@@ -8,6 +8,7 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 import Start from "./pages/Start";
 import Questions from "./components/Questions";
+import Dashboard from './pages/Dashboard'
 
 export default function App() {
   return (  
@@ -20,6 +21,7 @@ export default function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/start" element={<Start />} />
         <Route path="/questions" element={<Questions />} />
+        <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
     </BrowserRouter>
   );

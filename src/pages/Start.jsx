@@ -249,7 +249,7 @@ export default function Start() {
               }
               <div className="font-syne font-black text-white text-lg">{user.name}</div>
               <div className="text-[12px] text-[#444444] font-dm-sans mt-[2px] mb-7">{user.email}</div>
-              <button onClick={() => navigate('/questions')}
+              <button onClick={() => navigate('/dashboard')}
                 className="w-full py-[13px] rounded-full bg-white text-black text-sm font-black font-dm-sans flex items-center justify-center gap-2 mb-3 transition-all duration-200 hover:bg-[#e8e8e8] hover:-translate-y-[2px] hover:shadow-[0_10px_32px_rgba(255,255,255,0.15)]"
               >
                 <RiRocketLine size={14}/> Continue to Viram
