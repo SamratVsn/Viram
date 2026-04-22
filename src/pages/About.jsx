@@ -100,7 +100,7 @@ function AvatarOrb({ initials, floating }) {
   )
 }
 
-export default function Developers() {
+export default function About() {
   return (
     <>
       <style>{STYLES}</style>
