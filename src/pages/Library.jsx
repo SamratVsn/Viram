@@ -87,6 +87,8 @@ const STYLES = `
 `
 
 export default function Library() {
+  const storedUser = localStorage.getItem('viram_user');
+  const isLoggedIn = !!storedUser;
   return (
     <>
       <style>{STYLES}</style>
@@ -96,7 +98,7 @@ export default function Library() {
         {/* ── Top bar ────────────────────────────────────────────────────── */}
         <div className="flex items-center justify-between px-5 py-[14px] border-b border-[#1a1a1a] bg-black/95 backdrop-blur-xl sticky top-0 z-50 flex-shrink-0">
           <Link
-            to="/"
+            to={isLoggedIn ? "/dashboard" : "/"}
             className="flex items-center gap-2 text-[13px] font-semibold text-[#888888] hover:text-white transition-colors duration-200 font-dm-sans no-underline"
           >
             <i className="ri-arrow-left-line" /> Back

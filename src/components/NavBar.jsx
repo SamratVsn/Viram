@@ -39,7 +39,7 @@ export default function Navbar() {
         {[
           { to: "/", label: "Home" },
           { to: "/library", label: "Library" },
-          { to: "/developers", label: "Developers" },
+          { to: "/about", label: "About" },
         ].map(({ to, label }) => (
           <Link
             key={to}
