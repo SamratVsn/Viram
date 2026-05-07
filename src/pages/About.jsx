@@ -1,5 +1,6 @@
-import { motion } from 'framer-motion'
-import { Link } from 'react-router-dom'
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import {
   RiCodeSSlashLine,
   RiGlobalLine,
@@ -9,342 +10,772 @@ import {
   RiSparkling2Line,
   RiRocketLine,
   RiHeartLine,
-} from 'react-icons/ri'
-import NavBar from '../components/NavBar'
+  RiPaintBrushLine,
+  RiMagicLine,
+  RiReactjsLine,
+} from "react-icons/ri";
+import NavBar from "../components/NavBar";
 
+/* ─── Font loader ─────────────────────────────────────────────────────────── */
+const FontLoader = () => (
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,600&family=Jost:wght@300;400;500;600&display=swap"
+  />
+);
+
+/* ─── Grain overlay ───────────────────────────────────────────────────────── */
+const Grain = () => (
+  <div
+    aria-hidden="true"
+    className="absolute inset-0 pointer-events-none z-0 rounded-[inherit]"
+    style={{
+      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23g)' opacity='0.03'/%3E%3C/svg%3E")`,
+    }}
+  />
+);
+
+/* ─── Pulse dot ───────────────────────────────────────────────────────────── */
+const PulseDot = ({ color = "#B8704E" }) => (
+  <motion.span
+    animate={{ opacity: [1, 0.35, 1], scale: [1, 0.55, 1] }}
+    transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
+    className="inline-block w-[5px] h-[5px] rounded-full flex-shrink-0"
+    style={{ background: color }}
+  />
+);
+
+/* ─── Tag badge ───────────────────────────────────────────────────────────── */
+function Tag({ children }) {
+  return (
+    <div
+      className="inline-flex items-center gap-[6px] px-[14px] py-[5px] rounded-full mb-[22px]"
+      style={{
+        fontFamily: "'Jost', sans-serif",
+        fontSize: 10,
+        fontWeight: 600,
+        letterSpacing: "0.18em",
+        textTransform: "uppercase",
+        color: "#5A4E42",
+        background: "#EDE8DF",
+        border: "1px solid rgba(55,38,22,0.12)",
+        boxShadow: "0 1px 3px rgba(42,34,24,0.06)",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+/* ─── Animation helper ────────────────────────────────────────────────────── */
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 24 },
   whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, margin: '-60px' },
+  viewport: { once: true, margin: "-60px" },
   transition: { duration: 0.72, delay, ease: [0.22, 1, 0.36, 1] },
-})
+});
 
-const STYLES = `
-  @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.3;transform:scale(.7)} }
-  @keyframes float     { 0%,100%{transform:translateY(0px)}    50%{transform:translateY(-8px)}     }
-  @keyframes spin-slow { from{transform:rotate(0deg)}          to{transform:rotate(360deg)}         }
-`
-
+/* ─── Data ────────────────────────────────────────────────────────────────── */
 const TEAM = [
   {
-    name:     'Samrat Parajuli',
-    handle:   '@SamratVsn',
-    role:     'Co-Founder & Lead Developer',
-    tags:     ['Android', 'Systems Engineering', 'Full Stack'],
-    bio:      'Learning Android developer and systems engineer from Nepal. Building Viram from the ground up from the avatar engine to the focus session backend. Obsessed with clean architecture and making discipline feel like a game worth playing.',
-    website:  'https://www.samratparajuli0.com.np',
-    github:   'https://github.com/SamratVsn',
-    twitter:  null,
-    initials: 'SP',
-    placeholder: false,
+    name: "Samrat Parajuli",
+    handle: "@SamratVsn",
+    role: "Co-Founder & Lead Developer",
+    tags: ["Android", "Systems Engineering", "Full Stack"],
+    bio: "Learning Android developer and systems engineer from Nepal. Building Viram from the ground up — from the avatar engine to the focus session backend. Obsessed with clean architecture and making discipline feel like a game worth playing.",
+    website: "https://www.samratparajuli0.com.np",
+    github: "https://github.com/SamratVsn",
+    twitter: null,
+    initials: "SP",
   },
   {
-    name:     'Prince Timilsina',
-    handle:   '@prince.env',
-    role:     'Co-Founder',
-    tags:     ['Website', 'Systems Engineering', 'Full Stack'],
-    bio:      '.................',
-    website:  null,
-    github:   'https://github.com/PrinceTimilsina',
-    twitter:  null,
-    initials: 'PT',
-    placeholder: false,
+    name: "Prince Timilsina",
+    handle: "@prince.env",
+    role: "Co-Founder",
+    tags: ["Website", "Systems Engineering", "Full Stack"],
+    bio: ".................",
+    website: null,
+    github: "https://github.com/PrinceTimilsina",
+    twitter: null,
+    initials: "PT",
   },
-]
+];
 
 const VALUES = [
   {
     Icon: RiHeartLine,
-    title: 'Built with intention',
-    body:  "Every feature exists to fight distraction, not feed it. We refuse to add anything that doesn't serve the mission.",
+    title: "Built with intention",
+    body: "Every feature exists to fight distraction, not feed it. We refuse to add anything that doesn't serve the mission.",
   },
   {
     Icon: RiCodeSSlashLine,
-    title: 'Small team, big scope',
-    body:  'Two builders. No VC money. No bloated roadmap. Just two people who got sick of being the product and decided to build the antidote.',
+    title: "Small team, big scope",
+    body: "Two builders. No VC money. No bloated roadmap. Just two people who got sick of being the product and decided to build the antidote.",
   },
   {
     Icon: RiRocketLine,
-    title: 'Shipping fast',
-    body:  'Viram is being built in public. Expect rough edges, fast iterations, and genuine curiosity about what actually helps people focus.',
+    title: "Shipping fast",
+    body: "Viram is being built in public. Expect rough edges, fast iterations, and genuine curiosity about what actually helps people focus.",
   },
-]
+];
 
 const STACK = [
-  { label: 'React',  icon: 'ri-reactjs-line'     },
-//   { label: 'Node.js',          icon: 'ri-server-line'      },
-//   { label: 'PostgreSQL',       icon: 'ri-database-2-line'  },
-  { label: 'Framer Motion',    icon: 'ri-magic-line'       },
-  { label: 'Tailwind CSS',     icon: 'ri-paint-brush-line' },
-]
+  { label: "React", Icon: RiReactjsLine },
+  { label: "Framer Motion", Icon: RiMagicLine },
+  { label: "Tailwind CSS", Icon: RiPaintBrushLine },
+];
 
-function AvatarOrb({ initials, floating }) {
+/* ─── Floating avatar orb ─────────────────────────────────────────────────── */
+function AvatarOrb({ initials }) {
   return (
-    <div className="relative flex-shrink-0">
-      <svg
+    <div className="relative flex-shrink-0 w-[110px] h-[110px]">
+      {/* Spinning dashed ring */}
+      <motion.svg
+        animate={{ rotate: 360 }}
+        transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
         className="absolute -inset-[10px] w-[calc(100%+20px)] h-[calc(100%+20px)]"
-        style={{ animation: 'spin-slow 18s linear infinite' }}
         viewBox="0 0 140 140"
       >
-        <circle cx="70" cy="70" r="66" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="1" strokeDasharray="4 9" />
-      </svg>
-      <div
-        className="w-[110px] h-[110px] rounded-full bg-[#0a0a0a] border border-[#2a2a2a] flex items-center justify-center"
-        style={{ animation: floating ? 'float 5s ease-in-out infinite' : 'none' }}
+        <circle
+          cx="70"
+          cy="70"
+          r="66"
+          fill="none"
+          stroke="rgba(184,112,78,0.18)"
+          strokeWidth="1"
+          strokeDasharray="4 9"
+        />
+      </motion.svg>
+
+      {/* Floating circle */}
+      <motion.div
+        animate={{ y: [0, -8, 0] }}
+        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+        className="w-[110px] h-[110px] rounded-full flex items-center justify-center"
+        style={{
+          background: "#EDE8DF",
+          border: "1px solid rgba(55,38,22,0.12)",
+          boxShadow: "0 4px 16px rgba(42,34,24,0.10)",
+        }}
       >
-        <span className="font-syne font-black text-[28px] text-white tracking-tight select-none">
+        <span
+          style={{
+            fontFamily: "'Cormorant Garamond', serif",
+            fontSize: 28,
+            fontWeight: 600,
+            color: "#2A2218",
+            letterSpacing: "-0.02em",
+            userSelect: "none",
+          }}
+        >
           {initials}
         </span>
-      </div>
+      </motion.div>
     </div>
-  )
+  );
 }
 
+/* ─── Team card ───────────────────────────────────────────────────────────── */
+function TeamCard({ person, delay }) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <motion.div
+      {...fadeUp(delay)}
+      className="relative flex flex-col gap-6 p-8 rounded-[28px] overflow-hidden transition-all duration-300"
+      style={{
+        background: "#F9F5EC",
+        border: `1px solid ${hovered ? "rgba(55,38,22,0.18)" : "rgba(55,38,22,0.10)"}`,
+        boxShadow: hovered
+          ? "0 20px 60px rgba(42,34,24,0.10), 0 6px 20px rgba(42,34,24,0.07)"
+          : "0 2px 10px rgba(42,34,24,0.06)",
+        transform: hovered ? "translateY(-4px)" : "translateY(0)",
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <Grain />
+
+      {/* Top shimmer line */}
+      <div
+        className="absolute top-0 left-0 right-0 h-px"
+        style={{
+          background:
+            "linear-gradient(90deg, rgba(184,112,78,0.3), rgba(184,112,78,0.08), transparent)",
+        }}
+      />
+
+      {/* Avatar + name */}
+      <div className="relative z-[1] flex items-center gap-6">
+        <AvatarOrb initials={person.initials} />
+        <div>
+          <div
+            className="leading-tight mb-[5px]"
+            style={{
+              fontFamily: "'Cormorant Garamond', serif",
+              fontSize: 22,
+              fontWeight: 600,
+              color: "#2A2218",
+              letterSpacing: "-0.01em",
+            }}
+          >
+            {person.name}
+          </div>
+          <div
+            style={{
+              fontFamily: "'Jost', sans-serif",
+              fontSize: 12,
+              fontWeight: 400,
+              letterSpacing: "0.06em",
+              color: "#A89B8C",
+            }}
+          >
+            {person.handle}
+          </div>
+        </div>
+      </div>
+
+      {/* Role badge */}
+      <div className="relative z-[1] self-start">
+        <div
+          className="inline-flex items-center px-3 py-[5px] rounded-full"
+          style={{
+            fontFamily: "'Jost', sans-serif",
+            fontSize: 10,
+            fontWeight: 600,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            color: "#8A7E74",
+            background: "#EDE8DF",
+            border: "1px solid rgba(55,38,22,0.10)",
+          }}
+        >
+          {person.role}
+        </div>
+      </div>
+
+      {/* Skill tags */}
+      <div className="relative z-[1] flex flex-wrap gap-[7px]">
+        {person.tags.map((tag) => (
+          <span
+            key={tag}
+            className="px-3 py-[4px] rounded-full"
+            style={{
+              fontFamily: "'Jost', sans-serif",
+              fontSize: 11,
+              fontWeight: 400,
+              color: "#A89B8C",
+              background: "#EDE8DF",
+              border: "1px solid rgba(55,38,22,0.08)",
+            }}
+          >
+            {tag}
+          </span>
+        ))}
+      </div>
+
+      {/* Bio */}
+      <p
+        className="relative z-[1] flex-1 leading-[1.85]"
+        style={{
+          fontFamily: "'Jost', sans-serif",
+          fontSize: 14,
+          fontWeight: 400,
+          color: "#5A4E42",
+          letterSpacing: "0.01em",
+        }}
+      >
+        {person.bio}
+      </p>
+
+      {/* Links */}
+      <div
+        className="relative z-[1] pt-4 flex items-center gap-5 flex-wrap"
+        style={{ borderTop: "1px solid rgba(55,38,22,0.07)" }}
+      >
+        {person.website && (
+          <ExternalLink
+            href={person.website}
+            Icon={RiGlobalLine}
+            label="Website"
+          />
+        )}
+        {person.github && (
+          <ExternalLink
+            href={person.github}
+            Icon={RiGithubLine}
+            label="GitHub"
+          />
+        )}
+        {person.twitter && (
+          <ExternalLink href={person.twitter} Icon={RiTwitterXLine} label="X" />
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+/* ─── External link ───────────────────────────────────────────────────────── */
+function ExternalLink({ href, Icon, label }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="no-underline flex items-center gap-[5px] transition-all duration-200"
+      style={{
+        fontFamily: "'Jost', sans-serif",
+        fontSize: 12,
+        fontWeight: 500,
+        letterSpacing: "0.04em",
+        color: hovered ? "#2A2218" : "#8A7E74",
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <Icon size={13} style={{ color: hovered ? "#B8704E" : "#C4B8A8" }} />
+      {label}
+      <RiArrowRightUpLine size={10} style={{ opacity: hovered ? 1 : 0.5 }} />
+    </a>
+  );
+}
+
+/* ─── Value row ───────────────────────────────────────────────────────────── */
+function ValueRow({ Icon, title, body, delay }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <motion.div
+      {...fadeUp(delay)}
+      className="flex items-start gap-6 px-6 py-6 rounded-[18px] transition-all duration-250 cursor-default"
+      style={{
+        background: hovered ? "#F9F5EC" : "transparent",
+        border: `1px solid ${hovered ? "rgba(55,38,22,0.12)" : "rgba(55,38,22,0.07)"}`,
+        boxShadow: hovered ? "0 2px 10px rgba(42,34,24,0.06)" : "none",
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <div
+        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-250"
+        style={{
+          background: hovered ? "rgba(184,112,78,0.10)" : "#EDE8DF",
+          border: `1px solid ${hovered ? "rgba(184,112,78,0.20)" : "rgba(55,38,22,0.10)"}`,
+        }}
+      >
+        <Icon size={17} style={{ color: hovered ? "#B8704E" : "#A89B8C" }} />
+      </div>
+      <div>
+        <div
+          className="mb-[6px]"
+          style={{
+            fontFamily: "'Cormorant Garamond', serif",
+            fontSize: 18,
+            fontWeight: 600,
+            color: "#2A2218",
+            letterSpacing: "-0.01em",
+          }}
+        >
+          {title}
+        </div>
+        <div
+          style={{
+            fontFamily: "'Jost', sans-serif",
+            fontSize: 13,
+            fontWeight: 400,
+            color: "#5A4E42",
+            lineHeight: 1.78,
+            letterSpacing: "0.01em",
+          }}
+        >
+          {body}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ─── Stack chip ──────────────────────────────────────────────────────────── */
+function StackChip({ label, Icon, delay }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <motion.div
+      {...fadeUp(delay)}
+      className="flex items-center gap-3 px-5 py-4 rounded-[14px] cursor-default transition-all duration-200"
+      style={{
+        background: "#F9F5EC",
+        border: `1px solid ${hovered ? "rgba(55,38,22,0.18)" : "rgba(55,38,22,0.10)"}`,
+        boxShadow: hovered
+          ? "0 4px 14px rgba(42,34,24,0.08)"
+          : "0 1px 3px rgba(42,34,24,0.05)",
+        transform: hovered ? "translateY(-2px)" : "translateY(0)",
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <Icon size={16} style={{ color: hovered ? "#B8704E" : "#C4B8A8" }} />
+      <span
+        style={{
+          fontFamily: "'Jost', sans-serif",
+          fontSize: 13,
+          fontWeight: 500,
+          letterSpacing: "0.04em",
+          color: hovered ? "#2A2218" : "#8A7E74",
+        }}
+      >
+        {label}
+      </span>
+    </motion.div>
+  );
+}
+
+/* ─── CTA button ──────────────────────────────────────────────────────────── */
+function CTAButton({ to, children, variant = "primary" }) {
+  const [hovered, setHovered] = useState(false);
+  const isPrimary = variant === "primary";
+  return (
+    <motion.div
+      animate={{ y: hovered ? -2 : 0 }}
+      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+      className="inline-block"
+    >
+      <Link
+        to={to}
+        className="no-underline inline-flex items-center gap-2 px-8 py-[14px] rounded-[28px] transition-shadow duration-300"
+        style={{
+          fontFamily: "'Jost', sans-serif",
+          fontSize: 14,
+          fontWeight: 600,
+          letterSpacing: "0.06em",
+          ...(isPrimary
+            ? {
+                background: "#2A2218",
+                color: "#F9F5EC",
+                boxShadow: hovered
+                  ? "0 10px 32px rgba(42,34,24,0.20), 0 3px 10px rgba(42,34,24,0.10)"
+                  : "0 4px 16px rgba(42,34,24,0.14), 0 1px 4px rgba(42,34,24,0.08)",
+              }
+            : {
+                background: "#F9F5EC",
+                color: "#5A4E42",
+                border: "1px solid rgba(55,38,22,0.14)",
+                boxShadow: hovered
+                  ? "0 6px 20px rgba(42,34,24,0.10)"
+                  : "0 1px 3px rgba(42,34,24,0.06)",
+              }),
+        }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        {children}
+      </Link>
+    </motion.div>
+  );
+}
+
+/* ─── Main export ─────────────────────────────────────────────────────────── */
 export default function About() {
   return (
     <>
-      <style>{STYLES}</style>
+      <FontLoader />
       <NavBar />
-      <div className="min-h-screen bg-black overflow-x-hidden pt-[70px]">
 
-        {/* ── HERO ──────────────────────────────────────────────────────── */}
-        <section className="px-[5vw] pt-20 pb-20 border-b border-[#1a1a1a] relative overflow-hidden text-center">
-          <div className="absolute inset-0 pointer-events-none">
-            <div
-              className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] rounded-full"
-              style={{ background: 'radial-gradient(ellipse,rgba(255,255,255,0.04) 0%,transparent 65%)', filter: 'blur(60px)' }}
-            />
-          </div>
+      <div
+        className="min-h-screen overflow-x-hidden pt-[72px]"
+        style={{ background: "#F4EEE3", color: "#2A2218" }}
+      >
+        {/* ── Hero ──────────────────────────────────────────────────────── */}
+        <section
+          className="relative overflow-hidden text-center px-[5vw] pt-20 pb-20"
+          style={{ borderBottom: "1px solid rgba(55,38,22,0.07)" }}
+        >
+          {/* Dot grid */}
+          <div
+            className="absolute inset-0 pointer-events-none opacity-[0.22]"
+            style={{
+              backgroundImage:
+                "radial-gradient(circle, rgba(42,34,24,0.10) 1px, transparent 1px)",
+              backgroundSize: "28px 28px",
+            }}
+          />
+          {/* Warm glow */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background:
+                "radial-gradient(ellipse 70% 60% at 50% 30%, rgba(184,112,78,0.07) 0%, transparent 70%)",
+            }}
+          />
 
           <div className="relative z-[2] max-w-[640px] mx-auto">
             <motion.div
-              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-              className="inline-flex items-center gap-[7px] text-[10px] tracking-[0.2em] text-[#cccccc] uppercase font-bold font-dm-sans px-[14px] py-[5px] rounded-full border border-[#2a2a2a] bg-white/[0.03] mb-6"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex justify-center"
             >
-              <RiSparkling2Line size={11} /> The people behind it
+              <Tag>
+                <RiSparkling2Line size={11} /> The people behind it
+              </Tag>
             </motion.div>
 
             <motion.h1
-              initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.08 } }}
-              className="font-syne font-black leading-[0.96] tracking-[-0.04em] text-white mb-6"
-              style={{ fontSize: 'clamp(42px, 7vw, 80px)' }}
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0, transition: { delay: 0.08 } }}
+              className="mb-6 leading-[0.96]"
+              style={{
+                fontFamily: "'Cormorant Garamond', serif",
+                fontWeight: 600,
+                letterSpacing: "-0.02em",
+                color: "#2A2218",
+                fontSize: "clamp(44px, 7vw, 82px)",
+              }}
             >
-              Built by two<br />
-              <span className="text-[#555555]">obsessed people.</span>
+              Built by two
+              <br />
+              <span style={{ color: "#A89B8C", fontStyle: "italic" }}>
+                obsessed people.
+              </span>
             </motion.h1>
 
             <motion.p
-              initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.16 } }}
-              className="text-[15px] text-[#888888] font-dm-sans leading-[1.85]"
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0, transition: { delay: 0.16 } }}
+              className="leading-[1.85]"
+              style={{
+                fontFamily: "'Jost', sans-serif",
+                fontSize: 15,
+                fontWeight: 400,
+                color: "#5A4E42",
+                letterSpacing: "0.01em",
+              }}
             >
-              No VC. No growth team. No dark patterns. Just two builders from Nepal who
-              got tired of watching their own attention get sold — and decided to do
-              something about it.
+              No VC. No growth team. No dark patterns. Just two builders from
+              Nepal who got tired of watching their own attention get sold — and
+              decided to do something about it.
             </motion.p>
           </div>
         </section>
 
-        {/* ── TEAM CARDS ────────────────────────────────────────────────── */}
-        <section className="px-[5vw] py-[100px] border-b border-[#1a1a1a]">
+        {/* ── Team cards ────────────────────────────────────────────────── */}
+        <section
+          className="px-[5vw] py-[100px]"
+          style={{ borderBottom: "1px solid rgba(55,38,22,0.07)" }}
+        >
           <div className="max-w-[900px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-5">
             {TEAM.map((person, i) => (
-              <motion.div
-                key={person.name}
-                {...fadeUp(i * 0.1)}
-                className={`relative p-8 rounded-[24px] border bg-[#0a0a0a] flex flex-col gap-6 overflow-hidden transition-all duration-300 hover:-translate-y-1 ${person.placeholder ? 'border-[#1a1a1a] opacity-60' : 'border-[#2a2a2a] hover:border-[#3a3a3a]'}`}
-              >
-                {/* top shimmer */}
-                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-white/20 via-white/5 to-transparent" />
-
-                {/* Avatar + name */}
-                <div className="flex items-center gap-6">
-                  <AvatarOrb initials={person.initials} floating={!person.placeholder} />
-                  <div>
-                    <div className="font-syne font-black text-white text-xl leading-tight mb-[5px]">
-                      {person.name}
-                    </div>
-                    <div className="text-[12px] text-[#444444] font-dm-sans tracking-[0.05em]">
-                      {person.handle}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Role */}
-                <div className="inline-flex self-start items-center px-3 py-[5px] rounded-full border border-[#2a2a2a] bg-white/[0.03] text-[10px] font-bold text-[#888888] font-dm-sans tracking-[0.1em] uppercase">
-                  {person.role}
-                </div>
-
-                {/* Skill tags */}
-                <div className="flex flex-wrap gap-[7px]">
-                  {person.tags.map(tag => (
-                    <span
-                      key={tag}
-                      className="px-3 py-[4px] rounded-full bg-white/[0.03] border border-[#1a1a1a] text-[11px] text-[#555555] font-dm-sans"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-
-                {/* Bio */}
-                <p className="text-[14px] text-[#555555] font-dm-sans leading-[1.8] flex-1">
-                  {person.bio}
-                </p>
-
-                {/* Links */}
-                <div className="pt-4 border-t border-[#1a1a1a]">
-                  {!person.placeholder ? (
-                    <div className="flex items-center gap-4 flex-wrap">
-                      {person.website && (
-                        <a href={person.website} target="_blank" rel="noreferrer"
-                          className="flex items-center gap-[5px] text-[12px] text-[#555555] font-dm-sans font-semibold no-underline transition-colors duration-200 hover:text-white"
-                        >
-                          <RiGlobalLine size={13} /> Website <RiArrowRightUpLine size={10} />
-                        </a>
-                      )}
-                      {person.github && (
-                        <a href={person.github} target="_blank" rel="noreferrer"
-                          className="flex items-center gap-[5px] text-[12px] text-[#555555] font-dm-sans font-semibold no-underline transition-colors duration-200 hover:text-white"
-                        >
-                          <RiGithubLine size={13} /> GitHub <RiArrowRightUpLine size={10} />
-                        </a>
-                      )}
-                      {person.twitter && (
-                        <a href={person.twitter} target="_blank" rel="noreferrer"
-                          className="flex items-center gap-[5px] text-[12px] text-[#555555] font-dm-sans font-semibold no-underline transition-colors duration-200 hover:text-white"
-                        >
-                          <RiTwitterXLine size={13} /> X <RiArrowRightUpLine size={10} />
-                        </a>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="w-[6px] h-[6px] rounded-full bg-white/20 inline-block"
-                        style={{ animation: 'pulse-dot 2.5s ease-in-out infinite' }}
-                      />
-                      <span className="text-[11px] text-[#333333] font-dm-sans">Profile details coming soon</span>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
+              <TeamCard key={person.name} person={person} delay={i * 0.1} />
             ))}
           </div>
         </section>
 
-        {/* ── VALUES ────────────────────────────────────────────────────── */}
-        <section className="px-[5vw] py-[100px] border-b border-[#1a1a1a]">
+        {/* ── Values ────────────────────────────────────────────────────── */}
+        <section
+          className="px-[5vw] py-[100px]"
+          style={{ borderBottom: "1px solid rgba(55,38,22,0.07)" }}
+        >
           <div className="max-w-[900px] mx-auto">
-            <motion.div {...fadeUp(0)}
-              className="inline-flex items-center gap-[7px] text-[10px] tracking-[0.2em] text-[#cccccc] uppercase font-bold font-dm-sans px-[14px] py-[5px] rounded-full border border-[#2a2a2a] bg-white/[0.03] mb-[22px]"
-            >
-              <RiHeartLine size={11} /> How we build
+            <motion.div {...fadeUp(0)}>
+              <Tag>
+                <RiHeartLine size={11} /> How we build
+              </Tag>
             </motion.div>
-            <motion.h2 {...fadeUp(0.06)}
-              className="font-syne font-black leading-[1.05] tracking-[-0.04em] text-white mb-14"
-              style={{ fontSize: 'clamp(26px,4vw,48px)' }}
+
+            <motion.h2
+              {...fadeUp(0.06)}
+              className="mb-14 leading-[1.05]"
+              style={{
+                fontFamily: "'Cormorant Garamond', serif",
+                fontWeight: 600,
+                letterSpacing: "-0.02em",
+                color: "#2A2218",
+                fontSize: "clamp(28px, 4vw, 52px)",
+              }}
             >
-              The principles<br />we ship with.
+              The principles
+              <br />
+              <span style={{ color: "#A89B8C", fontStyle: "italic" }}>
+                we ship with.
+              </span>
             </motion.h2>
 
-            <div className="flex flex-col gap-[2px]">
+            <div className="flex flex-col gap-[3px]">
               {VALUES.map(({ Icon, title, body }, i) => (
-                <motion.div key={title} {...fadeUp(i * 0.08)}
-                  className="flex items-start gap-6 px-6 py-6 rounded-[14px] border border-[#1a1a1a] bg-white/[0.015] cursor-default transition-all duration-200 hover:bg-white/[0.035] hover:border-[#2a2a2a]"
-                >
-                  <div className="w-10 h-10 rounded-xl border border-[#2a2a2a] bg-[#0a0a0a] flex items-center justify-center flex-shrink-0 text-[#888888]">
-                    <Icon size={17} />
-                  </div>
-                  <div>
-                    <div className="font-syne font-black text-white text-[15px] mb-[6px]">{title}</div>
-                    <div className="text-[13px] text-[#555555] font-dm-sans leading-[1.75]">{body}</div>
-                  </div>
-                </motion.div>
+                <ValueRow
+                  key={title}
+                  Icon={Icon}
+                  title={title}
+                  body={body}
+                  delay={i * 0.08}
+                />
               ))}
             </div>
           </div>
         </section>
 
-        {/* ── TECH STACK ────────────────────────────────────────────────── */}
-        <section className="px-[5vw] py-[100px] border-b border-[#1a1a1a]">
+        {/* ── Tech stack ────────────────────────────────────────────────── */}
+        <section
+          className="px-[5vw] py-[100px]"
+          style={{ borderBottom: "1px solid rgba(55,38,22,0.07)" }}
+        >
           <div className="max-w-[900px] mx-auto">
-            <motion.div {...fadeUp(0)}
-              className="inline-flex items-center gap-[7px] text-[10px] tracking-[0.2em] text-[#cccccc] uppercase font-bold font-dm-sans px-[14px] py-[5px] rounded-full border border-[#2a2a2a] bg-white/[0.03] mb-[22px]"
-            >
-              <RiCodeSSlashLine size={11} /> Stack
+            <motion.div {...fadeUp(0)}>
+              <Tag>
+                <RiCodeSSlashLine size={11} /> Stack
+              </Tag>
             </motion.div>
-            <motion.h2 {...fadeUp(0.06)}
-              className="font-syne font-black leading-[1.05] tracking-[-0.04em] text-white mb-14"
-              style={{ fontSize: 'clamp(26px,4vw,48px)' }}
+
+            <motion.h2
+              {...fadeUp(0.06)}
+              className="mb-14 leading-[1.05]"
+              style={{
+                fontFamily: "'Cormorant Garamond', serif",
+                fontWeight: 600,
+                letterSpacing: "-0.02em",
+                color: "#2A2218",
+                fontSize: "clamp(28px, 4vw, 52px)",
+              }}
             >
-              What Viram<br />is made of.
+              What Viram
+              <br />
+              <span style={{ color: "#A89B8C", fontStyle: "italic" }}>
+                is made of.
+              </span>
             </motion.h2>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-[10px]">
-              {STACK.map(({ label, icon }, i) => (
-                <motion.div key={label} {...fadeUp(i * 0.06)}
-                  className="flex items-center gap-3 px-5 py-4 rounded-[14px] border border-[#1a1a1a] bg-[#0a0a0a] cursor-default transition-all duration-200 hover:border-[#2a2a2a]"
-                >
-                  <i className={`${icon} text-[#444444] text-base`} />
-                  <span className="font-dm-sans text-[13px] text-[#666666] font-semibold">{label}</span>
-                </motion.div>
+              {STACK.map(({ label, Icon }, i) => (
+                <StackChip
+                  key={label}
+                  label={label}
+                  Icon={Icon}
+                  delay={i * 0.06}
+                />
               ))}
             </div>
           </div>
         </section>
 
         {/* ── CTA ───────────────────────────────────────────────────────── */}
-        <section className="px-[5vw] py-[100px] text-center relative overflow-hidden">
-          <div className="absolute inset-0 pointer-events-none">
-            <div
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[400px] rounded-full"
-              style={{ background: 'radial-gradient(ellipse,rgba(255,255,255,0.03) 0%,transparent 60%)', filter: 'blur(70px)' }}
-            />
-          </div>
+        <section className="relative overflow-hidden px-[5vw] py-[100px] text-center">
+          {/* Warm ambient glow */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background:
+                "radial-gradient(ellipse 60% 60% at 50% 50%, rgba(184,112,78,0.06) 0%, transparent 65%)",
+            }}
+          />
 
-          <motion.h2 {...fadeUp(0)}
-            className="font-syne font-black leading-[1.0] tracking-[-0.04em] text-white mb-5"
-            style={{ fontSize: 'clamp(28px,5vw,56px)' }}
+          <motion.h2
+            {...fadeUp(0)}
+            className="relative z-[1] mb-5 leading-[1.0]"
+            style={{
+              fontFamily: "'Cormorant Garamond', serif",
+              fontWeight: 600,
+              letterSpacing: "-0.02em",
+              color: "#2A2218",
+              fontSize: "clamp(30px, 5vw, 58px)",
+            }}
           >
-            Want to say hi<br />or collaborate?
+            Want to say hi
+            <br />
+            <span style={{ color: "#A89B8C", fontStyle: "italic" }}>
+              or collaborate?
+            </span>
           </motion.h2>
-          <motion.p {...fadeUp(0.06)}
-            className="text-[15px] text-[#555555] font-dm-sans leading-[1.8] mb-10 max-w-[340px] mx-auto"
+
+          <motion.p
+            {...fadeUp(0.06)}
+            className="relative z-[1] max-w-[340px] mx-auto mb-10 leading-[1.8]"
+            style={{
+              fontFamily: "'Jost', sans-serif",
+              fontSize: 15,
+              fontWeight: 400,
+              color: "#8A7E74",
+              letterSpacing: "0.01em",
+            }}
           >
             We're a small team, so we actually read every message we get.
           </motion.p>
-          <motion.div {...fadeUp(0.12)} className="flex gap-3 justify-center flex-wrap">
-            <Link to="/contact"
-              className="px-8 py-[15px] rounded-full bg-white text-black text-[15px] font-bold font-dm-sans no-underline flex items-center gap-2 transition-all duration-200 shadow-[0_8px_40px_rgba(255,255,255,0.1)] hover:bg-[#e8e8e8] hover:-translate-y-[2px]"
-            >
+
+          <motion.div
+            {...fadeUp(0.12)}
+            className="relative z-[1] flex gap-3 justify-center flex-wrap"
+          >
+            <CTAButton to="/contact" variant="primary">
               Get in touch
-            </Link>
-            <a href="https://www.samratparajuli0.com.np" target="_blank" rel="noreferrer"
-              className="px-7 py-[15px] rounded-full bg-white/[0.04] text-[#e8e8e8] border border-[#2a2a2a] text-[15px] font-semibold font-dm-sans no-underline flex items-center gap-2 transition-all duration-200 hover:bg-white/[0.08] hover:border-[#555555]"
-            >
+            </CTAButton>
+            <CTAButton to="https://www.samratparajuli0.com.np" variant="secondary" target="_blank" rel="noopener noreferrer">
               <RiGlobalLine size={15} /> Samrat's site
-            </a>
+            </CTAButton>
           </motion.div>
         </section>
 
-        {/* ── FOOTER STRIP ──────────────────────────────────────────────── */}
-        <div className="border-t border-[#1a1a1a] px-[5vw] py-6 flex items-center justify-between flex-wrap gap-3">
-          <Link to="/" className="font-syne font-black tracking-[0.18em] no-underline">
-            <span className="text-white">VI</span><span className="text-[#3a3a3a]">RAM</span>
+        {/* ── Footer strip ──────────────────────────────────────────────── */}
+        <div
+          className="relative overflow-hidden flex items-center justify-between flex-wrap gap-3 px-[5vw] py-6"
+          style={{
+            borderTop: "1px solid rgba(55,38,22,0.07)",
+            background: "#EDE8DF",
+          }}
+        >
+          <Grain />
+
+          <Link
+            to="/"
+            className="relative z-[1] no-underline"
+            style={{ fontFamily: "'Cormorant Garamond', serif" }}
+          >
+            <span
+              style={{
+                fontSize: 17,
+                fontWeight: 600,
+                letterSpacing: "0.18em",
+                color: "#2A2218",
+              }}
+            >
+              VI
+            </span>
+            <span
+              style={{
+                fontSize: 17,
+                fontWeight: 400,
+                letterSpacing: "0.18em",
+                color: "#C4B8A8",
+              }}
+            >
+              RAM
+            </span>
           </Link>
-          <div className="text-xs text-[#3a3a3a] font-dm-sans">
+
+          <div
+            className="relative z-[1]"
+            style={{
+              fontFamily: "'Jost', sans-serif",
+              fontSize: 12,
+              fontWeight: 400,
+              color: "#A89B8C",
+              letterSpacing: "0.03em",
+            }}
+          >
             © 2026 Viram. Built for those who refuse to be the product.
           </div>
-          <div className="flex items-center gap-[7px] text-xs text-[#3a3a3a] font-dm-sans">
-            <span
-              className="w-[6px] h-[6px] rounded-full bg-white inline-block"
-              style={{ animation: 'pulse-dot 2s ease-in-out infinite' }}
-            />
+
+          <div
+            className="relative z-[1] flex items-center gap-[6px]"
+            style={{
+              fontFamily: "'Jost', sans-serif",
+              fontSize: 11,
+              fontWeight: 400,
+              color: "#A89B8C",
+              letterSpacing: "0.06em",
+            }}
+          >
+            <PulseDot />
             Systems online
           </div>
         </div>
-
       </div>
     </>
-  )
+  );
 }

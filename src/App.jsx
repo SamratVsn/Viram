@@ -7,7 +7,7 @@ import Library from "./pages/Library";
 import About from './pages/About';
 import Contact from './pages/Contact';
 import Start from "./pages/Start";
-import Questions from "./components/Questions";
+import Onboarding from "./components/Onboarding";
 import Dashboard from './pages/Dashboard'
 
 export default function App() {
@@ -20,7 +20,7 @@ export default function App() {
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/start" element={<Start />} />
-        <Route path="/questions" element={<Questions />} />
+        <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
     </BrowserRouter>

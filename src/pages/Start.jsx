@@ -15,74 +15,239 @@ import {
   RiMailLine,
   RiLockPasswordLine,
   RiUserSmileLine,
+  RiLeafLine,
 } from 'react-icons/ri'
 
-/* ── Global keyframes ─────────────────────────────────────────────────────── */
-const STYLES = `
-  @keyframes spin-slow  { from{transform:rotate(0deg)}         to{transform:rotate(360deg)}      }
-  @keyframes spin-rev   { from{transform:rotate(0deg)}         to{transform:rotate(-360deg)}     }
-  @keyframes pulse-dot  { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.3;transform:scale(.7)} }
-  @keyframes float      { 0%,100%{transform:translateY(0)}     50%{transform:translateY(-7px)}   }
-  .auth-input {
-    width: 100%;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid #1e1e1e;
-    border-radius: 12px;
-    padding: 13px 16px 13px 44px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    color: #cccccc;
-    outline: none;
-    transition: border-color 0.2s, background 0.2s;
+/* ─── Design Tokens ─────────────────────────────────────── */
+const T = {
+  bg:        '#F4EEE3',
+  card:      '#F9F5EC',
+  cardDeep:  '#F1EBD9',          // slightly deeper card for inset fields
+  inkHigh:   '#2A2218',
+  inkMid:    '#5A4E42',
+  inkLow:    '#8A7B6E',
+  inkGhost:  'rgba(55,38,22,0.18)',
+  border:    'rgba(55,38,22,0.07)',
+  borderMid: 'rgba(55,38,22,0.13)',
+  accent:    '#B8704E',
+  accentBg:  'rgba(184,112,78,0.08)',
+  accentBorder: 'rgba(184,112,78,0.22)',
+  heading:   "'Cormorant Garamond', Georgia, serif",
+  body:      "'Jost', system-ui, sans-serif",
+  rSm:       '10px',
+  rMd:       '18px',
+  rLg:       '26px',
+  rPill:     '100px',
+}
+
+/* Grain SVG as data URI */
+const GRAIN_URL =
+  `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E")`
+
+/* ─── Global styles ─────────────────────────────────────── */
+const GLOBAL = `
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Jost:wght@300;400;500;600&display=swap');
+
+  /* Grain overlay on page */
+  .viram-bg::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: ${GRAIN_URL};
+    background-repeat: repeat;
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 9999;
   }
-  .auth-input::placeholder { color: #2e2e2e; }
-  .auth-input:focus { border-color: #444; background: rgba(255,255,255,0.05); }
+
+  /* Grain on cards */
+  .viram-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: ${GRAIN_URL};
+    background-repeat: repeat;
+    opacity: 0.035;
+    pointer-events: none;
+    z-index: 1;
+    border-radius: inherit;
+  }
+  .viram-card > * { position: relative; z-index: 2; }
+
+  /* Auth input */
+  .viram-input {
+    width: 100%;
+    background: ${T.cardDeep};
+    border: 1px solid rgba(55,38,22,0.10);
+    border-radius: ${T.rSm};
+    padding: 13px 16px 13px 44px;
+    font-family: ${T.body};
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    color: ${T.inkHigh};
+    outline: none;
+    transition: border-color 0.25s, box-shadow 0.25s;
+  }
+  .viram-input::placeholder { color: rgba(55,38,22,0.25); }
+  .viram-input:focus {
+    border-color: rgba(184,112,78,0.40);
+    box-shadow: 0 0 0 3px rgba(184,112,78,0.07);
+  }
+
+  /* Animations */
+  @keyframes float-slow {
+    0%,100% { transform: translateY(0px) rotate(-1deg); }
+    50%      { transform: translateY(-9px) rotate(1deg); }
+  }
+  @keyframes drift {
+    0%   { transform: translate(0, 0) rotate(0deg); }
+    33%  { transform: translate(6px, -8px) rotate(2deg); }
+    66%  { transform: translate(-4px, 5px) rotate(-1deg); }
+    100% { transform: translate(0, 0) rotate(0deg); }
+  }
+  @keyframes pulse-dot {
+    0%,100% { opacity:1; transform:scale(1); }
+    50%     { opacity:.4; transform:scale(.7); }
+  }
+  @keyframes spin-slow { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+  @keyframes spin-rev  { from{transform:rotate(0deg)} to{transform:rotate(-360deg)} }
 `
 
-/* ── Decorative orb with two counter-rotating rings ──────────────────────── */
-function LogoOrb() {
+/* ─── Framer ease ───────────────────────────────────────── */
+const ease = [0.22, 1, 0.36, 1]
+
+/* ─── Background decoration ─────────────────────────────── */
+function PageBackground() {
   return (
-    <div className="relative mx-auto w-fit mb-7">
-      {/* outer ring */}
-      <svg className="absolute -inset-[22px] w-[calc(100%+44px)] h-[calc(100%+44px)]"
-        style={{ animation: 'spin-slow 22s linear infinite' }} viewBox="0 0 160 160">
-        <circle cx="80" cy="80" r="75" fill="none"
-          stroke="rgba(255,255,255,0.05)" strokeWidth="1" strokeDasharray="3 10" />
+    <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+      {/* warm radial wash */}
+      <div style={{
+        position:   'absolute',
+        top:        '-20%',
+        left:       '50%',
+        transform:  'translateX(-50%)',
+        width:      700,
+        height:     700,
+        borderRadius: '50%',
+        background: 'radial-gradient(ellipse, rgba(184,112,78,0.07) 0%, transparent 65%)',
+        filter:     'blur(60px)',
+      }} />
+      {/* subtle paper lines (ruled notepad feel) */}
+      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.025 }}>
+        <defs>
+          <pattern id="lines" width="1" height="36" patternUnits="userSpaceOnUse">
+            <line x1="0" y1="35.5" x2="9999" y2="35.5" stroke={T.inkHigh} strokeWidth="0.6" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#lines)" />
+      </svg>
+      {/* floating organic shapes */}
+      <div style={{
+        position:     'absolute',
+        top:          '12%',
+        right:        '8%',
+        width:        160,
+        height:       160,
+        borderRadius: '62% 38% 46% 54% / 60% 44% 56% 40%',
+        border:       `1px solid rgba(184,112,78,0.10)`,
+        animation:    'drift 18s ease-in-out infinite',
+      }} />
+      <div style={{
+        position:     'absolute',
+        bottom:       '15%',
+        left:         '6%',
+        width:        110,
+        height:       110,
+        borderRadius: '44% 56% 60% 40% / 50% 60% 40% 50%',
+        border:       `1px solid rgba(55,38,22,0.06)`,
+        animation:    'drift 24s ease-in-out infinite reverse',
+      }} />
+    </div>
+  )
+}
+
+/* ─── Logo mark ─────────────────────────────────────────── */
+function LogoMark() {
+  return (
+    <div style={{ position: 'relative', width: 80, height: 80, margin: '0 auto 32px' }}>
+      {/* outer dashed ring */}
+      <svg
+        style={{ position: 'absolute', inset: -20, width: 'calc(100% + 40px)', height: 'calc(100% + 40px)', animation: 'spin-slow 30s linear infinite' }}
+        viewBox="0 0 160 160"
+      >
+        <circle cx="80" cy="80" r="74" fill="none" stroke={T.accentBorder} strokeWidth="1" strokeDasharray="4 12" />
       </svg>
       {/* inner ring */}
-      <svg className="absolute -inset-[10px] w-[calc(100%+20px)] h-[calc(100%+20px)]"
-        style={{ animation: 'spin-rev 14s linear infinite' }} viewBox="0 0 120 120">
-        <circle cx="60" cy="60" r="56" fill="none"
-          stroke="rgba(255,255,255,0.08)" strokeWidth="1" strokeDasharray="6 6" />
-      </svg>
-      {/* core */}
-      <div
-        className="w-[76px] h-[76px] rounded-full bg-[#0a0a0a] border border-[#2a2a2a] flex items-center justify-center"
-        style={{ animation: 'float 4.5s ease-in-out infinite' }}
+      <svg
+        style={{ position: 'absolute', inset: -8, width: 'calc(100% + 16px)', height: 'calc(100% + 16px)', animation: 'spin-rev 18s linear infinite' }}
+        viewBox="0 0 112 112"
       >
-        <span className="font-syne font-black text-[20px] text-white tracking-[0.12em] select-none">VI</span>
+        <circle cx="56" cy="56" r="52" fill="none" stroke={T.border} strokeWidth="1" strokeDasharray="2 8" />
+      </svg>
+      {/* core disc */}
+      <div style={{
+        width:          80,
+        height:         80,
+        borderRadius:   '50%',
+        background:     T.card,
+        border:         `1px solid ${T.borderMid}`,
+        boxShadow:      `0 4px 20px rgba(55,38,22,0.08), inset 0 1px 0 rgba(255,255,255,0.6)`,
+        display:        'flex',
+        alignItems:     'center',
+        justifyContent: 'center',
+        animation:      'float-slow 5.5s ease-in-out infinite',
+      }}>
+        <span style={{
+          fontFamily:    T.heading,
+          fontWeight:    700,
+          fontSize:      22,
+          letterSpacing: '0.14em',
+          color:         T.inkHigh,
+          userSelect:    'none',
+        }}>VI</span>
       </div>
     </div>
   )
 }
 
-/* ── Input with leading icon ─────────────────────────────────────────────── */
+/* ─── Input with leading icon ───────────────────────────── */
 function AuthInput({ icon: Icon, type = 'text', placeholder, value, onChange, right }) {
   return (
-    <div className="relative">
-      <Icon size={15} className="absolute left-[15px] top-1/2 -translate-y-1/2 text-[#333333]" />
+    <div style={{ position: 'relative' }}>
+      <Icon
+        size={14}
+        style={{
+          position:  'absolute',
+          left:      15,
+          top:       '50%',
+          transform: 'translateY(-50%)',
+          color:     T.inkLow,
+          pointerEvents: 'none',
+        }}
+      />
       <input
         type={type}
         placeholder={placeholder}
         value={value}
         onChange={onChange}
-        className="auth-input"
+        className="viram-input"
       />
       {right && (
         <button
           type="button"
           onClick={right.onClick}
-          className="absolute right-[14px] top-1/2 -translate-y-1/2 text-[#333333] hover:text-[#666666] transition-colors"
+          style={{
+            position:   'absolute',
+            right:      13,
+            top:        '50%',
+            transform:  'translateY(-50%)',
+            background: 'none',
+            border:     'none',
+            padding:    0,
+            cursor:     'pointer',
+            color:      T.inkLow,
+          }}
         >
           {right.icon}
         </button>
@@ -91,9 +256,22 @@ function AuthInput({ icon: Icon, type = 'text', placeholder, value, onChange, ri
   )
 }
 
-/* ── Google "G" SVG ─────────────────────────────────────────────────────── */
+/* ─── Inline divider ─────────────────────────────────────── */
+function OrDivider() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '4px 0' }}>
+      <div style={{ flex: 1, height: 1, background: T.border }} />
+      <span style={{ fontFamily: T.body, fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: T.inkLow }}>
+        or with email
+      </span>
+      <div style={{ flex: 1, height: 1, background: T.border }} />
+    </div>
+  )
+}
+
+/* ─── Google "G" SVG ─────────────────────────────────────── */
 const GoogleG = () => (
-  <svg width="16" height="16" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+  <svg width="15" height="15" viewBox="0 0 18 18">
     <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908C16.658 14.013 17.64 11.705 17.64 9.2z" fill="#4285F4"/>
     <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
     <path d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/>
@@ -101,36 +279,54 @@ const GoogleG = () => (
   </svg>
 )
 
-/* ── Main component ───────────────────────────────────────────────────────── */
+/* ─── Shared card shell ─────────────────────────────────── */
+function CardShell({ children, style = {} }) {
+  return (
+    <div
+      className="viram-card"
+      style={{
+        position:     'relative',
+        overflow:     'hidden',
+        background:   T.card,
+        border:       `1px solid ${T.border}`,
+        borderRadius: T.rLg,
+        boxShadow:    `0 8px 40px rgba(55,38,22,0.10), 0 1px 0 rgba(255,255,255,0.7) inset`,
+        width:        '100%',
+        maxWidth:     460,
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
+/* ─── Main component ─────────────────────────────────────── */
 export default function Start() {
   const navigate = useNavigate()
 
-  /* auth state */
-  const [tab,      setTab]      = useState('signup')   // 'signup' | 'login'
+  const [tab,      setTab]      = useState('signup')
   const [name,     setName]     = useState('')
   const [email,    setEmail]    = useState('')
   const [pass,     setPass]     = useState('')
   const [showPass, setShowPass] = useState(false)
   const [user,     setUser]     = useState(null)
-  const [status,   setStatus]   = useState('')          // '' | 'success' | 'error' | 'loading'
+  const [status,   setStatus]   = useState('')
   const [isNew,    setIsNew]    = useState(false)
   const [errMsg,   setErrMsg]   = useState('')
 
-  /* restore session */
   useEffect(() => {
     const stored = localStorage.getItem('viram_user')
     if (stored) setUser(JSON.parse(stored))
   }, [])
 
-  /* redirect after success */
   useEffect(() => {
     if (status === 'success') {
-      const t = setTimeout(() => navigate('/questions'), 1800)
+      const t = setTimeout(() => navigate('/onboarding'), 2000)
       return () => clearTimeout(t)
     }
   }, [status, navigate])
 
-  /* Google OAuth */
   const googleLogin = useGoogleLogin({
     onSuccess: async (token) => {
       try {
@@ -141,18 +337,14 @@ export default function Start() {
         const info = await res.json()
         const existed = !!localStorage.getItem('viram_user')
         localStorage.setItem('viram_user', JSON.stringify(info))
-        setUser(info)
-        setIsNew(!existed)
-        setStatus('success')
+        setUser(info); setIsNew(!existed); setStatus('success')
       } catch {
-        setStatus('error')
-        setErrMsg('Could not fetch profile. Try again.')
+        setStatus('error'); setErrMsg('Could not fetch profile. Try again.')
       }
     },
     onError: () => { setStatus('error'); setErrMsg('Google sign-in failed.') },
   })
 
-  /* Email submit (stub — wire to your backend) */
   function handleEmailSubmit(e) {
     e.preventDefault()
     setErrMsg('')
@@ -160,13 +352,10 @@ export default function Start() {
       setErrMsg('Please fill in all fields.')
       return
     }
-    // ── replace with real auth call ──
     const mock = { name: name || email.split('@')[0], email, picture: null }
     const existed = tab === 'login'
     localStorage.setItem('viram_user', JSON.stringify(mock))
-    setUser(mock)
-    setIsNew(!existed)
-    setStatus('success')
+    setUser(mock); setIsNew(!existed); setStatus('success')
   }
 
   function handleLogout() {
@@ -179,208 +368,441 @@ export default function Start() {
 
   return (
     <>
-      <style>{STYLES}</style>
+      <style>{GLOBAL}</style>
 
-      <div className="min-h-screen bg-black flex items-center justify-center px-4 py-10 relative overflow-hidden">
+      <div
+        className="viram-bg"
+        style={{
+          minHeight:      '100vh',
+          background:     T.bg,
+          display:        'flex',
+          flexDirection:  'column',
+          alignItems:     'center',
+          justifyContent: 'center',
+          padding:        '40px 20px',
+          position:       'relative',
+          overflow:       'hidden',
+        }}
+      >
+        <PageBackground />
 
-        {/* Background grid + glow */}
-        <div className="absolute inset-0 pointer-events-none">
-          <svg className="absolute inset-0 w-full h-full opacity-[0.025]" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern id="sg" width="50" height="50" patternUnits="userSpaceOnUse">
-                <path d="M 50 0 L 0 0 0 50" fill="none" stroke="white" strokeWidth="0.5"/>
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#sg)"/>
-          </svg>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full"
-            style={{ background:'radial-gradient(ellipse,rgba(255,255,255,0.035) 0%,transparent 65%)', filter:'blur(80px)' }}/>
+        {/* Nav wordmark */}
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, padding: '20px 6vw', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 10 }}>
+          <Link to="/" style={{ textDecoration: 'none' }}>
+            <span style={{ fontFamily: T.heading, fontWeight: 700, fontSize: 20, letterSpacing: '0.14em', color: T.inkHigh }}>
+              VI<span style={{ color: T.accent }}>RAM</span>
+            </span>
+          </Link>
+          <Link
+            to="/"
+            style={{
+              fontFamily:    T.body,
+              fontSize:      12,
+              fontWeight:    500,
+              color:         T.inkLow,
+              textDecoration: 'none',
+              display:       'flex',
+              alignItems:    'center',
+              gap:           5,
+              letterSpacing: '0.04em',
+            }}
+          >
+            <RiArrowLeftLine size={12} /> Back
+          </Link>
         </div>
 
         <AnimatePresence mode="wait">
 
-          {/* ── SUCCESS ─────────────────────────────────────────────────── */}
+          {/* ── SUCCESS ──────────────────────────────────────── */}
           {status === 'success' && (
-            <motion.div key="success"
-              initial={{ opacity: 0, scale: 0.94 }} animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }} transition={{ duration: 0.4 }}
-              className="relative flex flex-col items-center text-center w-full max-w-[400px] bg-[#0a0a0a] border border-[#1a1a1a] rounded-[28px] p-10 overflow-hidden"
+            <motion.div
+              key="success"
+              initial={{ opacity: 0, scale: 0.96, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.6, ease }}
+              style={{ width: '100%', maxWidth: 460 }}
             >
-              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"/>
-              <div className="w-16 h-16 rounded-full border border-[#2a2a2a] flex items-center justify-center mb-6">
-                <RiCheckLine size={28} className="text-white"/>
-              </div>
-              <div className="font-syne font-black text-white text-2xl mb-2">
-                {isNew ? 'Welcome aboard.' : 'Welcome back.'}
-              </div>
-              <p className="text-[14px] text-[#555555] font-dm-sans leading-[1.75] mb-6">
-                {isNew
-                  ? "Let's build your avatar. Setting up your profile…"
-                  : 'Good to have you back. Redirecting…'}
-              </p>
-              <div className="flex items-center gap-2 text-[12px] text-[#333333] font-dm-sans">
-                <span className="w-[6px] h-[6px] rounded-full bg-white inline-block"
-                  style={{ animation:'pulse-dot 1.2s ease-in-out infinite' }}/>
-                Taking you to /questions
-              </div>
+              <CardShell>
+                <div style={{ padding: '52px 44px', textAlign: 'center' }}>
+                  <div style={{
+                    width:          60,
+                    height:         60,
+                    borderRadius:   '50%',
+                    background:     T.accentBg,
+                    border:         `1px solid ${T.accentBorder}`,
+                    display:        'flex',
+                    alignItems:     'center',
+                    justifyContent: 'center',
+                    margin:         '0 auto 24px',
+                    color:          T.accent,
+                  }}>
+                    <RiCheckLine size={24} />
+                  </div>
+                  <div style={{ fontFamily: T.heading, fontWeight: 700, fontSize: 32, color: T.inkHigh, marginBottom: 10, letterSpacing: '-0.01em' }}>
+                    {isNew ? 'Welcome aboard.' : 'Welcome back.'}
+                  </div>
+                  <p style={{ fontFamily: T.body, fontWeight: 300, fontSize: 14, color: T.inkMid, lineHeight: 1.85, maxWidth: 260, margin: '0 auto 28px' }}>
+                    {isNew ? 'Setting up your profile and building your avatar…' : 'Your focus space is ready. Redirecting you now.'}
+                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontFamily: T.body, fontSize: 12, color: T.inkLow }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: T.accent, display: 'inline-block', animation: 'pulse-dot 1.4s ease-in-out infinite' }} />
+                    Taking you to onboarding
+                  </div>
+                </div>
+              </CardShell>
             </motion.div>
           )}
 
-          {/* ── ALREADY SIGNED IN ───────────────────────────────────────── */}
+          {/* ── ALREADY SIGNED IN ────────────────────────────── */}
           {status !== 'success' && user && (
-            <motion.div key="signed-in"
-              initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }}
-              exit={{ opacity:0 }} transition={{ duration:0.45 }}
-              className="relative w-full max-w-[400px] bg-[#0a0a0a] border border-[#1a1a1a] rounded-[28px] p-10 flex flex-col items-center text-center overflow-hidden"
+            <motion.div
+              key="signed-in"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.55, ease }}
+              style={{ width: '100%', maxWidth: 460 }}
             >
-              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"/>
-              <LogoOrb />
-              <div className="inline-flex items-center gap-[6px] text-[10px] tracking-[0.18em] text-[#cccccc] uppercase font-bold font-dm-sans px-[14px] py-[5px] rounded-full border border-[#2a2a2a] bg-white/[0.03] mb-6">
-                <span className="w-[6px] h-[6px] rounded-full bg-white"
-                  style={{ animation:'pulse-dot 2s ease-in-out infinite' }}/>
-                Signed in
-              </div>
-              {user.picture
-                ? <img src={user.picture} alt={user.name}
-                    className="w-14 h-14 rounded-full border border-[#2a2a2a] mb-3 grayscale"/>
-                : <div className="w-14 h-14 rounded-full border border-[#2a2a2a] bg-[#111] flex items-center justify-center mb-3 text-[#888888]">
-                    <RiUserLine size={22}/>
+              <CardShell>
+                <div style={{ padding: '48px 40px', textAlign: 'center' }}>
+                  <LogoMark />
+
+                  {/* status chip */}
+                  <div style={{
+                    display:       'inline-flex',
+                    alignItems:    'center',
+                    gap:           7,
+                    fontFamily:    T.body,
+                    fontSize:      10,
+                    fontWeight:    600,
+                    letterSpacing: '0.18em',
+                    textTransform: 'uppercase',
+                    color:         T.accent,
+                    background:    T.accentBg,
+                    border:        `1px solid ${T.accentBorder}`,
+                    borderRadius:  T.rPill,
+                    padding:       '5px 14px',
+                    marginBottom:  24,
+                  }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: T.accent, animation: 'pulse-dot 2s ease-in-out infinite' }} />
+                    Signed in
                   </div>
-              }
-              <div className="font-syne font-black text-white text-lg">{user.name}</div>
-              <div className="text-[12px] text-[#444444] font-dm-sans mt-[2px] mb-7">{user.email}</div>
-              <button onClick={() => navigate('/dashboard')}
-                className="w-full py-[13px] rounded-full bg-white text-black text-sm font-black font-dm-sans flex items-center justify-center gap-2 mb-3 transition-all duration-200 hover:bg-[#e8e8e8] hover:-translate-y-[2px] hover:shadow-[0_10px_32px_rgba(255,255,255,0.15)]"
-              >
-                <RiRocketLine size={14}/> Continue to Viram
-              </button>
-              <button onClick={handleLogout}
-                className="w-full py-[13px] rounded-full border border-[#1a1a1a] text-[#555555] text-sm font-semibold font-dm-sans flex items-center justify-center gap-2 transition-all duration-200 hover:border-[#333333] hover:text-[#888888]"
-              >
-                <RiLogoutBoxLine size={14}/> Sign out
-              </button>
+
+                  {/* Avatar */}
+                  <div style={{ marginBottom: 6 }}>
+                    {user.picture
+                      ? <img src={user.picture} alt={user.name} style={{ width: 56, height: 56, borderRadius: '50%', border: `2px solid ${T.border}`, margin: '0 auto', display: 'block', filter: 'sepia(0.15)' }} />
+                      : <div style={{ width: 56, height: 56, borderRadius: '50%', border: `1px solid ${T.borderMid}`, background: T.accentBg, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', color: T.accent }}>
+                          <RiUserLine size={22} />
+                        </div>
+                    }
+                  </div>
+                  <div style={{ fontFamily: T.heading, fontWeight: 600, fontSize: 22, color: T.inkHigh, marginBottom: 4 }}>{user.name}</div>
+                  <div style={{ fontFamily: T.body, fontWeight: 300, fontSize: 12, color: T.inkLow, marginBottom: 32, letterSpacing: '0.02em' }}>{user.email}</div>
+
+                  {/* CTAs */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <motion.button
+                      onClick={() => navigate('/dashboard')}
+                      whileHover={{ y: -2, boxShadow: `0 14px 36px rgba(184,112,78,0.28)` }}
+                      whileTap={{ y: 0 }}
+                      transition={{ duration: 0.28, ease }}
+                      style={{
+                        width:          '100%',
+                        padding:        '14px 24px',
+                        borderRadius:   T.rPill,
+                        background:     T.accent,
+                        border:         'none',
+                        color:          '#FFF8F2',
+                        fontFamily:     T.body,
+                        fontWeight:     600,
+                        fontSize:       13,
+                        letterSpacing:  '0.08em',
+                        textTransform:  'uppercase',
+                        display:        'flex',
+                        alignItems:     'center',
+                        justifyContent: 'center',
+                        gap:            8,
+                        cursor:         'pointer',
+                        boxShadow:      `0 4px 18px rgba(184,112,78,0.22)`,
+                      }}
+                    >
+                      <RiRocketLine size={14} /> Continue to Viram
+                    </motion.button>
+                    <button
+                      onClick={handleLogout}
+                      style={{
+                        width:          '100%',
+                        padding:        '13px 24px',
+                        borderRadius:   T.rPill,
+                        background:     'transparent',
+                        border:         `1px solid ${T.border}`,
+                        color:          T.inkLow,
+                        fontFamily:     T.body,
+                        fontWeight:     500,
+                        fontSize:       13,
+                        letterSpacing:  '0.04em',
+                        display:        'flex',
+                        alignItems:     'center',
+                        justifyContent: 'center',
+                        gap:            7,
+                        cursor:         'pointer',
+                        transition:     'border-color 0.2s, color 0.2s',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = T.accentBorder; e.currentTarget.style.color = T.accent }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = T.border; e.currentTarget.style.color = T.inkLow }}
+                    >
+                      <RiLogoutBoxLine size={13} /> Sign out
+                    </button>
+                  </div>
+                </div>
+              </CardShell>
             </motion.div>
           )}
 
-          {/* ── AUTH FORM ───────────────────────────────────────────────── */}
+          {/* ── AUTH FORM ─────────────────────────────────────── */}
           {status !== 'success' && !user && (
-            <motion.div key="auth"
-              initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }}
-              exit={{ opacity:0 }} transition={{ duration:0.5, ease:[0.22,1,0.36,1] }}
-              className="relative w-full max-w-[440px] bg-[#0a0a0a] border border-[#1a1a1a] rounded-[28px] overflow-hidden"
+            <motion.div
+              key="auth"
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.72, ease }}
+              style={{ width: '100%', maxWidth: 460 }}
             >
-              {/* shimmer */}
-              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"/>
+              <CardShell>
+                <div style={{ padding: 'clamp(32px, 5vw, 48px) clamp(24px, 5vw, 44px)' }}>
+                  <LogoMark />
 
-              <div className="p-8 md:p-10">
-                <LogoOrb />
-
-                {/* headline */}
-                <h1 className="font-syne font-black text-white text-center leading-[1.0] tracking-[-0.04em] mb-2"
-                  style={{ fontSize:'clamp(26px,5vw,34px)' }}>
-                  {tab === 'signup' ? 'Forge your identity.' : 'Welcome back.'}
-                </h1>
-                <p className="text-[13px] text-[#555555] font-dm-sans text-center leading-[1.7] mb-7 max-w-[280px] mx-auto">
-                  {tab === 'signup'
-                    ? 'Build an avatar that reflects your real habits. No excuses.'
-                    : 'Your avatar has been waiting. Log back into your journey.'}
-                </p>
-
-                {/* tab switcher */}
-                <div className="flex p-1 mb-7 rounded-xl bg-white/[0.03] border border-[#1a1a1a]">
-                  {[['signup','Sign Up'],['login','Log In']].map(([t, lbl]) => (
-                    <button key={t} onClick={() => { setTab(t); setErrMsg('') }}
-                      className={`flex-1 py-[10px] rounded-[10px] text-sm font-bold font-dm-sans transition-all duration-200 ${
-                        tab === t
-                          ? 'bg-white text-black shadow-[0_2px_12px_rgba(0,0,0,0.4)]'
-                          : 'text-[#444444] hover:text-[#888888]'
-                      }`}
-                    >{lbl}</button>
-                  ))}
-                </div>
-
-                {/* Google */}
-                <button
-                  onClick={() => googleLogin()}
-                  disabled={isLoading}
-                  className="w-full py-[13px] rounded-full bg-white/[0.04] border border-[#2a2a2a] text-white text-sm font-semibold font-dm-sans flex items-center justify-center gap-3 mb-5 transition-all duration-200 hover:border-[#444444] hover:bg-white/[0.07] hover:-translate-y-[1px] disabled:opacity-40"
-                >
-                  <GoogleG />
-                  {isLoading ? 'Connecting…' : `${tab === 'signup' ? 'Sign up' : 'Log in'} with Google`}
-                </button>
-
-                {/* divider */}
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="flex-1 h-px bg-[#161616]"/>
-                  <span className="text-[10px] text-[#2a2a2a] font-dm-sans uppercase tracking-[0.14em]">or with email</span>
-                  <div className="flex-1 h-px bg-[#161616]"/>
-                </div>
-
-                {/* email form */}
-                <form onSubmit={handleEmailSubmit} className="flex flex-col gap-[10px]">
-                  <AnimatePresence>
-                    {tab === 'signup' && (
-                      <motion.div
-                        key="name-field"
-                        initial={{ opacity:0, height:0 }} animate={{ opacity:1, height:'auto' }}
-                        exit={{ opacity:0, height:0 }} transition={{ duration:0.22 }}
-                        className="overflow-hidden"
-                      >
-                        <AuthInput
-                          icon={RiUserSmileLine}
-                          placeholder="Display name"
-                          value={name}
-                          onChange={e => setName(e.target.value)}
-                        />
-                      </motion.div>
+                  {/* Headline */}
+                  <h1 style={{
+                    fontFamily:    T.heading,
+                    fontWeight:    700,
+                    fontSize:      'clamp(28px, 5vw, 38px)',
+                    lineHeight:    1.0,
+                    letterSpacing: '-0.02em',
+                    color:         T.inkHigh,
+                    textAlign:     'center',
+                    marginBottom:  10,
+                  }}>
+                    {tab === 'signup' ? (
+                      <>Forge your <em style={{ fontStyle: 'italic', color: T.accent }}>identity.</em></>
+                    ) : (
+                      <>Welcome <em style={{ fontStyle: 'italic', color: T.accent }}>back.</em></>
                     )}
-                  </AnimatePresence>
+                  </h1>
+                  <p style={{
+                    fontFamily:   T.body,
+                    fontWeight:   300,
+                    fontSize:     14,
+                    color:        T.inkMid,
+                    textAlign:    'center',
+                    lineHeight:   1.85,
+                    maxWidth:     300,
+                    margin:       '0 auto 28px',
+                    letterSpacing: '0.01em',
+                  }}>
+                    {tab === 'signup'
+                      ? 'Build an avatar that reflects your real habits. No noise, no distraction.'
+                      : 'Your focus space has been waiting. Step back into your practice.'}
+                  </p>
 
-                  <AuthInput
-                    icon={RiMailLine}
-                    type="email"
-                    placeholder="Email address"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                  />
-
-                  <AuthInput
-                    icon={RiLockPasswordLine}
-                    type={showPass ? 'text' : 'password'}
-                    placeholder="Password"
-                    value={pass}
-                    onChange={e => setPass(e.target.value)}
-                    right={{
-                      onClick: () => setShowPass(p => !p),
-                      icon: showPass ? <RiEyeOffLine size={15}/> : <RiEyeLine size={15}/>,
-                    }}
-                  />
-
-                  {/* error */}
-                  {errMsg && (
-                    <p className="text-[12px] text-[#666666] font-dm-sans text-center">{errMsg}</p>
-                  )}
-
-                  <button type="submit"
-                    className="mt-1 w-full py-[14px] rounded-full bg-white text-black text-sm font-black font-dm-sans flex items-center justify-center gap-2 transition-all duration-200 hover:bg-[#e8e8e8] hover:-translate-y-[2px] hover:shadow-[0_10px_32px_rgba(255,255,255,0.15)]"
-                  >
-                    {tab === 'signup' ? 'Create Account' : 'Log In'}
-                    <RiArrowRightLine size={14}/>
-                  </button>
-                </form>
-
-                {/* trust + back */}
-                <div className="mt-6 flex flex-col items-center gap-3">
-                  <div className="flex items-center gap-[6px]">
-                    <RiShieldKeyholeLine size={11} className="text-[#2a2a2a]"/>
-                    <span className="text-[11px] text-[#2a2a2a] font-dm-sans">We never post or store anything without permission.</span>
+                  {/* Tab switcher */}
+                  <div style={{
+                    display:      'flex',
+                    padding:      4,
+                    marginBottom: 24,
+                    borderRadius: T.rMd,
+                    background:   T.cardDeep,
+                    border:       `1px solid ${T.border}`,
+                  }}>
+                    {[['signup', 'Sign up'], ['login', 'Log in']].map(([t, lbl]) => (
+                      <button
+                        key={t}
+                        onClick={() => { setTab(t); setErrMsg('') }}
+                        style={{
+                          flex:          1,
+                          padding:       '10px 16px',
+                          borderRadius:  14,
+                          fontFamily:    T.body,
+                          fontWeight:    tab === t ? 600 : 400,
+                          fontSize:      13,
+                          letterSpacing: '0.03em',
+                          border:        'none',
+                          cursor:        'pointer',
+                          transition:    'all 0.22s ease',
+                          background:    tab === t ? T.card : 'transparent',
+                          color:         tab === t ? T.inkHigh : T.inkLow,
+                          boxShadow:     tab === t ? `0 2px 10px rgba(55,38,22,0.08), inset 0 1px 0 rgba(255,255,255,0.5)` : 'none',
+                        }}
+                      >{lbl}</button>
+                    ))}
                   </div>
-                  <Link to="/"
-                    className="flex items-center gap-[5px] text-[12px] text-[#333333] font-dm-sans font-semibold no-underline hover:text-white transition-colors duration-200"
+
+                  {/* Google OAuth */}
+                  <motion.button
+                    onClick={() => googleLogin()}
+                    disabled={isLoading}
+                    whileHover={{ y: -1, boxShadow: `0 8px 24px rgba(55,38,22,0.10)` }}
+                    whileTap={{ y: 0 }}
+                    transition={{ duration: 0.25, ease }}
+                    style={{
+                      width:          '100%',
+                      padding:        '13px 20px',
+                      borderRadius:   T.rPill,
+                      background:     T.cardDeep,
+                      border:         `1px solid ${T.borderMid}`,
+                      color:          T.inkHigh,
+                      fontFamily:     T.body,
+                      fontWeight:     500,
+                      fontSize:       13,
+                      letterSpacing:  '0.03em',
+                      display:        'flex',
+                      alignItems:     'center',
+                      justifyContent: 'center',
+                      gap:            10,
+                      cursor:         isLoading ? 'not-allowed' : 'pointer',
+                      opacity:        isLoading ? 0.55 : 1,
+                      marginBottom:   20,
+                      boxShadow:      `0 2px 8px rgba(55,38,22,0.06)`,
+                    }}
                   >
-                    <RiArrowLeftLine size={12}/> Back to home
-                  </Link>
+                    <GoogleG />
+                    {isLoading ? 'Connecting…' : `${tab === 'signup' ? 'Sign up' : 'Log in'} with Google`}
+                  </motion.button>
+
+                  <OrDivider />
+
+                  {/* Email form */}
+                  <form onSubmit={handleEmailSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 20 }}>
+                    <AnimatePresence>
+                      {tab === 'signup' && (
+                        <motion.div
+                          key="name-field"
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.28, ease }}
+                          style={{ overflow: 'hidden' }}
+                        >
+                          <AuthInput
+                            icon={RiUserSmileLine}
+                            placeholder="Display name"
+                            value={name}
+                            onChange={e => setName(e.target.value)}
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    <AuthInput
+                      icon={RiMailLine}
+                      type="email"
+                      placeholder="Email address"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                    />
+
+                    <AuthInput
+                      icon={RiLockPasswordLine}
+                      type={showPass ? 'text' : 'password'}
+                      placeholder="Password"
+                      value={pass}
+                      onChange={e => setPass(e.target.value)}
+                      right={{
+                        onClick: () => setShowPass(p => !p),
+                        icon: showPass
+                          ? <RiEyeOffLine size={14} color={T.inkLow} />
+                          : <RiEyeLine    size={14} color={T.inkLow} />,
+                      }}
+                    />
+
+                    {/* Error message */}
+                    <AnimatePresence>
+                      {errMsg && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0 }}
+                          style={{ fontFamily: T.body, fontSize: 12, color: T.accent, textAlign: 'center', margin: 0 }}
+                        >
+                          {errMsg}
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
+
+                    {/* Submit */}
+                    <motion.button
+                      type="submit"
+                      whileHover={{ y: -2, boxShadow: `0 14px 36px rgba(184,112,78,0.28)` }}
+                      whileTap={{ y: 0 }}
+                      transition={{ duration: 0.28, ease }}
+                      style={{
+                        marginTop:      6,
+                        width:          '100%',
+                        padding:        '14px 24px',
+                        borderRadius:   T.rPill,
+                        background:     T.accent,
+                        border:         'none',
+                        color:          '#FFF8F2',
+                        fontFamily:     T.body,
+                        fontWeight:     600,
+                        fontSize:       13,
+                        letterSpacing:  '0.1em',
+                        textTransform:  'uppercase',
+                        display:        'flex',
+                        alignItems:     'center',
+                        justifyContent: 'center',
+                        gap:            8,
+                        cursor:         'pointer',
+                        boxShadow:      `0 4px 18px rgba(184,112,78,0.22)`,
+                      }}
+                    >
+                      {tab === 'signup' ? 'Create account' : 'Log in'}
+                      <RiArrowRightLine size={14} />
+                    </motion.button>
+                  </form>
+
+                  {/* Trust footer */}
+                  <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <RiShieldKeyholeLine size={11} color={T.inkLow} />
+                      <span style={{ fontFamily: T.body, fontWeight: 300, fontSize: 11, color: T.inkLow, letterSpacing: '0.02em' }}>
+                        We never post or store anything without permission.
+                      </span>
+                    </div>
+                    {/* Separator line */}
+                    <div style={{ width: '100%', height: 1, background: T.border, margin: '4px 0' }} />
+                    {/* Philosophy note — new addition */}
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, background: T.accentBg, border: `1px solid ${T.accentBorder}`, borderRadius: T.rSm, padding: '10px 14px' }}>
+                      <RiLeafLine size={13} color={T.accent} style={{ flexShrink: 0, marginTop: 1 }} />
+                      <p style={{ fontFamily: T.body, fontWeight: 300, fontSize: 11, color: T.inkMid, lineHeight: 1.7, margin: 0 }}>
+                        Viram is built to be calm, not compulsive. No streaks that shame you. No dark patterns.
+                      </p>
+                    </div>
+                  </div>
                 </div>
+              </CardShell>
+
+              {/* Below-card back link */}
+              <div style={{ textAlign: 'center', marginTop: 20 }}>
+                <Link
+                  to="/"
+                  style={{
+                    fontFamily:    T.body,
+                    fontWeight:    400,
+                    fontSize:      12,
+                    color:         T.inkLow,
+                    textDecoration: 'none',
+                    display:       'inline-flex',
+                    alignItems:    'center',
+                    gap:           5,
+                    letterSpacing: '0.04em',
+                  }}
+                >
+                  <RiArrowLeftLine size={11} /> Back to home
+                </Link>
               </div>
             </motion.div>
           )}

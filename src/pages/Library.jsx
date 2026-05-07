@@ -1,6 +1,128 @@
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
+import {
+  RiArrowLeftLine,
+  RiBookOpenLine,
+  RiSparkling2Line,
+  RiSeedlingLine,
+  RiBrainLine,
+  RiMindMap,
+  RiShieldLine,
+  RiScissorsLine,
+  RiLightbulbLine,
+  RiTimerLine,
+  RiSparklingLine,
+  RiForbidLine,
+  RiSmartphoneLine,
+  RiRocketLine,
+} from 'react-icons/ri'
 
+/* ─── Font loader ─────────────────────────────────────────────────────────── */
+const FontLoader = () => (
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,600&family=Jost:wght@300;400;500;600&display=swap"
+  />
+)
+
+/* ─── Animation helper ────────────────────────────────────────────────────── */
+const fadeUp = (delay = 0) => ({
+  initial: { opacity: 0, y: 20 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: '-60px' },
+  transition: { duration: 0.72, delay, ease: [0.22, 1, 0.36, 1] },
+})
+
+/* ─── Grain overlay ───────────────────────────────────────────────────────── */
+const Grain = () => (
+  <div
+    aria-hidden="true"
+    className="absolute inset-0 pointer-events-none z-0 rounded-[inherit]"
+    style={{
+      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23g)' opacity='0.03'/%3E%3C/svg%3E")`,
+    }}
+  />
+)
+
+/* ─── Pulse dot ───────────────────────────────────────────────────────────── */
+const PulseDot = ({ color = '#B8704E' }) => (
+  <motion.span
+    animate={{ opacity: [1, 0.35, 1], scale: [1, 0.55, 1] }}
+    transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
+    className="inline-block w-[5px] h-[5px] rounded-full flex-shrink-0"
+    style={{ background: color }}
+  />
+)
+
+/* ─── Tag badge ───────────────────────────────────────────────────────────── */
+function Tag({ children }) {
+  return (
+    <div
+      className="inline-flex items-center gap-[6px] px-[14px] py-[5px] rounded-full mb-[22px]"
+      style={{
+        fontFamily: "'Jost', sans-serif",
+        fontSize: 10,
+        fontWeight: 600,
+        letterSpacing: '0.18em',
+        textTransform: 'uppercase',
+        color: '#5A4E42',
+        background: '#EDE8DF',
+        border: '1px solid rgba(55,38,22,0.12)',
+        boxShadow: '0 1px 3px rgba(42,34,24,0.06)',
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
+/* ─── Author pill ─────────────────────────────────────────────────────────── */
+function AuthorPill({ Icon, name }) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <div
+      className="inline-flex items-center gap-[7px] px-[14px] py-[6px] rounded-full cursor-default transition-all duration-200"
+      style={{
+        fontFamily: "'Jost', sans-serif",
+        fontSize: 12,
+        fontWeight: 400,
+        color: hovered ? '#5A4E42' : '#8A7E74',
+        background: '#F9F5EC',
+        border: `1px solid ${hovered ? 'rgba(55,38,22,0.18)' : 'rgba(55,38,22,0.10)'}`,
+        boxShadow: hovered
+          ? '0 2px 8px rgba(42,34,24,0.07), 0 1px 3px rgba(42,34,24,0.04)'
+          : '0 1px 3px rgba(42,34,24,0.05)',
+        transform: hovered ? 'translateY(-1px)' : 'translateY(0)',
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <Icon size={12} style={{ color: hovered ? '#B8704E' : '#C4B8A8' }} />
+      {name}
+    </div>
+  )
+}
+
+/* ─── Icon map ────────────────────────────────────────────────────────────── */
+const ICON_MAP = {
+  'ri-seedling-line':    RiSeedlingLine,
+  'ri-brain-line':       RiBrainLine,
+  'ri-mind-map':         RiMindMap,
+  'ri-shield-line':      RiShieldLine,
+  'ri-scissors-cut-line':RiScissorsLine,
+  'ri-lightbulb-line':   RiLightbulbLine,
+  'ri-timer-line':       RiTimerLine,
+  'ri-sparkling-line':   RiSparklingLine,
+  'ri-forbid-line':      RiForbidLine,
+  'ri-smartphone-line':  RiSmartphoneLine,
+}
+function DynIcon({ name, size = 14, color = '#8A7E74' }) {
+  const C = ICON_MAP[name]
+  return C ? <C size={size} style={{ color }} /> : null
+}
+
+/* ─── Data ────────────────────────────────────────────────────────────────── */
 const CHAPTERS = [
   {
     num: '01', label: 'Atomic Habits', icon: 'ri-seedling-line', author: 'James Clear',
@@ -25,7 +147,7 @@ const CHAPTERS = [
       `The Pomodoro system inside Viram is not arbitrary. It is designed around your brain's natural ultradian rhythm — the 90-minute cycles of high and low neural activity that govern how your attention actually functions. The 25-minute sessions are set at the point where concentration reaches its first peak. The breaks prevent the kind of mental fatigue that makes subsequent sessions increasingly shallow. This is not a productivity hack. It is working with your biology instead of against it.`,
     ],
     pullquote: { text: 'In an age of distraction, nothing can feel more luxurious than paying attention.', source: 'Pico Iyer · The Art of Stillness' },
-    insight: { icon: 'ri-timer-line', label: 'Science', title: 'The Depth Equation', body: 'Newport\'s formula is blunt: High-Quality Work Produced = Time Spent × Intensity of Focus. Doubling your time is hard. Doubling your intensity through distraction-free sessions is achievable tonight. The Pomodoro sessions in Viram are structured to maximise intensity — not just duration.' },
+    insight: { icon: 'ri-timer-line', label: 'Science', title: 'The Depth Equation', body: "Newport's formula is blunt: High-Quality Work Produced = Time Spent × Intensity of Focus. Doubling your time is hard. Doubling your intensity through distraction-free sessions is achievable tonight. The Pomodoro sessions in Viram are structured to maximise intensity — not just duration." },
   },
   {
     num: '03', label: 'The Power of Your Subconscious Mind', icon: 'ri-mind-map', author: 'Joseph Murphy',
@@ -61,100 +183,294 @@ const CHAPTERS = [
       `The 90% rule McKeown describes is one of the most useful decision-making tools available. When evaluating a commitment — a new project, a new habit, a new platform — rate it honestly from zero to one hundred. If it is not a 90 or above, it is a no. Not a maybe. Not a not-right-now. A no. This single filter, applied consistently, eliminates the mediocre middle that swallows most people's time and energy before they even realise it has happened.`,
     ],
     pullquote: { text: 'The way of the Essentialist is the relentless pursuit of less but better.', source: 'Greg McKeown · Essentialism' },
-    insight: { icon: 'ri-scissors-cut-line', label: 'Practice', title: 'Apply the 90% Rule Now', body: 'Open your phone\'s screen time report. Look at every app you used this week. Ask honestly: does this score a 90 or above in terms of the value it adds to your life? Whatever doesn\'t make the cut, you already know what to do.' },
+    insight: { icon: 'ri-scissors-cut-line', label: 'Practice', title: 'Apply the 90% Rule Now', body: "Open your phone's screen time report. Look at every app you used this week. Ask honestly: does this score a 90 or above in terms of the value it adds to your life? Whatever doesn't make the cut, you already know what to do." },
   },
 ]
 
 const AUTHORS = [
-  { icon: 'ri-seedling-line',    name: 'James Clear'    },
-  { icon: 'ri-brain-line',      name: 'Cal Newport'    },
-  { icon: 'ri-mind-map',        name: 'Joseph Murphy'  },
-  { icon: 'ri-smartphone-line', name: 'Tristan Harris' },
-  { icon: 'ri-scissors-cut-line', name: 'Greg McKeown' },
+  { name: 'James Clear',    Icon: RiSeedlingLine   },
+  { name: 'Cal Newport',    Icon: RiBrainLine      },
+  { name: 'Joseph Murphy',  Icon: RiMindMap        },
+  { name: 'Tristan Harris', Icon: RiSmartphoneLine },
+  { name: 'Greg McKeown',   Icon: RiScissorsLine   },
 ]
 
-// Global CSS — only for things Tailwind can't handle inline
-const STYLES = `
-  @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.3;transform:scale(.7)} }
-  .lib-prose {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 15px;
-    color: #888888;
-    line-height: 1.9;
-    letter-spacing: 0.005em;
-  }
-  .lib-prose strong { color: #cccccc; font-weight: 600; }
-`
+/* ─── Hover-lift card wrapper ─────────────────────────────────────────────── */
+function LiftCard({ children, className = '', style = {} }) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <div
+      className={`relative transition-all duration-[280ms] ${className}`}
+      style={{
+        transform: hovered ? 'translateY(-3px)' : 'translateY(0)',
+        boxShadow: hovered
+          ? '0 20px 60px rgba(42,34,24,0.10), 0 6px 20px rgba(42,34,24,0.07)'
+          : '0 1px 3px rgba(42,34,24,0.06)',
+        ...style,
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {children}
+    </div>
+  )
+}
 
+/* ─── Chapter divider ─────────────────────────────────────────────────────── */
+function ChapterDivider() {
+  return (
+    <motion.div {...fadeUp(0)} className="flex items-center gap-4 my-[72px]">
+      <div className="flex-1 h-px bg-[rgba(55,38,22,0.07)]" />
+      <div
+        className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+        style={{
+          background: '#F9F5EC',
+          border: '1px solid rgba(55,38,22,0.12)',
+          boxShadow: '0 1px 3px rgba(42,34,24,0.06)',
+        }}
+      >
+        <RiSparkling2Line size={14} style={{ color: '#C4B8A8' }} />
+      </div>
+      <div className="flex-1 h-px bg-[rgba(55,38,22,0.07)]" />
+    </motion.div>
+  )
+}
+
+/* ─── Pull quote card ─────────────────────────────────────────────────────── */
+function PullQuote({ text, source }) {
+  return (
+    <motion.div
+      {...fadeUp(0.04)}
+      className="relative my-11 px-8 py-7 rounded-[18px] overflow-hidden"
+      style={{
+        background: '#F9F5EC',
+        border: '1px solid rgba(55,38,22,0.10)',
+        borderLeft: '3px solid #B8704E',
+        boxShadow: '0 6px 24px rgba(42,34,24,0.07), 0 2px 8px rgba(42,34,24,0.04)',
+      }}
+    >
+      <Grain />
+      {/* Decorative quotation mark */}
+      <div
+        className="absolute top-2 left-5 text-[72px] leading-none pointer-events-none select-none z-0"
+        style={{
+          fontFamily: "'Cormorant Garamond', serif",
+          color: 'rgba(184,112,78,0.10)',
+        }}
+      >
+        "
+      </div>
+      <p
+        className="relative z-[1] mb-[14px] italic leading-[1.7]"
+        style={{
+          fontFamily: "'Cormorant Garamond', serif",
+          fontSize: 19,
+          color: '#2A2218',
+        }}
+      >
+        {text}
+      </p>
+      <div
+        style={{
+          fontFamily: "'Jost', sans-serif",
+          fontSize: 10,
+          fontWeight: 600,
+          letterSpacing: '0.16em',
+          textTransform: 'uppercase',
+          color: '#C4B8A8',
+        }}
+      >
+        {source}
+      </div>
+    </motion.div>
+  )
+}
+
+/* ─── Insight card ────────────────────────────────────────────────────────── */
+function InsightCard({ icon, label, title, body }) {
+  return (
+    <LiftCard
+      className="my-7 rounded-[18px] overflow-hidden"
+      style={{
+        background: '#EDE8DF',
+        border: '1px solid rgba(55,38,22,0.07)',
+      }}
+    >
+      <Grain />
+      {/* Terracotta accent bar */}
+      <div
+        className="absolute top-0 left-0 right-0 h-[2px]"
+        style={{
+          background: 'linear-gradient(90deg, #B8704E, rgba(184,112,78,0.3), transparent)',
+          opacity: 0.8,
+        }}
+      />
+      <div className="relative z-[1] p-6">
+        {/* Label row */}
+        <div
+          className="flex items-center gap-[6px] mb-[10px]"
+          style={{
+            fontFamily: "'Jost', sans-serif",
+            fontSize: 9,
+            fontWeight: 600,
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            color: '#B8704E',
+          }}
+        >
+          <DynIcon name={icon} size={11} color="#B8704E" />
+          {label}
+        </div>
+        {/* Title */}
+        <div
+          className="mb-[8px]"
+          style={{
+            fontFamily: "'Cormorant Garamond', serif",
+            fontSize: 18,
+            fontWeight: 600,
+            color: '#2A2218',
+            letterSpacing: '-0.01em',
+          }}
+        >
+          {title}
+        </div>
+        {/* Body */}
+        <div
+          style={{
+            fontFamily: "'Jost', sans-serif",
+            fontSize: 13,
+            fontWeight: 400,
+            color: '#5A4E42',
+            lineHeight: 1.8,
+            letterSpacing: '0.01em',
+          }}
+        >
+          {body}
+        </div>
+      </div>
+    </LiftCard>
+  )
+}
+
+/* ─── Main export ─────────────────────────────────────────────────────────── */
 export default function Library() {
-  const storedUser = localStorage.getItem('viram_user');
-  const isLoggedIn = !!storedUser;
+  const isLoggedIn = typeof localStorage !== 'undefined' && !!localStorage.getItem('viram_user')
+
   return (
     <>
-      <style>{STYLES}</style>
+      <FontLoader />
 
-      <div className="fixed inset-0 bg-black z-10 flex flex-col overflow-hidden">
+      <div
+        className="min-h-svh overflow-x-hidden"
+        style={{ background: '#F4EEE3', color: '#2A2218' }}
+      >
 
-        {/* ── Top bar ────────────────────────────────────────────────────── */}
-        <div className="flex items-center justify-between px-5 py-[14px] border-b border-[#1a1a1a] bg-black/95 backdrop-blur-xl sticky top-0 z-50 flex-shrink-0">
-          <Link
-            to={isLoggedIn ? "/dashboard" : "/"}
-            className="flex items-center gap-2 text-[13px] font-semibold text-[#888888] hover:text-white transition-colors duration-200 font-dm-sans no-underline"
+        {/* ── Sticky top bar ────────────────────────────────────────────── */}
+        <div
+          className="sticky top-0 z-50 flex items-center justify-between h-[56px] px-[5vw] relative overflow-hidden"
+          style={{
+            background: 'rgba(244,238,227,0.90)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            borderBottom: '1px solid rgba(55,38,22,0.07)',
+            boxShadow: '0 1px 3px rgba(42,34,24,0.06)',
+          }}
+        >
+          <Grain />
+
+          {/* Back link */}
+          <BackLink to={isLoggedIn ? '/dashboard' : '/'} />
+
+          {/* Centre wordmark */}
+          <div
+            className="flex items-center gap-[7px] relative z-[1]"
+            style={{ fontFamily: "'Cormorant Garamond', serif" }}
           >
-            <i className="ri-arrow-left-line" /> Back
-          </Link>
-
-          <div className="font-syne text-[15px] font-black flex items-center gap-2 text-white tracking-wide">
-            <i className="ri-book-open-line text-[#888888]" /> Mind Library
+            <RiBookOpenLine size={14} style={{ color: '#A89B8C' }} />
+            <span
+              style={{
+                fontSize: 14,
+                fontWeight: 600,
+                color: '#2A2218',
+                letterSpacing: '0.06em',
+              }}
+            >
+              Mind Library
+            </span>
           </div>
 
-          {/* spacer to keep title centred */}
-          <div className="w-[60px]" />
+          {/* Chapter count */}
+          <div
+            className="flex items-center gap-[6px] relative z-[1]"
+            style={{
+              fontFamily: "'Jost', sans-serif",
+              fontSize: 11,
+              fontWeight: 500,
+              letterSpacing: '0.10em',
+              color: '#A89B8C',
+            }}
+          >
+            <PulseDot />
+            {CHAPTERS.length} Chapters
+          </div>
         </div>
 
-        {/* ── Scrollable body ─────────────────────────────────────────────── */}
-        <div className="flex-1 overflow-y-auto">
+        {/* ── Hero ──────────────────────────────────────────────────────── */}
+        <section
+          className="relative overflow-hidden text-center px-[5vw] pt-[88px] pb-[96px]"
+          style={{ borderBottom: '1px solid rgba(55,38,22,0.07)' }}
+        >
+          {/* Dot grid */}
+          <div
+            className="absolute inset-0 pointer-events-none opacity-[0.25]"
+            style={{
+              backgroundImage: 'radial-gradient(circle, rgba(42,34,24,0.10) 1px, transparent 1px)',
+              backgroundSize: '28px 28px',
+            }}
+          />
+          {/* Warm ambient glow */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: 'radial-gradient(ellipse 70% 60% at 50% 40%, rgba(184,112,78,0.06) 0%, transparent 70%)',
+            }}
+          />
 
-          {/* ── Hero ─────────────────────────────────────────────────────── */}
-          <div className="text-center px-6 pt-20 pb-16 relative overflow-hidden border-b border-[#1a1a1a]">
-            {/* Radial glow */}
-            <div className="absolute inset-0 pointer-events-none">
-              <div
-                className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[320px] rounded-full"
-                style={{ background: 'radial-gradient(ellipse, rgba(255,255,255,0.03) 0%, transparent 65%)', filter: 'blur(60px)' }}
-              />
-            </div>
-
-            {/* Live badge */}
+          <div className="relative z-[2]">
             <motion.div
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
-              className="inline-flex items-center gap-[7px] text-[10px] tracking-[0.2em] text-[#cccccc] uppercase font-bold font-dm-sans px-[14px] py-[5px] rounded-full border border-[#2a2a2a] bg-white/[0.03] mb-6"
+              className="flex justify-center"
             >
-              <span
-                className="w-[6px] h-[6px] rounded-full bg-white inline-block"
-                style={{ animation: 'pulse-dot 2s ease-in-out infinite' }}
-              />
-              Viram Mind Library
+              <Tag><RiBookOpenLine size={11} /> Viram Mind Library</Tag>
             </motion.div>
 
-            {/* Title */}
             <motion.h1
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0, transition: { delay: 0.1 } }}
-              className="font-syne font-black leading-[1.02] tracking-[-0.04em] text-white mb-5"
-              style={{ fontSize: 'clamp(32px, 6vw, 62px)' }}
+              initial={{ opacity: 0, y: 22 }}
+              animate={{ opacity: 1, y: 0, transition: { delay: 0.08 } }}
+              className="mb-5 leading-[0.96]"
+              style={{
+                fontFamily: "'Cormorant Garamond', serif",
+                fontWeight: 600,
+                letterSpacing: '-0.02em',
+                color: '#2A2218',
+                fontSize: 'clamp(42px, 6vw, 76px)',
+              }}
             >
               The Knowledge That<br />
-              <span className="text-[#555555]">Changes Everything</span>
+              <span style={{ color: '#A89B8C', fontStyle: 'italic' }}>Changes Everything</span>
             </motion.h1>
 
-            {/* Subtitle */}
             <motion.p
               initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0, transition: { delay: 0.18 } }}
-              className="text-[17px] text-[#555555] max-w-[580px] mx-auto leading-[1.75] mb-8 font-dm-sans"
-              style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontStyle: 'italic' }}
+              animate={{ opacity: 1, y: 0, transition: { delay: 0.16 } }}
+              className="max-w-[560px] mx-auto mb-10 italic"
+              style={{
+                fontFamily: "'Cormorant Garamond', serif",
+                fontSize: 'clamp(15px, 1.3vw, 18px)',
+                color: '#5A4E42',
+                lineHeight: 1.8,
+              }}
             >
               This is not a collection of quotes. This is a distillation of the most important
               ideas on attention, identity, and human potential — structured to actually change
@@ -164,120 +480,260 @@ export default function Library() {
             {/* Author pills */}
             <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: 1, transition: { delay: 0.28 } }}
+              animate={{ opacity: 1, transition: { delay: 0.26 } }}
               className="flex flex-wrap gap-[10px] justify-center"
             >
-              {AUTHORS.map(a => (
-                <div
-                  key={a.name}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.03] border border-[#2a2a2a] text-sm text-[#888888] font-dm-sans transition-all duration-200 hover:border-[#555555] hover:text-[#cccccc]"
-                >
-                  <i className={`${a.icon} text-[#555555]`} />{a.name}
-                </div>
+              {AUTHORS.map(({ name, Icon }) => (
+                <AuthorPill key={name} Icon={Icon} name={name} />
               ))}
             </motion.div>
           </div>
+        </section>
 
-          {/* ── Chapters ─────────────────────────────────────────────────── */}
-          <div className="max-w-[720px] mx-auto px-6 py-16 pb-28">
-            {CHAPTERS.map((ch, idx) => (
-              <div key={ch.num}>
-                <motion.article
-                  initial={{ opacity: 0, y: 24 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: '-80px' }}
-                  transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-                  className="mb-4"
-                >
-                  {/* Chapter badge */}
-                  <div className="flex items-center gap-3 mb-5">
-                    <div className="inline-flex items-center gap-2 px-3 py-[5px] rounded-full bg-white/[0.03] border border-[#2a2a2a] text-[10px] tracking-[0.16em] text-[#888888] uppercase font-bold font-dm-sans">
-                      <i className={ch.icon} /> Chapter {ch.num} — {ch.label}
-                    </div>
+        {/* ── Chapter content ───────────────────────────────────────────── */}
+        <div className="max-w-[740px] mx-auto px-[5vw] pt-[80px] pb-[120px]">
+          {CHAPTERS.map((ch, idx) => (
+            <div key={ch.num}>
+              <motion.article {...fadeUp(0)}>
+
+                {/* Chapter badge row */}
+                <div className="flex items-center gap-[10px] mb-5">
+                  <div
+                    className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{
+                      background: '#EDE8DF',
+                      border: '1px solid rgba(55,38,22,0.12)',
+                      boxShadow: '0 1px 3px rgba(42,34,24,0.06)',
+                    }}
+                  >
+                    <DynIcon name={ch.icon} size={15} color="#A89B8C" />
                   </div>
-
-                  {/* Chapter heading */}
-                  <h2
-                    className="font-syne font-black tracking-[-0.03em] text-white mb-2 leading-[1.15]"
-                    style={{ fontSize: 'clamp(22px, 3.5vw, 34px)' }}
-                  >
-                    {ch.title}
-                  </h2>
-                  <p
-                    className="text-[#666666] text-[16px] mb-8 leading-[1.65]"
-                    style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontStyle: 'italic' }}
-                  >
-                    {ch.subtitle}
-                  </p>
-
-                  {/* Body paragraphs */}
-                  {ch.paras.map((p, i) => (
-                    <p key={i} className="lib-prose mb-5">{p}</p>
-                  ))}
-
-                  {/* Pull quote */}
-                  <div className="relative border-l-[2px] border-white pl-6 py-4 my-10 bg-white/[0.02] rounded-r-xl">
-                    {/* decorative opening quote */}
+                  <div>
                     <div
-                      className="absolute -top-3 left-4 text-[56px] text-white/10 leading-none select-none"
-                      style={{ fontFamily: 'Georgia, serif' }}
+                      className="mb-[2px]"
+                      style={{
+                        fontFamily: "'Jost', sans-serif",
+                        fontSize: 9,
+                        fontWeight: 600,
+                        letterSpacing: '0.20em',
+                        textTransform: 'uppercase',
+                        color: '#C4B8A8',
+                      }}
                     >
-                      "
+                      Chapter {ch.num}
                     </div>
-                    <p
-                      className="text-[19px] text-white leading-[1.65] mb-2"
-                      style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontStyle: 'italic' }}
+                    <div
+                      style={{
+                        fontFamily: "'Jost', sans-serif",
+                        fontSize: 11,
+                        fontWeight: 500,
+                        letterSpacing: '0.10em',
+                        textTransform: 'uppercase',
+                        color: '#8A7E74',
+                      }}
                     >
-                      {ch.pullquote.text}
-                    </p>
-                    <p className="text-[11px] text-[#555555] font-bold tracking-[0.12em] font-dm-sans uppercase">
-                      {ch.pullquote.source}
-                    </p>
-                  </div>
-
-                  {/* Insight card */}
-                  <div className="relative bg-[#0a0a0a] border border-[#2a2a2a] rounded-2xl p-5 my-6 overflow-hidden">
-                    {/* top accent line — BNW gradient */}
-                    <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-white/40 via-white/10 to-transparent" />
-
-                    <div className="flex items-center gap-2 text-[10px] tracking-[0.14em] text-[#888888] uppercase font-bold font-dm-sans mb-[10px]">
-                      <i className={ch.insight.icon} /> {ch.insight.label}
-                    </div>
-                    <div className="font-syne text-[14px] font-black text-white mb-2">
-                      {ch.insight.title}
-                    </div>
-                    <div className="text-[13px] text-[#666666] leading-[1.75] font-dm-sans">
-                      {ch.insight.body}
+                      {ch.label} — {ch.author}
                     </div>
                   </div>
-                </motion.article>
+                </div>
 
-                {/* Divider between chapters */}
-                {idx < CHAPTERS.length - 1 && (
-                  <div className="flex items-center gap-4 my-16">
-                    <div className="flex-1 h-px bg-[#1a1a1a]" />
-                    <div className="w-8 h-8 rounded-full bg-[#0a0a0a] border border-[#2a2a2a] flex items-center justify-center">
-                      <i className="ri-sparkling-line text-[#3a3a3a] text-xs" />
-                    </div>
-                    <div className="flex-1 h-px bg-[#1a1a1a]" />
-                  </div>
-                )}
-              </div>
-            ))}
+                {/* Chapter title */}
+                <h2
+                  className="mb-[10px] leading-[1.08]"
+                  style={{
+                    fontFamily: "'Cormorant Garamond', serif",
+                    fontWeight: 600,
+                    letterSpacing: '-0.02em',
+                    color: '#2A2218',
+                    fontSize: 'clamp(24px, 3.5vw, 38px)',
+                  }}
+                >
+                  {ch.title}
+                </h2>
 
-            {/* End note */}
-            <div className="text-center mt-20 pt-10 border-t border-[#1a1a1a]">
-              <p
-                className="text-[#555555] text-[16px] leading-[1.8] max-w-[420px] mx-auto"
-                style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontStyle: 'italic' }}
-              >
-                The knowledge exists. The question is always the same: what will you do
-                with it when you close this page?
-              </p>
+                {/* Subtitle */}
+                <p
+                  className="mb-9 italic leading-[1.65]"
+                  style={{
+                    fontFamily: "'Cormorant Garamond', serif",
+                    fontSize: 17,
+                    color: '#8A7E74',
+                  }}
+                >
+                  {ch.subtitle}
+                </p>
+
+                {/* Body paragraphs */}
+                {ch.paras.map((p, i) => (
+                  <p
+                    key={i}
+                    className="mb-5 leading-[1.9]"
+                    style={{
+                      fontFamily: "'Jost', sans-serif",
+                      fontSize: 15,
+                      fontWeight: 400,
+                      color: '#5A4E42',
+                      letterSpacing: '0.005em',
+                    }}
+                  >
+                    {p}
+                  </p>
+                ))}
+
+                <PullQuote text={ch.pullquote.text} source={ch.pullquote.source} />
+
+                <InsightCard
+                  icon={ch.insight.icon}
+                  label={ch.insight.label}
+                  title={ch.insight.title}
+                  body={ch.insight.body}
+                />
+              </motion.article>
+
+              {idx < CHAPTERS.length - 1 && <ChapterDivider />}
             </div>
+          ))}
+
+          {/* ── End note ────────────────────────────────────────────────── */}
+          <motion.div
+            {...fadeUp(0)}
+            className="text-center mt-20 pt-12"
+            style={{ borderTop: '1px solid rgba(55,38,22,0.07)' }}
+          >
+            {/* Glowing orb */}
+            <div
+              className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
+              style={{
+                background: 'rgba(184,112,78,0.10)',
+                border: '1px solid rgba(184,112,78,0.18)',
+                boxShadow: '0 2px 8px rgba(42,34,24,0.07)',
+              }}
+            >
+              <RiBookOpenLine size={26} style={{ color: '#B8704E' }} />
+            </div>
+
+            <p
+              className="max-w-[420px] mx-auto mb-7 italic leading-[1.85]"
+              style={{
+                fontFamily: "'Cormorant Garamond', serif",
+                fontSize: 18,
+                color: '#5A4E42',
+              }}
+            >
+              The knowledge exists. The question is always the same: what will you do
+              with it when you close this page?
+            </p>
+
+            <CTAButton to="/start">
+              <RiRocketLine size={14} /> Forge Your Avatar
+            </CTAButton>
+          </motion.div>
+        </div>
+
+        {/* ── Footer echo ───────────────────────────────────────────────── */}
+        <div
+          className="relative overflow-hidden flex items-center justify-between flex-wrap gap-3 px-[5vw] py-7"
+          style={{
+            borderTop: '1px solid rgba(55,38,22,0.07)',
+            background: '#EDE8DF',
+          }}
+        >
+          <Grain />
+
+          {/* Wordmark */}
+          <div className="relative z-[1]" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+            <span style={{ fontSize: 17, fontWeight: 600, letterSpacing: '0.18em', color: '#2A2218' }}>VI</span>
+            <span style={{ fontSize: 17, fontWeight: 400, letterSpacing: '0.18em', color: '#C4B8A8' }}>RAM</span>
+          </div>
+
+          <div
+            className="relative z-[1]"
+            style={{
+              fontFamily: "'Jost', sans-serif",
+              fontSize: 12,
+              fontWeight: 400,
+              color: '#A89B8C',
+              letterSpacing: '0.04em',
+            }}
+          >
+            Mind Library · {CHAPTERS.length} Chapters
+          </div>
+
+          <div className="relative z-[1] flex items-center gap-[6px]"
+            style={{
+              fontFamily: "'Jost', sans-serif",
+              fontSize: 11,
+              fontWeight: 400,
+              color: '#A89B8C',
+              letterSpacing: '0.06em',
+            }}
+          >
+            <PulseDot />
+            Always growing
           </div>
         </div>
       </div>
     </>
+  )
+}
+
+/* ─── Small reusable pieces ───────────────────────────────────────────────── */
+function BackLink({ to }) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <Link
+      to={to}
+      className="relative z-[1] no-underline flex items-center gap-[6px] transition-all duration-200"
+      style={{
+        fontFamily: "'Jost', sans-serif",
+        fontSize: 13,
+        fontWeight: 500,
+        letterSpacing: '0.04em',
+        color: hovered ? '#2A2218' : '#8A7E74',
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <motion.span
+        animate={{ x: hovered ? -2 : 0 }}
+        transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <RiArrowLeftLine size={14} />
+      </motion.span>
+      Back
+    </Link>
+  )
+}
+
+function CTAButton({ to, children }) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <motion.div
+      animate={{ y: hovered ? -2 : 0 }}
+      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+      className="inline-block"
+    >
+      <Link
+        to={to}
+        className="inline-flex items-center gap-[7px] no-underline px-7 py-3 rounded-[28px]"
+        style={{
+          fontFamily: "'Jost', sans-serif",
+          fontSize: 13,
+          fontWeight: 600,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color: '#F9F5EC',
+          background: '#2A2218',
+          boxShadow: hovered
+            ? '0 10px 32px rgba(42,34,24,0.18), 0 3px 10px rgba(42,34,24,0.10)'
+            : '0 4px 16px rgba(42,34,24,0.14), 0 1px 4px rgba(42,34,24,0.08)',
+          transition: 'box-shadow 0.28s ease',
+        }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        {children}
+      </Link>
+    </motion.div>
   )
 }

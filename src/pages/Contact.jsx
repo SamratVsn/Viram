@@ -15,36 +15,47 @@ import {
 } from 'react-icons/ri'
 import NavBar from '../components/NavBar'
 
+/* ─── Design Tokens ─────────────────────────────────────── */
+const T = {
+  bg:       '#F4EEE3',
+  card:     '#F9F5EC',
+  inkHigh:  '#2A2218',
+  inkMid:   '#5A4E42',
+  inkLow:   '#8A7B6E',
+  inkGhost: 'rgba(55,38,22,0.18)',
+  border:   'rgba(55,38,22,0.07)',
+  accent:   '#B8704E',
+  accentBg: 'rgba(184,112,78,0.08)',
+  heading:  "'Cormorant Garamond', Georgia, serif",
+  body:     "'Jost', system-ui, sans-serif",
+  rSm:      '12px',
+  rMd:      '18px',
+  rLg:      '28px',
+}
+
+/* Grain SVG as data URI */
+const GRAIN_URL =
+  `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E")`
+
+/* ─── Framer variants ────────────────────────────────────── */
 const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 24 },
+  initial:     { opacity: 0, y: 20 },
   whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, margin: '-60px' },
-  transition: { duration: 0.72, delay, ease: [0.22, 1, 0.36, 1] },
+  viewport:    { once: true, margin: '-60px' },
+  transition:  { duration: 0.88, delay, ease: [0.22, 1, 0.36, 1] },
 })
 
-const STYLES = `
-  @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.3;transform:scale(.7)} }
-  .input-field {
-    width: 100%;
-    background: #050505;
-    border: 1px solid #1a1a1a;
-    border-radius: 12px;
-    padding: 13px 16px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    color: #cccccc;
-    outline: none;
-    transition: border-color 0.2s;
-    resize: none;
-  }
-  .input-field::placeholder { color: #2a2a2a; }
-  .input-field:focus         { border-color: #444444; }
-`
+const fadeIn = (delay = 0) => ({
+  initial:    { opacity: 0, y: 16 },
+  animate:    { opacity: 1, y: 0 },
+  transition: { duration: 0.88, delay, ease: [0.22, 1, 0.36, 1] },
+})
 
+/* ─── Channels ───────────────────────────────────────────── */
 const CHANNELS = [
   {
     Icon:   RiMailSendLine,
-    title:  'Email us',
+    title:  'Email',
     body:   'For general questions, partnerships, or press enquiries. We read every message.',
     action: 'hello@viram.app',
     href:   'mailto:hello@viram.app',
@@ -53,14 +64,14 @@ const CHANNELS = [
   {
     Icon:   RiDiscordLine,
     title:  'Discord',
-    body:   'Real-time community. Ask questions, share streaks, and get early access to features.',
+    body:   'Real-time community. Ask questions, share streaks, and get early feature access.',
     action: 'discord.gg/viram',
     href:   'https://discord.gg/viram',
     label:  'Open Discord',
   },
   {
     Icon:   RiTwitterXLine,
-    title:  'Find us on X',
+    title:  'X / Twitter',
     body:   'Follow for product updates, focus challenges, and the occasional stoic thought.',
     action: '@viramapp',
     href:   'https://twitter.com/viramapp',
@@ -69,7 +80,7 @@ const CHANNELS = [
   {
     Icon:   RiGithubLine,
     title:  'GitHub',
-    body:   'Browse our SDKs and community integrations. PRs welcome.',
+    body:   'Browse our SDKs and community integrations. Pull requests are always welcome.',
     action: 'github.com/viram',
     href:   'https://github.com/viram',
     label:  'View on GitHub',
@@ -85,6 +96,118 @@ const TOPICS = [
   'Feature request',
 ]
 
+/* ─── Inline styles (non-Tailwind) ──────────────────────── */
+const GLOBAL = `
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Jost:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg:      ${T.bg};
+    --card:    ${T.card};
+    --ink-hi:  ${T.inkHigh};
+    --ink-mid: ${T.inkMid};
+    --ink-low: ${T.inkLow};
+    --border:  ${T.border};
+    --accent:  ${T.accent};
+    --r-sm:    ${T.rSm};
+    --r-md:    ${T.rMd};
+    --r-lg:    ${T.rLg};
+  }
+
+  /* Paper grain overlay — applied as ::after on .viram-bg */
+  .viram-bg {
+    background-color: var(--bg);
+    position: relative;
+  }
+  .viram-bg::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: ${GRAIN_URL};
+    background-repeat: repeat;
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* Card grain */
+  .viram-card {
+    position: relative;
+    overflow: hidden;
+  }
+  .viram-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: ${GRAIN_URL};
+    background-repeat: repeat;
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .viram-card > * { position: relative; z-index: 2; }
+
+  /* Input / Textarea */
+  .viram-input {
+    width: 100%;
+    background: ${T.bg};
+    border: 1px solid rgba(55,38,22,0.12);
+    border-radius: var(--r-sm);
+    padding: 13px 16px;
+    font-family: ${T.body};
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--ink-hi);
+    outline: none;
+    transition: border-color 0.25s, box-shadow 0.25s;
+    resize: none;
+    letter-spacing: 0.01em;
+  }
+  .viram-input::placeholder { color: rgba(55,38,22,0.25); }
+  .viram-input:focus {
+    border-color: rgba(184,112,78,0.45);
+    box-shadow: 0 0 0 3px rgba(184,112,78,0.07);
+  }
+
+  /* Pulse dot */
+  @keyframes pulse-dot {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: .4; transform: scale(.7); }
+  }
+`
+
+/* ─── Chip / pill label ─────────────────────────────────── */
+function Chip({ children, icon: Icon }) {
+  return (
+    <div style={{
+      display:       'inline-flex',
+      alignItems:    'center',
+      gap:           6,
+      fontFamily:    T.body,
+      fontSize:      10,
+      fontWeight:    600,
+      letterSpacing: '0.18em',
+      textTransform: 'uppercase',
+      color:         T.accent,
+      background:    T.accentBg,
+      border:        `1px solid rgba(184,112,78,0.18)`,
+      borderRadius:  100,
+      padding:       '5px 14px',
+      marginBottom:  22,
+    }}>
+      {Icon && <Icon size={10} />}
+      {children}
+    </div>
+  )
+}
+
+/* ─── Divider ────────────────────────────────────────────── */
+function Divider() {
+  return (
+    <div style={{ borderTop: `1px solid ${T.border}`, margin: '0' }} />
+  )
+}
+
+/* ─── Component ─────────────────────────────────────────── */
 export default function Contact() {
   const [topic,   setTopic]   = useState('')
   const [name,    setName]    = useState('')
@@ -95,86 +218,137 @@ export default function Contact() {
   function handleSubmit(e) {
     e.preventDefault()
     if (!name || !email || !message) return
-    // wire up your real form handler (e.g. Resend, Formspree) here
     setSent(true)
   }
 
   return (
     <>
-      <style>{STYLES}</style>
+      <style>{GLOBAL}</style>
       <NavBar />
-      <div className="min-h-screen bg-black overflow-x-hidden pt-[70px]">
 
-        {/* ── HERO ──────────────────────────────────────────────────────── */}
-        <section className="px-[5vw] pt-20 pb-16 border-b border-[#1a1a1a] relative overflow-hidden">
-          <div className="absolute inset-0 pointer-events-none">
-            <div
-              className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[300px] rounded-full"
-              style={{ background: 'radial-gradient(ellipse,rgba(255,255,255,0.03) 0%,transparent 65%)', filter: 'blur(70px)' }}
-            />
-          </div>
+      <div className="viram-bg" style={{ minHeight: '100vh', overflowX: 'hidden' }}>
 
-          <div className="max-w-[640px] mx-auto text-center relative z-[2]">
-            <motion.div
-              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-              className="inline-flex items-center gap-[7px] text-[10px] tracking-[0.2em] text-[#cccccc] uppercase font-bold font-dm-sans px-[14px] py-[5px] rounded-full border border-[#2a2a2a] bg-white/[0.03] mb-6"
-            >
-              <span
-                className="w-[6px] h-[6px] rounded-full bg-white inline-block"
-                style={{ animation: 'pulse-dot 2s ease-in-out infinite' }}
-              />
-              We're listening
-            </motion.div>
+        {/* ── HERO ─────────────────────────────────────────── */}
+        <section style={{
+          padding:      'clamp(72px,10vw,120px) 6vw clamp(64px,8vw,96px)',
+          borderBottom: `1px solid ${T.border}`,
+          textAlign:    'center',
+        }}>
+          <motion.div {...fadeIn(0)}>
+            <Chip>We're listening</Chip>
+          </motion.div>
 
-            <motion.h1
-              initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.08 } }}
-              className="font-syne font-black leading-[1.0] tracking-[-0.04em] text-white mb-5"
-              style={{ fontSize: 'clamp(40px,6vw,72px)' }}
-            >
-              Get in touch.
-            </motion.h1>
+          <motion.h1 {...fadeIn(0.08)} style={{
+            fontFamily:    T.heading,
+            fontWeight:    700,
+            fontSize:      'clamp(44px,7vw,84px)',
+            lineHeight:    1.0,
+            letterSpacing: '-0.02em',
+            color:         T.inkHigh,
+            marginBottom:  20,
+          }}>
+            Get in touch<span style={{ color: T.accent }}>.</span>
+          </motion.h1>
 
-            <motion.p
-              initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.16 } }}
-              className="text-[15px] text-[#666666] font-dm-sans leading-[1.85] max-w-[440px] mx-auto"
-            >
-              Whether you're a developer with a question, a journalist writing about the
-              attention economy, or just someone who wants to say hi — we're here.
-            </motion.p>
-          </div>
+          <motion.p {...fadeIn(0.16)} style={{
+            fontFamily:  T.body,
+            fontWeight:  300,
+            fontSize:    16,
+            lineHeight:  1.9,
+            color:       T.inkMid,
+            maxWidth:    460,
+            margin:      '0 auto',
+            letterSpacing: '0.01em',
+          }}>
+            Whether you're a developer with a question, a journalist writing about
+            the attention economy, or just someone who wants to say hello — we're here.
+          </motion.p>
         </section>
 
-        {/* ── CHANNELS ──────────────────────────────────────────────────── */}
-        <section className="px-[5vw] py-[80px] border-b border-[#1a1a1a]">
-          <div className="max-w-[1100px] mx-auto">
-            <motion.div {...fadeUp(0)}
-              className="inline-flex items-center gap-[7px] text-[10px] tracking-[0.2em] text-[#cccccc] uppercase font-bold font-dm-sans px-[14px] py-[5px] rounded-full border border-[#2a2a2a] bg-white/[0.03] mb-[22px]"
-            >
-              <RiChat1Line size={11} /> Channels
-            </motion.div>
-            <motion.h2 {...fadeUp(0.06)}
-              className="font-syne font-black leading-[1.05] tracking-[-0.04em] text-white mb-14"
-              style={{ fontSize: 'clamp(26px,4vw,48px)' }}
-            >
+        {/* ── CHANNELS ─────────────────────────────────────── */}
+        <section style={{ padding: 'clamp(64px,9vw,100px) 6vw', borderBottom: `1px solid ${T.border}` }}>
+          <div style={{ maxWidth: 1080, margin: '0 auto' }}>
+            <motion.div {...fadeUp(0)}><Chip icon={RiChat1Line}>Channels</Chip></motion.div>
+
+            <motion.h2 {...fadeUp(0.06)} style={{
+              fontFamily:    T.heading,
+              fontWeight:    600,
+              fontSize:      'clamp(28px,4vw,48px)',
+              lineHeight:    1.05,
+              letterSpacing: '-0.02em',
+              color:         T.inkHigh,
+              marginBottom:  52,
+            }}>
               Pick your channel.
             </motion.h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[14px]">
+            <div style={{
+              display:             'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              gap:                 16,
+            }}>
               {CHANNELS.map(({ Icon, title, body, action, href, label }, i) => (
                 <motion.a
-                  key={title} href={href} target="_blank" rel="noreferrer"
+                  key={title}
+                  href={href}
+                  target="_blank"
+                  rel="noreferrer"
                   {...fadeUp(i * 0.07)}
-                  className="group p-6 rounded-[18px] border border-[#1a1a1a] bg-[#0a0a0a] flex flex-col no-underline transition-all duration-[250ms] hover:border-[#3a3a3a] hover:-translate-y-[3px]"
+                  whileHover={{ y: -3, boxShadow: `0 12px 40px rgba(55,38,22,0.10)` }}
+                  transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+                  className="viram-card"
+                  style={{
+                    display:         'flex',
+                    flexDirection:   'column',
+                    textDecoration:  'none',
+                    background:      T.card,
+                    border:          `1px solid ${T.border}`,
+                    borderRadius:    T.rLg,
+                    padding:         28,
+                    boxShadow:       `0 2px 12px rgba(55,38,22,0.04)`,
+                    transition:      'box-shadow 0.3s',
+                  }}
                 >
-                  <div className="w-[42px] h-[42px] rounded-xl flex items-center justify-center mb-5 border border-[#2a2a2a] bg-white/[0.03] text-[#888888] transition-all duration-200 group-hover:border-[#444444] group-hover:text-[#cccccc]">
+                  {/* Icon */}
+                  <div style={{
+                    width:        44,
+                    height:       44,
+                    borderRadius: T.rSm,
+                    border:       `1px solid rgba(184,112,78,0.2)`,
+                    background:   T.accentBg,
+                    display:      'flex',
+                    alignItems:   'center',
+                    justifyContent: 'center',
+                    color:        T.accent,
+                    marginBottom: 20,
+                    flexShrink:   0,
+                  }}>
                     <Icon size={18} />
                   </div>
-                  <div className="font-syne text-sm font-black text-white mb-[7px]">{title}</div>
-                  <div className="text-xs text-[#555555] leading-[1.7] font-dm-sans mb-5 flex-1">{body}</div>
-                  <div className="mt-auto">
-                    <div className="text-[11px] font-mono text-[#444444] mb-3 truncate">{action}</div>
-                    <div className="inline-flex items-center gap-[5px] text-[11px] font-bold text-[#666666] font-dm-sans tracking-[0.04em] transition-colors duration-200 group-hover:text-white">
-                      {label} <RiArrowRightUpLine size={10} />
+
+                  <div style={{ fontFamily: T.heading, fontWeight: 600, fontSize: 18, color: T.inkHigh, marginBottom: 8 }}>
+                    {title}
+                  </div>
+                  <div style={{ fontFamily: T.body, fontWeight: 300, fontSize: 13, color: T.inkMid, lineHeight: 1.75, flex: 1, marginBottom: 20 }}>
+                    {body}
+                  </div>
+
+                  <div style={{ marginTop: 'auto' }}>
+                    <div style={{ fontFamily: T.body, fontSize: 11, color: T.inkLow, marginBottom: 10, letterSpacing: '0.04em' }}>
+                      {action}
+                    </div>
+                    <div style={{
+                      display:     'inline-flex',
+                      alignItems:  'center',
+                      gap:         5,
+                      fontFamily:  T.body,
+                      fontWeight:  500,
+                      fontSize:    12,
+                      color:       T.accent,
+                      letterSpacing: '0.06em',
+                      textTransform: 'uppercase',
+                    }}>
+                      {label} <RiArrowRightUpLine size={11} />
                     </div>
                   </div>
                 </motion.a>
@@ -183,69 +357,128 @@ export default function Contact() {
           </div>
         </section>
 
-        {/* ── FORM ──────────────────────────────────────────────────────── */}
-        <section className="px-[5vw] py-[100px]">
-          <div className="max-w-[1100px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-start">
+        {/* ── FORM ─────────────────────────────────────────── */}
+        <section style={{ padding: 'clamp(72px,10vw,120px) 6vw' }}>
+          <div style={{
+            maxWidth:             1080,
+            margin:               '0 auto',
+            display:              'grid',
+            gridTemplateColumns:  'repeat(auto-fit, minmax(300px, 1fr))',
+            gap:                  'clamp(48px,6vw,96px)',
+            alignItems:           'start',
+          }}>
 
             {/* Left: copy */}
-            <div className="lg:sticky lg:top-[100px]">
-              <motion.div {...fadeUp(0)}
-                className="inline-flex items-center gap-[7px] text-[10px] tracking-[0.2em] text-[#cccccc] uppercase font-bold font-dm-sans px-[14px] py-[5px] rounded-full border border-[#2a2a2a] bg-white/[0.03] mb-6"
-              >
-                <RiQuillPenLine size={11} /> Direct message
-              </motion.div>
+            <div style={{ position: 'sticky', top: 110 }}>
+              <motion.div {...fadeUp(0)}><Chip icon={RiQuillPenLine}>Direct message</Chip></motion.div>
 
-              <motion.h2 {...fadeUp(0.06)}
-                className="font-syne font-black leading-[1.0] tracking-[-0.04em] text-white mb-5"
-                style={{ fontSize: 'clamp(28px,4vw,52px)' }}
-              >
+              <motion.h2 {...fadeUp(0.06)} style={{
+                fontFamily:    T.heading,
+                fontWeight:    700,
+                fontSize:      'clamp(32px,4.5vw,58px)',
+                lineHeight:    1.0,
+                letterSpacing: '-0.02em',
+                color:         T.inkHigh,
+                marginBottom:  20,
+              }}>
                 Send us a<br />
-                <span
-                  className="text-[#555555]"
-                  style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontStyle: 'italic' }}
-                >
-                  message.
-                </span>
+                <em style={{ color: T.accent, fontStyle: 'italic' }}>message.</em>
               </motion.h2>
 
-              <motion.p {...fadeUp(0.12)}
-                className="text-[15px] text-[#444444] font-dm-sans leading-[1.85] max-w-[340px] mb-10"
-              >
+              <motion.p {...fadeUp(0.12)} style={{
+                fontFamily:  T.body,
+                fontWeight:  300,
+                fontSize:    15,
+                color:       T.inkMid,
+                lineHeight:  1.9,
+                maxWidth:    320,
+                marginBottom: 36,
+                letterSpacing: '0.01em',
+              }}>
                 We aim to respond within one business day. For urgent questions,
-                Discord is faster.
+                Discord is usually faster.
               </motion.p>
 
               {/* Response time badge */}
-              <motion.div {...fadeUp(0.16)}
-                className="inline-flex items-center gap-3 px-5 py-[14px] rounded-[14px] border border-[#1a1a1a] bg-[#0a0a0a]"
-              >
-                <div className="w-8 h-8 rounded-full border border-[#2a2a2a] flex items-center justify-center flex-shrink-0 text-[#666666]">
+              <motion.div {...fadeUp(0.16)} className="viram-card" style={{
+                display:      'inline-flex',
+                alignItems:   'center',
+                gap:          16,
+                padding:      '16px 22px',
+                background:   T.card,
+                border:       `1px solid ${T.border}`,
+                borderRadius: T.rMd,
+                boxShadow:    `0 2px 12px rgba(55,38,22,0.05)`,
+              }}>
+                <div style={{
+                  width:          38,
+                  height:         38,
+                  borderRadius:   '50%',
+                  border:         `1px solid rgba(184,112,78,0.2)`,
+                  background:     T.accentBg,
+                  display:        'flex',
+                  alignItems:     'center',
+                  justifyContent: 'center',
+                  color:          T.accent,
+                  flexShrink:     0,
+                }}>
                   <RiTimeLine size={15} />
                 </div>
                 <div>
-                  <div className="text-[10px] text-[#444444] font-dm-sans uppercase tracking-[0.1em] font-bold mb-[2px]">
+                  <div style={{ fontFamily: T.body, fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: T.inkLow, marginBottom: 2 }}>
                     Avg. response time
                   </div>
-                  <div className="font-syne font-black text-white text-[15px]">&lt; 24 hours</div>
+                  <div style={{ fontFamily: T.heading, fontWeight: 600, fontSize: 18, color: T.inkHigh }}>
+                    &lt; 24 hours
+                  </div>
                 </div>
               </motion.div>
             </div>
 
             {/* Right: form */}
-            <motion.div {...fadeUp(0.08)}>
+            <motion.div {...fadeUp(0.1)}>
               {sent ? (
                 /* ── Success state ── */
-                <div className="p-10 rounded-[22px] border border-[#2a2a2a] bg-[#0a0a0a] text-center">
-                  <div className="w-14 h-14 rounded-full border border-[#2a2a2a] flex items-center justify-center mx-auto mb-6 text-white">
-                    <RiCheckLine size={26} />
+                <div className="viram-card" style={{
+                  padding:      52,
+                  background:   T.card,
+                  border:       `1px solid ${T.border}`,
+                  borderRadius: T.rLg,
+                  textAlign:    'center',
+                  boxShadow:    `0 4px 24px rgba(55,38,22,0.06)`,
+                }}>
+                  <div style={{
+                    width:          56,
+                    height:         56,
+                    borderRadius:   '50%',
+                    border:         `1px solid rgba(184,112,78,0.3)`,
+                    background:     T.accentBg,
+                    display:        'flex',
+                    alignItems:     'center',
+                    justifyContent: 'center',
+                    margin:         '0 auto 24px',
+                    color:          T.accent,
+                  }}>
+                    <RiCheckLine size={24} />
                   </div>
-                  <div className="font-syne font-black text-white text-xl mb-3">Message sent.</div>
-                  <p className="text-[14px] text-[#555555] font-dm-sans leading-[1.75] max-w-[280px] mx-auto mb-8">
+                  <div style={{ fontFamily: T.heading, fontWeight: 700, fontSize: 26, color: T.inkHigh, marginBottom: 12 }}>
+                    Message sent.
+                  </div>
+                  <p style={{ fontFamily: T.body, fontWeight: 300, fontSize: 14, color: T.inkMid, lineHeight: 1.8, maxWidth: 280, margin: '0 auto 32px' }}>
                     We've got it. Expect a reply within 24 hours — usually much sooner.
                   </p>
                   <button
                     onClick={() => { setSent(false); setName(''); setEmail(''); setMessage(''); setTopic('') }}
-                    className="text-[13px] text-[#666666] font-dm-sans font-semibold hover:text-white transition-colors duration-200"
+                    style={{
+                      background:    'none',
+                      border:        'none',
+                      fontFamily:    T.body,
+                      fontWeight:    500,
+                      fontSize:      13,
+                      color:         T.accent,
+                      cursor:        'pointer',
+                      letterSpacing: '0.04em',
+                    }}
                   >
                     Send another →
                   </button>
@@ -254,23 +487,42 @@ export default function Contact() {
                 /* ── Form ── */
                 <form
                   onSubmit={handleSubmit}
-                  className="p-8 rounded-[22px] border border-[#1a1a1a] bg-[#0a0a0a] flex flex-col gap-5"
+                  className="viram-card"
+                  style={{
+                    padding:      36,
+                    background:   T.card,
+                    border:       `1px solid ${T.border}`,
+                    borderRadius: T.rLg,
+                    boxShadow:    `0 4px 24px rgba(55,38,22,0.06)`,
+                    display:      'flex',
+                    flexDirection: 'column',
+                    gap:          28,
+                  }}
                 >
                   {/* Topic pills */}
                   <div>
-                    <label className="block text-[11px] font-bold text-[#444444] uppercase tracking-[0.12em] font-dm-sans mb-[10px]">
+                    <label style={{ display: 'block', fontFamily: T.body, fontWeight: 600, fontSize: 10, color: T.inkMid, letterSpacing: '0.16em', textTransform: 'uppercase', marginBottom: 12 }}>
                       Topic
                     </label>
-                    <div className="flex flex-wrap gap-[7px]">
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                       {TOPICS.map(t => (
                         <button
-                          key={t} type="button"
+                          key={t}
+                          type="button"
                           onClick={() => setTopic(t)}
-                          className={`px-[12px] py-[6px] rounded-full text-[11px] font-semibold font-dm-sans border transition-all duration-150 ${
-                            topic === t
-                              ? 'bg-white text-black border-white'
-                              : 'bg-transparent text-[#444444] border-[#1a1a1a] hover:border-[#333333] hover:text-[#888888]'
-                          }`}
+                          style={{
+                            padding:       '7px 14px',
+                            borderRadius:  100,
+                            fontFamily:    T.body,
+                            fontWeight:    500,
+                            fontSize:      11,
+                            letterSpacing: '0.04em',
+                            border:        topic === t ? `1px solid ${T.accent}` : `1px solid rgba(55,38,22,0.12)`,
+                            background:    topic === t ? T.accentBg : 'transparent',
+                            color:         topic === t ? T.accent : T.inkMid,
+                            cursor:        'pointer',
+                            transition:    'all 0.2s ease',
+                          }}
                         >
                           {t}
                         </button>
@@ -278,42 +530,38 @@ export default function Contact() {
                     </div>
                   </div>
 
+                  {/* Hairline divider */}
+                  <Divider />
+
                   {/* Name + Email */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[11px] font-bold text-[#444444] uppercase tracking-[0.12em] font-dm-sans mb-2">
-                        Name
-                      </label>
-                      <input
-                        className="input-field"
-                        placeholder="Your name"
-                        value={name}
-                        onChange={e => setName(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-[#444444] uppercase tracking-[0.12em] font-dm-sans mb-2">
-                        Email
-                      </label>
-                      <input
-                        type="email"
-                        className="input-field"
-                        placeholder="you@example.com"
-                        value={email}
-                        onChange={e => setEmail(e.target.value)}
-                        required
-                      />
-                    </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                    {[
+                      { label: 'Name', type: 'text', placeholder: 'Your name',       val: name,  set: setName },
+                      { label: 'Email', type: 'email', placeholder: 'you@example.com', val: email, set: setEmail },
+                    ].map(({ label, type, placeholder, val, set }) => (
+                      <div key={label}>
+                        <label style={{ display: 'block', fontFamily: T.body, fontWeight: 600, fontSize: 10, color: T.inkMid, letterSpacing: '0.16em', textTransform: 'uppercase', marginBottom: 8 }}>
+                          {label}
+                        </label>
+                        <input
+                          type={type}
+                          className="viram-input"
+                          placeholder={placeholder}
+                          value={val}
+                          onChange={e => set(e.target.value)}
+                          required
+                        />
+                      </div>
+                    ))}
                   </div>
 
                   {/* Message */}
                   <div>
-                    <label className="block text-[11px] font-bold text-[#444444] uppercase tracking-[0.12em] font-dm-sans mb-2">
+                    <label style={{ display: 'block', fontFamily: T.body, fontWeight: 600, fontSize: 10, color: T.inkMid, letterSpacing: '0.16em', textTransform: 'uppercase', marginBottom: 8 }}>
                       Message
                     </label>
                     <textarea
-                      className="input-field"
+                      className="viram-input"
                       placeholder="What's on your mind?"
                       rows={6}
                       value={message}
@@ -322,15 +570,38 @@ export default function Contact() {
                     />
                   </div>
 
-                  {/* Submit */}
-                  <button
-                    type="submit"
-                    className="w-full py-[14px] rounded-full bg-white text-black text-sm font-black font-dm-sans tracking-[0.03em] flex items-center justify-center gap-2 transition-all duration-200 hover:bg-[#e8e8e8] hover:-translate-y-[2px] hover:shadow-[0_10px_32px_rgba(255,255,255,0.15)]"
-                  >
-                    <RiSendPlaneLine size={15} /> Send message
-                  </button>
+                  <Divider />
 
-                  <p className="text-[11px] text-[#2a2a2a] font-dm-sans text-center leading-[1.6]">
+                  {/* Submit */}
+                  <motion.button
+                    type="submit"
+                    whileHover={{ y: -2, boxShadow: `0 14px 36px rgba(184,112,78,0.28)` }}
+                    whileTap={{ y: 0, boxShadow: 'none' }}
+                    transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                    style={{
+                      width:          '100%',
+                      padding:        '15px 24px',
+                      borderRadius:   100,
+                      background:     T.accent,
+                      border:         'none',
+                      color:          '#FFF8F2',
+                      fontFamily:     T.body,
+                      fontWeight:     600,
+                      fontSize:       13,
+                      letterSpacing:  '0.1em',
+                      textTransform:  'uppercase',
+                      display:        'flex',
+                      alignItems:     'center',
+                      justifyContent: 'center',
+                      gap:            8,
+                      cursor:         'pointer',
+                      boxShadow:      `0 4px 18px rgba(184,112,78,0.22)`,
+                    }}
+                  >
+                    <RiSendPlaneLine size={14} /> Send message
+                  </motion.button>
+
+                  <p style={{ fontFamily: T.body, fontWeight: 300, fontSize: 11, color: T.inkLow, textAlign: 'center', lineHeight: 1.6, letterSpacing: '0.02em' }}>
                     No marketing, no spam. Your message goes directly to the team.
                   </p>
                 </form>
@@ -339,18 +610,36 @@ export default function Contact() {
           </div>
         </section>
 
-        {/* ── FOOTER STRIP ──────────────────────────────────────────────── */}
-        <div className="border-t border-[#1a1a1a] px-[5vw] py-6 flex items-center justify-between flex-wrap gap-3">
-          <Link to="/" className="font-syne font-black tracking-[0.18em] no-underline">
-            <span className="text-white">VI</span><span className="text-[#3a3a3a]">RAM</span>
+        {/* ── FOOTER STRIP ─────────────────────────────────── */}
+        <div style={{
+          borderTop:      `1px solid ${T.border}`,
+          padding:        '24px 6vw',
+          display:        'flex',
+          alignItems:     'center',
+          justifyContent: 'space-between',
+          flexWrap:       'wrap',
+          gap:            12,
+        }}>
+          <Link to="/" style={{ textDecoration: 'none' }}>
+            <span style={{ fontFamily: T.heading, fontWeight: 700, fontSize: 20, letterSpacing: '0.14em', color: T.inkHigh }}>
+              VI<span style={{ color: T.accent }}>RAM</span>
+            </span>
           </Link>
-          <div className="text-xs text-[#3a3a3a] font-dm-sans">
+
+          <div style={{ fontFamily: T.body, fontWeight: 300, fontSize: 12, color: T.inkLow, letterSpacing: '0.02em' }}>
             © 2026 Viram. Built for those who refuse to be the product.
           </div>
-          <div className="flex items-center gap-[7px] text-xs text-[#3a3a3a] font-dm-sans">
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: T.body, fontSize: 12, color: T.inkLow }}>
             <span
-              className="w-[6px] h-[6px] rounded-full bg-white inline-block"
-              style={{ animation: 'pulse-dot 2s ease-in-out infinite' }}
+              style={{
+                width:        7,
+                height:       7,
+                borderRadius: '50%',
+                background:   T.accent,
+                display:      'inline-block',
+                animation:    'pulse-dot 2.4s ease-in-out infinite',
+              }}
             />
             Systems online
           </div>

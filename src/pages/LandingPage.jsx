@@ -12,39 +12,91 @@ import {
 } from 'react-icons/ri'
 import NavBar from '../components/NavBar'
 
-// ── animation helper ─────────────────────────────────────────────────────────
+// ─── Minimal style block ──────────────────────────────────────────────────────
+// Tailwind can't generate: custom keyframes, font imports, CSS variables,
+// or the body::before grain overlay. Everything else uses Tailwind classes.
+const STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Jost:wght@300;400;500;600&display=swap');
+
+  /* ── Design tokens ── */
+  :root {
+    --bg:          #F4EEE3;
+    --bg-card:     #F9F5EC;
+    --bg-inset:    #EDE5D5;
+    --border:      rgba(55,38,22,0.07);
+    --border-mid:  rgba(55,38,22,0.14);
+    --text-hi:     #2A2218;
+    --text-mid:    #5A4E42;
+    --text-lo:     #8A7F74;
+    --text-ghost:  #BAB1A7;
+    --accent:      #B8704E;
+    --amber:       #C79B3A;
+    --shadow-xs:   0 1px 3px rgba(45,28,12,0.07), 0 1px 2px rgba(45,28,12,0.04);
+    --shadow-sm:   0 2px 8px rgba(45,28,12,0.08), 0 1px 3px rgba(45,28,12,0.04);
+    --shadow-md:   0 6px 24px rgba(45,28,12,0.09), 0 2px 8px rgba(45,28,12,0.05);
+    --shadow-lg:   0 16px 48px rgba(45,28,12,0.10), 0 4px 16px rgba(45,28,12,0.05);
+    --shadow-lift: 0 22px 64px rgba(45,28,12,0.13), 0 6px 22px rgba(45,28,12,0.07);
+    --r-sm:        12px;
+    --r-md:        18px;
+    --r-lg:        28px;
+    --r-xl:        38px;
+  }
+
+  /* ── Keyframes ── */
+  @keyframes marquee       { from { transform: translateX(0) }    to { transform: translateX(-50%) } }
+  @keyframes marquee-testi { from { transform: translateX(0) }    to { transform: translateX(-50%) } }
+  @keyframes pulse-dot     { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.35;transform:scale(.6)} }
+  @keyframes spin-slow     { from { transform: rotate(0deg) }     to { transform: rotate(360deg) } }
+  @keyframes float-avatar  { 0%,100% { transform: translateY(0px) } 50% { transform: translateY(-8px) } }
+
+  /* ── Two font utilities Tailwind cannot generate without config ── */
+  .font-display { font-family: 'Cormorant Garamond', serif; }
+  .font-body    { font-family: 'Jost', sans-serif; }
+
+  /* ── Full-page paper grain — the key tactile layer ── */
+  body { background: var(--bg); }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    pointer-events: none; z-index: 9999; opacity: 0.032;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.68' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 200px 200px;
+  }
+`
+
+// ─── Animation helper ─────────────────────────────────────────────────────────
 const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 24 },
+  initial: { opacity: 0, y: 20 },
   whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, margin: '-60px' },
+  viewport: { once: true, margin: '-50px' },
   transition: { duration: 0.72, delay, ease: [0.22, 1, 0.36, 1] },
 })
 
-// ── data ─────────────────────────────────────────────────────────────────────
+// ─── Data ─────────────────────────────────────────────────────────────────────
 const MARQUEE_ITEMS = [
-  'FOCUS', 'DISCIPLINE', 'CLARITY', 'GROWTH', 'EVOLVE', 'DEEP WORK',
-  'MOMENTUM', 'IDENTITY', 'FLOW STATE', 'WILLPOWER', 'PRESENCE', 'PURPOSE', 'MASTERY', 'SILENCE',
+  'FOCUS','DISCIPLINE','CLARITY','GROWTH','EVOLVE','DEEP WORK',
+  'MOMENTUM','IDENTITY','FLOW STATE','WILLPOWER','PRESENCE','PURPOSE','MASTERY','SILENCE',
 ]
 
 const FEATURES = [
-  { Icon: RiUserHeartLine,     title: 'Living Avatar',        body: "Your habits manifest in your character's stats in real time. Watch yourself grow — or wither.",                      large: true },
-  { Icon: RiTimerFlashLine,    title: 'Pomodoro Engine',      body: 'Deep work challenges with XP rewards. Complete without breaking = massive combo multiplier.'                              },
-  { Icon: RiShieldKeyholeLine, title: 'Friction Accounting',  body: 'Log doomscrolling honestly. Make the invisible cost of distraction visible in your avatar stats.'                        },
-  { Icon: RiPuzzleLine,        title: 'Mental Reset Puzzles', body: '90-second brain games to break the scroll loop and re-engage your prefrontal cortex.'                                    },
-  { Icon: RiBookOpenLine,      title: 'Mind Library',         body: 'Distilled lessons from Atomic Habits, Deep Work, Digital Minimalism — actionable, never just quotes.'                    },
-  { Icon: RiYoutubeLine,       title: 'Curated Resources',    body: 'Handpicked focus playlists and productivity content. Zero doomscrolling required.'                                       },
+  { Icon: RiUserHeartLine,     title: 'Living Avatar',        body: "Your habits manifest in your character's stats in real time. Every deep work session fuels your avatar. Every scroll drains it." },
+  { Icon: RiTimerFlashLine,    title: 'Pomodoro Engine',      body: 'Deep work challenges with XP rewards. Complete without breaking = massive combo multiplier.' },
+  { Icon: RiShieldKeyholeLine, title: 'Friction Accounting',  body: 'Log doomscrolling honestly. Make the invisible cost of distraction visible in your avatar stats.' },
+  { Icon: RiPuzzleLine,        title: 'Mental Reset Puzzles', body: '90-second brain games to break the scroll loop and re-engage your prefrontal cortex.' },
+  { Icon: RiBookOpenLine,      title: 'Mind Library',         body: 'Distilled lessons from Atomic Habits, Deep Work, Digital Minimalism — actionable, never just quotes.' },
+  { Icon: RiYoutubeLine,       title: 'Curated Resources',    body: 'Handpicked focus playlists and productivity content. Zero doomscrolling required.' },
 ]
 
 const PLAYLISTS = [
-  { channel: 'Andrew Huberman Lab', title: 'Dopamine & Motivation — Master Your Focus',     meta: '2h 14m',        url: 'https://www.youtube.com/results?search_query=andrew+huberman+dopamine+focus' },
-  { channel: 'Andrew Huberman Lab', title: 'The Science of Setting & Achieving Goals',       meta: 'Science-backed', url: 'https://www.youtube.com/results?search_query=huberman+lab+goals+focus+science' },
-  { channel: 'Cal Newport',         title: 'Deep Work Philosophy — Study With Me',           meta: 'Knowledge',      url: 'https://www.youtube.com/results?search_query=deep+work+productivity+cal+newport' },
-  { channel: 'Cal Newport',         title: 'Digital Minimalism — Quit Social Media',         meta: 'High Impact',    url: 'https://www.youtube.com/results?search_query=cal+newport+quit+social+media' },
-  { channel: 'James Clear',         title: 'Atomic Habits — Build Systems That Stick',       meta: 'Bestseller',     url: 'https://www.youtube.com/results?search_query=atomic+habits+james+clear' },
-  { channel: 'Marcus Aurelius',     title: 'Meditations — Stoic Wisdom for Modern Life',     meta: 'Timeless',       url: 'https://www.youtube.com/results?search_query=marcus+aurelius+meditations' },
-  { channel: 'Daily Stoic',         title: 'Marcus Aurelius — Self Discipline & Resilience', meta: 'Stoicism',       url: 'https://www.youtube.com/results?search_query=marcus+aurelius+daily+stoic' },
-  { channel: 'Magnetic Minds',      title: 'Binaural Beats — Alpha Waves for Focus',         meta: 'Neuroscience',   url: 'https://www.youtube.com/results?search_query=binaural+beats+focus' },
-  { channel: 'Digital Wellness',    title: 'Break the Scroll — Reclaim Your Attention',      meta: 'Mental Health',  url: 'https://www.youtube.com/results?search_query=digital+minimalism+screen+time' },
+  { channel: 'Andrew Huberman Lab', title: 'Dopamine & Motivation — Master Your Focus',     meta: '2h 14m',         url: 'https://www.youtube.com/results?search_query=andrew+huberman+dopamine+focus' },
+  { channel: 'Andrew Huberman Lab', title: 'The Science of Setting & Achieving Goals',       meta: 'Science-backed',  url: 'https://www.youtube.com/results?search_query=huberman+lab+goals+focus+science' },
+  { channel: 'Cal Newport',         title: 'Deep Work Philosophy — Study With Me',           meta: 'Knowledge',       url: 'https://www.youtube.com/results?search_query=deep+work+productivity+cal+newport' },
+  { channel: 'Cal Newport',         title: 'Digital Minimalism — Quit Social Media',         meta: 'High Impact',     url: 'https://www.youtube.com/results?search_query=cal+newport+quit+social+media' },
+  { channel: 'James Clear',         title: 'Atomic Habits — Build Systems That Stick',       meta: 'Bestseller',      url: 'https://www.youtube.com/results?search_query=atomic+habits+james+clear' },
+  { channel: 'Marcus Aurelius',     title: 'Meditations — Stoic Wisdom for Modern Life',     meta: 'Timeless',        url: 'https://www.youtube.com/results?search_query=marcus+aurelius+meditations' },
+  { channel: 'Daily Stoic',         title: 'Marcus Aurelius — Self Discipline & Resilience', meta: 'Stoicism',        url: 'https://www.youtube.com/results?search_query=marcus+aurelius+daily+stoic' },
+  { channel: 'Magnetic Minds',      title: 'Binaural Beats — Alpha Waves for Focus',         meta: 'Neuroscience',    url: 'https://www.youtube.com/results?search_query=binaural+beats+focus' },
+  { channel: 'Digital Wellness',    title: 'Break the Scroll — Reclaim Your Attention',      meta: 'Mental Health',   url: 'https://www.youtube.com/results?search_query=digital+minimalism+screen+time' },
 ]
 
 const TESTIMONIALS = [
@@ -57,155 +109,138 @@ const TESTIMONIALS = [
 ]
 
 const STATS = [
-  { num: '2.4h', label: 'Daily screen time saved'        },
-  { num: '87%',  label: 'Higher focus in 1 week'         },
-  { num: '23×',  label: 'More engaging than trackers'     },
+  { num: '2.4h', label: 'Daily screen time saved'     },
+  { num: '87%',  label: 'Higher focus in 1 week'      },
+  { num: '23×',  label: 'More engaging than trackers' },
 ]
 
 const PROB_STATS = [
-  { num: '4.8h',   label: 'Average daily screen time'                         },
-  { num: '$4.2B',  label: 'Spent annually to capture your attention'          },
-  { num: '73%',    label: 'Teens report feeling addicted to social media'      },
-  { num: '23 min', label: 'To regain focus after a single notification'        },
+  { num: '4.8h',   label: 'Average daily screen time'                    },
+  { num: '$4.2B',  label: 'Spent annually to capture your attention'     },
+  { num: '73%',    label: 'Teens report feeling addicted to social media' },
+  { num: '23 min', label: 'To regain focus after a single notification'  },
 ]
 
-// ── keyframes (animations that can't live in Tailwind alone) ─────────────────
-const KEYFRAMES = `
-  @keyframes marquee       { from{transform:translateX(0)} to{transform:translateX(-50%)} }
-  @keyframes marquee-testi { from{transform:translateX(0)} to{transform:translateX(-50%)} }
-  @keyframes pulse-dot     { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.3;transform:scale(.7)} }
-  @keyframes spin-slow     { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-  @keyframes float-avatar  { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(-10px)} }
-  @keyframes scanline      { 0%{top:-10%} 100%{top:110%} }
-  .testi-card:hover { filter: grayscale(1) brightness(1.25); }
-`
-
-// ── Tag badge shared component ────────────────────────────────────────────────
-function Tag({ children, center = false }) {
+// ─── Tag Badge ────────────────────────────────────────────────────────────────
+function Tag({ children }) {
   return (
-    <div className={`inline-flex items-center gap-[7px] text-[10px] tracking-[0.2em] uppercase font-bold font-dm-sans text-[#cccccc] px-[14px] py-[5px] rounded-full border border-[#2a2a2a] bg-white/[0.03] mb-[22px] ${center ? 'mx-auto' : ''}`}>
+    <div className="inline-flex items-center gap-1.5 mb-5 px-3.5 py-1.5 rounded-full font-body text-[10px] font-medium tracking-[0.2em] uppercase text-[var(--text-lo)] bg-[var(--bg-inset)] border border-[var(--border-mid)] shadow-[var(--shadow-xs)]">
       {children}
     </div>
   )
 }
 
-// ── StatBar ───────────────────────────────────────────────────────────────────
+// ─── Stat Bar ─────────────────────────────────────────────────────────────────
 function StatBar({ label, value }) {
   return (
     <div>
-      <div className="flex justify-between mb-[5px]">
-        <span className="text-[10px] text-[#555555] font-dm-sans tracking-[0.1em] uppercase font-medium">{label}</span>
-        <span className="text-[10px] text-[#cccccc] font-syne font-black">{value}</span>
+      <div className="flex justify-between mb-1.5">
+        <span className="font-body text-[10px] font-medium tracking-[0.12em] uppercase text-[var(--text-lo)]">{label}</span>
+        <span className="font-display text-[10px] font-bold text-[var(--text-mid)]">{value}%</span>
       </div>
-      <div className="h-[3px] rounded-full bg-[#1a1a1a] overflow-hidden">
+      <div className="h-[2px] rounded-full bg-[var(--bg-inset)] overflow-hidden">
+        {/* width is dynamic → must be inline style */}
         <div
-          className="h-full rounded-full bg-white opacity-90 transition-[width] duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
-          style={{ width: `${value}%` }}
+          className="h-full rounded-full opacity-70 transition-[width] duration-[1100ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
+          style={{ width: `${value}%`, background: 'linear-gradient(90deg, var(--text-lo), var(--text-mid))' }}
         />
       </div>
     </div>
   )
 }
 
-// ── AvatarCard ────────────────────────────────────────────────────────────────
+// ─── Avatar Card ──────────────────────────────────────────────────────────────
 function AvatarCard({ avatarStats, heroOffset }) {
   return (
     <motion.div
-      initial={{ opacity: 0, x: 40 }}
-      animate={{ opacity: 1, x: 0, transition: { delay: 0.2, duration: 0.9, ease: [0.22, 1, 0.36, 1] } }}
+      initial={{ opacity: 0, x: 32 }}
+      animate={{ opacity: 1, x: 0, transition: { delay: 0.2, duration: 0.85, ease: [0.22, 1, 0.36, 1] } }}
       className="relative z-[2]"
-      style={{
-        transform: `translate(${heroOffset.x * 0.35}px, ${heroOffset.y * 0.35}px)`,
-        transition: 'transform 0.12s ease-out',
-      }}
+      style={{ transform: `translate(${heroOffset.x * 0.28}px, ${heroOffset.y * 0.28}px)`, transition: 'transform 0.14s ease-out' }}
     >
-      {/* Card body */}
-      <div className="bg-[#0a0a0a] border border-[#2a2a2a] rounded-[28px] p-8 relative overflow-hidden shadow-[0_40px_80px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.05)]">
+      {/* Card */}
+      <div className="relative overflow-hidden bg-[var(--bg-card)] border border-[var(--border)] rounded-[var(--r-xl)] p-8 shadow-[var(--shadow-lg)]">
 
-        {/* Scanline overlay */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[28px]">
-          <div
-            className="absolute left-0 right-0 h-[30%] bg-gradient-to-b from-transparent via-white/[0.02] to-transparent"
-            style={{ animation: 'scanline 4s linear infinite' }}
-          />
-        </div>
-
-        {/* Line texture */}
+        {/* Paper grain on card surface */}
         <div
-          className="absolute inset-0 pointer-events-none rounded-[28px] opacity-[0.025]"
-          style={{ backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 19px,#fff 20px)' }}
+          className="absolute inset-0 rounded-[inherit] pointer-events-none opacity-[0.06]"
+          style={{
+            backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.8'/%3E%3C/svg%3E\")",
+            backgroundRepeat: 'repeat',
+            backgroundSize: '150px 150px',
+          }}
         />
 
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <div className="text-[10px] tracking-[0.18em] text-[#555555] uppercase font-dm-sans mb-[3px]">Active Avatar</div>
-            <div className="font-syne text-base font-black text-white">The Focused Mind</div>
+            <div className="font-body text-[10px] font-medium tracking-[0.18em] uppercase text-[var(--text-ghost)] mb-0.5">Active Avatar</div>
+            <div className="font-display text-[17px] font-bold text-[var(--text-hi)]">The Focused Mind</div>
           </div>
-          <div className="flex items-center gap-[6px] px-3 py-[5px] rounded-full bg-white/5 border border-[#2a2a2a]">
-            <span className="w-[6px] h-[6px] rounded-full bg-white inline-block" style={{ animation: 'pulse-dot 2s ease-in-out infinite' }} />
-            <span className="text-[10px] text-[#cccccc] font-bold font-dm-sans tracking-[0.12em]">LIVE</span>
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--bg-inset)] border border-[var(--border-mid)]">
+            <span className="w-[5px] h-[5px] rounded-full bg-[var(--text-lo)] inline-block" style={{ animation: 'pulse-dot 2.8s ease-in-out infinite' }} />
+            <span className="font-body text-[9px] font-semibold tracking-[0.16em] text-[var(--text-lo)]">LIVE</span>
           </div>
         </div>
 
         {/* Avatar circle */}
         <div className="relative mb-7">
           <div
-            className="w-28 h-28 rounded-full bg-[#1a1a1a] border border-[#3a3a3a] mx-auto flex items-center justify-center relative"
-            style={{ animation: 'float-avatar 4s ease-in-out infinite' }}
+            className="relative w-[108px] h-[108px] rounded-full mx-auto bg-[var(--bg-inset)] border border-[var(--border-mid)] flex items-center justify-center shadow-[var(--shadow-sm)]"
+            style={{ animation: 'float-avatar 4.5s ease-in-out infinite' }}
           >
-            <RiUser3Line size={46} className="text-[#cccccc]" />
+            <RiUser3Line size={42} className="text-[var(--text-lo)]" />
             <svg
-              className="absolute -inset-[7px] w-[calc(100%+14px)] h-[calc(100%+14px)]"
-              style={{ animation: 'spin-slow 12s linear infinite' }}
+              className="absolute"
+              style={{ inset: -8, width: 'calc(100% + 16px)', height: 'calc(100% + 16px)', animation: 'spin-slow 18s linear infinite' }}
               viewBox="0 0 126 126"
             >
-              <circle cx="63" cy="63" r="59" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="1" strokeDasharray="3 7" />
+              <circle cx="63" cy="63" r="59" fill="none" stroke="var(--border-mid)" strokeWidth="0.8" strokeDasharray="2 9" />
             </svg>
           </div>
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-white px-[14px] py-1 rounded-full text-[10px] font-black text-black font-syne tracking-[0.08em] whitespace-nowrap">
-            LV 14 · DISCIPLINE MONK
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-[var(--text-hi)] text-[var(--bg)] px-3.5 py-[3px] rounded-full font-body text-[10px] font-semibold tracking-[0.08em] whitespace-nowrap shadow-[var(--shadow-sm)]">
+            LV 99 · Focused Human
           </div>
         </div>
 
         {/* Stat bars */}
-        <div className="flex flex-col gap-3 mb-[22px]">
+        <div className="flex flex-col gap-3.5 mb-5">
           <StatBar label="Focus"      value={avatarStats.focus} />
           <StatBar label="Discipline" value={avatarStats.discipline} />
           <StatBar label="Clarity"    value={avatarStats.clarity} />
         </div>
 
         {/* Mini cards */}
-        <div className="grid grid-cols-2 gap-[10px]">
+        <div className="grid grid-cols-2 gap-2.5">
           {[
             { Icon: RiFireFill,       label: 'Streak', val: '12 days' },
             { Icon: RiTimerFlashLine, label: 'Today',  val: '3h 40m'  },
           ].map(({ Icon, label, val }) => (
-            <div key={label} className="p-[10px_12px] rounded-xl bg-white/[0.03] border border-[#1a1a1a]">
-              <div className="flex items-center gap-[5px] mb-1">
-                <Icon size={11} className="text-[#cccccc]" />
-                <span className="text-[10px] text-[#555555] font-dm-sans uppercase tracking-[0.1em]">{label}</span>
+            <div key={label} className="p-2.5 rounded-[var(--r-sm)] bg-[var(--bg-inset)] border border-[var(--border)] shadow-[var(--shadow-xs)]">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Icon size={11} className="text-[var(--text-lo)]" />
+                <span className="font-body text-[9px] font-medium tracking-[0.12em] uppercase text-[var(--text-ghost)]">{label}</span>
               </div>
-              <div className="font-syne font-black text-sm text-white">{val}</div>
+              <div className="font-display text-[16px] font-bold text-[var(--text-hi)]">{val}</div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Floating XP pill */}
+      {/* XP pill */}
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0, transition: { delay: 0.6 } }}
-        className="absolute -top-[14px] -right-[14px] bg-white px-4 py-2 rounded-full text-xs font-black text-black font-syne shadow-[0_8px_24px_rgba(255,255,255,0.12)] whitespace-nowrap"
+        className="absolute -top-3.5 -right-3.5 bg-[var(--text-hi)] text-[var(--bg)] px-4 py-1.5 rounded-full font-body text-[11px] font-semibold tracking-[0.06em] whitespace-nowrap shadow-[0_8px_28px_rgba(42,34,24,0.20)]"
       >
         +240 XP
       </motion.div>
 
-      {/* Floating alert pill */}
+      {/* Saved pill */}
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0, transition: { delay: 0.75 } }}
-        className="absolute -bottom-[14px] -left-[14px] bg-[#0a0a0a] border border-[#2a2a2a] px-[14px] py-2 rounded-full text-[11px] font-semibold text-[#cccccc] font-dm-sans shadow-[0_8px_24px_rgba(0,0,0,0.5)] flex items-center gap-[6px] whitespace-nowrap"
+        className="absolute -bottom-3.5 -left-3.5 flex items-center gap-1.5 whitespace-nowrap bg-[var(--bg-card)] border border-[var(--border-mid)] px-3.5 py-1.5 rounded-full font-body text-[11px] font-medium text-[var(--text-mid)] shadow-[var(--shadow-md)]"
       >
         <RiSmartphoneLine size={13} /> 47 min saved today
       </motion.div>
@@ -213,494 +248,436 @@ function AvatarCard({ avatarStats, heroOffset }) {
   )
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
-export default function LandingPage({ onStart, onDemo, onLibrary, onProblem }) {
+// ─── Main component ───────────────────────────────────────────────────────────
+export default function LandingPage() {
   const parallaxRef = useRef({ x: 0, y: 0 })
   const [heroOffset, setHeroOffset]   = useState({ x: 0, y: 0 })
   const [avatarStats, setAvatarStats] = useState({ focus: 72, discipline: 58, clarity: 84 })
 
-  // Mouse parallax
   useEffect(() => {
     const onMove = (e) => {
       const cx = window.innerWidth / 2
       const cy = window.innerHeight / 2
-      parallaxRef.current = {
-        x: ((e.clientX - cx) / cx) * 18,
-        y: ((e.clientY - cy) / cy) * 10,
-      }
+      parallaxRef.current = { x: ((e.clientX - cx) / cx) * 14, y: ((e.clientY - cy) / cy) * 8 }
     }
     let raf
-    const animate = () => {
+    const tick = () => {
       setHeroOffset(prev => ({
-        x: prev.x + (parallaxRef.current.x - prev.x) * 0.06,
-        y: prev.y + (parallaxRef.current.y - prev.y) * 0.06,
+        x: prev.x + (parallaxRef.current.x - prev.x) * 0.055,
+        y: prev.y + (parallaxRef.current.y - prev.y) * 0.055,
       }))
-      raf = requestAnimationFrame(animate)
+      raf = requestAnimationFrame(tick)
     }
     window.addEventListener('mousemove', onMove)
-    raf = requestAnimationFrame(animate)
+    raf = requestAnimationFrame(tick)
     return () => { window.removeEventListener('mousemove', onMove); cancelAnimationFrame(raf) }
   }, [])
 
-  // Avatar stat ticker
   useEffect(() => {
-    const interval = setInterval(() => {
+    const id = setInterval(() => {
       setAvatarStats({
         focus:      68 + Math.floor(Math.random() * 14),
         discipline: 55 + Math.floor(Math.random() * 18),
         clarity:    80 + Math.floor(Math.random() * 12),
       })
-    }, 3000)
-    return () => clearInterval(interval)
+    }, 3200)
+    return () => clearInterval(id)
   }, [])
 
   return (
     <>
       <NavBar />
-    <div id="s-land" className="relative z-10 overflow-y-auto overflow-x-hidden pt-[70px] bg-black">
-      <style>{KEYFRAMES}</style>
+      <style>{STYLES}</style>
 
-      {/* ── HERO ──────────────────────────────────────────────────────────── */}
-      <section className="min-h-screen grid grid-cols-1 md:grid-cols-2 items-center px-[5vw] py-[60px] relative overflow-hidden gap-[60px]">
+      <div className="font-body bg-[var(--bg)] text-[var(--text-hi)] relative z-[10] overflow-x-hidden">
 
-        {/* BG grid + glow */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <svg className="absolute inset-0 w-full h-full opacity-[0.04]" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
-                <path d="M 60 0 L 0 0 0 60" fill="none" stroke="white" strokeWidth="0.5" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#grid)" />
-          </svg>
-          <div
-            className="absolute top-[10%] right-[20%] w-[600px] h-[600px] rounded-full"
-            style={{
-              background: 'radial-gradient(ellipse, rgba(255,255,255,0.04) 0%, transparent 65%)',
-              filter: 'blur(40px)',
-              transform: `translate(${heroOffset.x * 0.4}px, ${heroOffset.y * 0.4}px)`,
-            }}
-          />
-        </div>
+        {/* ──────────────────────────────────────────────────── HERO */}
+        <section
+          className="relative overflow-hidden min-h-[100svh] grid items-center gap-16 px-[5vw] py-[60px]"
+          style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}
+        >
+          {/* Warm ambient radial */}
+          <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 70% 60% at 75% 40%, rgba(184,112,78,0.05) 0%, transparent 72%)' }} />
+          {/* Dot grid */}
+          <div className="absolute inset-0 pointer-events-none opacity-[0.28]" style={{ backgroundImage: 'radial-gradient(circle, rgba(55,38,22,0.12) 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
 
-        {/* Left: copy */}
-        <div className="relative z-[2]">
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-            <Tag>
-              <RiGamepadLine size={11} /> Productivity Reimagined
-            </Tag>
-          </motion.div>
+          {/* Left: copy */}
+          <div className="relative z-[2]">
+            <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}>
+              <Tag><RiGamepadLine size={11} /> Productivity Reimagined</Tag>
+            </motion.div>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0, transition: { delay: 0.08 } }}
-            className="font-syne font-black leading-[0.96] tracking-[-0.04em] mb-6 text-white"
-            style={{
-              fontSize: 'clamp(48px, 6.5vw, 82px)',
-              transform: `translate(${heroOffset.x * 0.2}px, ${heroOffset.y * 0.2}px)`,
-              transition: 'transform 0.12s ease-out',
-            }}
-          >
-            Turn Your <br />Goals<br /><span className="text-[#888888]">Into  <br />a MileStone <br /></span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0, transition: { delay: 0.16 } }}
-            className="text-[15px] text-[#888888] leading-[1.85] mb-9 max-w-[400px] font-dm-sans"
-          >
-            Your dopamine hijacked by social media. Your attention sold to advertisers.
-            Viram takes it back — and makes discipline feel{' '}
-            <em className="text-[#e8e8e8] italic">electric.</em>
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0, transition: { delay: 0.22 } }}
-            className="flex gap-[10px] flex-wrap mb-[52px]"
-          >
-            <button
-              onClick={onStart}
-              className="px-7 py-[13px] rounded-full bg-white text-black border-none text-sm font-bold cursor-pointer font-dm-sans flex items-center gap-[7px] transition-all duration-200 hover:-translate-y-[2px] hover:bg-[#e8e8e8] hover:shadow-[0_10px_32px_rgba(255,255,255,0.15)]"
+            <motion.h1
+              initial={{ opacity: 0, y: 22 }}
+              animate={{ opacity: 1, y: 0, transition: { delay: 0.08 } }}
+              className="font-display font-bold leading-[0.96] tracking-[-0.02em] mb-6 text-[var(--text-hi)] text-[clamp(50px,6vw,84px)]"
+              style={{ transform: `translate(${heroOffset.x * 0.18}px, ${heroOffset.y * 0.18}px)`, transition: 'transform 0.14s ease-out' }}
             >
-              <RiRocketLine size={15} /> Start Your Journey
-            </button>
-            <button
-              onClick={onDemo}
-              className="px-7 py-[13px] rounded-full bg-white/[0.04] text-[#e8e8e8] border border-[#2a2a2a] text-sm font-semibold cursor-pointer font-dm-sans flex items-center gap-[7px] transition-all duration-200 hover:border-[#555555] hover:bg-white/[0.08]"
-            >
-              <RiPlayCircleLine size={15} /> Preview Dashboard
-            </button>
-          </motion.div>
+              Turn Your <br />Goals<br />
+              <span className="text-[var(--text-lo)] italic">Into a<br />MileStone</span>
+            </motion.h1>
 
-          {/* Stats row */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1, transition: { delay: 0.3 } }}
-            className="flex border-t border-[#1a1a1a] pt-7 flex-wrap gap-y-4"
-          >
-            {STATS.map(({ num, label }, i) => (
-              <div
-                key={label}
-                className={`flex-1 min-w-[80px] ${i > 0 ? 'pl-6' : ''} ${i < STATS.length - 1 ? 'pr-6 border-r border-[#1a1a1a]' : ''}`}
+            <motion.p
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0, transition: { delay: 0.16 } }}
+              className="text-[15px] text-[var(--text-mid)] leading-[1.9] mb-9 max-w-[400px] font-light"
+            >
+              Your dopamine hijacked by social media. Your attention sold to advertisers.
+              Viram takes it back - and makes discipline feel{' '}
+              <em className="not-italic font-display text-[17px] font-semibold text-[var(--text-hi)]">automatic.</em>
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0, transition: { delay: 0.22 } }}
+              className="flex flex-wrap gap-2.5 mb-[52px]"
+            >
+              {/* ★ PRIMARY CTA — terracotta accent appears only here and in the footer CTA */}
+              <button
+                onClick={() => {}}
+                className="inline-flex items-center gap-1.5 cursor-pointer px-7 py-3 rounded-full bg-[var(--accent)] text-[#FAF5EC] border-0 text-sm font-medium tracking-[0.02em] shadow-[0_6px_20px_rgba(184,112,78,0.28)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(184,112,78,0.36)] active:scale-[0.975]"
               >
-                <div className="font-syne text-[28px] font-black text-white tracking-[-0.03em]">{num}</div>
-                <div className="text-[11px] text-[#3a3a3a] mt-1 font-dm-sans leading-[1.4]">{label}</div>
-              </div>
-            ))}
-          </motion.div>
-        </div>
+                <RiRocketLine size={15} /> Start Your Journey
+              </button>
+              <button
+                onClick={() => {}}
+                className="inline-flex items-center gap-1.5 cursor-pointer px-7 py-3 rounded-full bg-[var(--bg-card)] text-[var(--text-mid)] border border-[var(--border-mid)] text-sm font-light shadow-[var(--shadow-xs)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[rgba(55,38,22,0.22)] hover:shadow-[var(--shadow-sm)] active:scale-[0.975]"
+              >
+                <RiPlayCircleLine size={15} /> Preview Dashboard
+              </button>
+            </motion.div>
 
-        {/* Right: avatar card */}
-        <AvatarCard avatarStats={avatarStats} heroOffset={heroOffset} />
-      </section>
+            {/* Stats row */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1, transition: { delay: 0.3 } }}
+              className="flex flex-wrap gap-y-4 border-t border-[var(--border)] pt-7"
+            >
+              {STATS.map(({ num, label }, i) => (
+                <div
+                  key={label}
+                  className={`flex-[1_1_80px] ${i > 0 ? 'pl-6' : ''} ${i < STATS.length - 1 ? 'pr-6 border-r border-[var(--border)]' : ''}`}
+                >
+                  <div className="font-display text-[30px] font-bold tracking-[-0.02em] text-[var(--text-hi)]">{num}</div>
+                  <div className="text-[11px] text-[var(--text-ghost)] mt-0.5 leading-[1.5]">{label}</div>
+                </div>
+              ))}
+            </motion.div>
+          </div>
 
-      {/* ── MARQUEE ───────────────────────────────────────────────────────── */}
-      <div className="border-t border-[#1a1a1a] border-b relative overflow-hidden bg-white/[0.01]">
-        <div className="absolute left-0 top-0 bottom-0 w-[100px] bg-gradient-to-r from-black to-transparent z-[2]" />
-        <div className="absolute right-0 top-0 bottom-0 w-[100px] bg-gradient-to-l from-black to-transparent z-[2]" />
-        <div className="py-[14px] overflow-hidden">
-          <div
-            className="inline-flex whitespace-nowrap"
-            style={{ animation: 'marquee 32s linear infinite' }}
-          >
-            {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((item, i) => (
-              <span key={i} className="inline-flex items-center gap-3 px-[22px]">
-                <span className="font-syne text-[10px] font-black tracking-[0.24em] uppercase text-[#3a3a3a]">{item}</span>
-                <span className="w-[3px] h-[3px] rounded-full bg-[#2a2a2a] flex-shrink-0" />
-              </span>
-            ))}
+          {/* Right: avatar card */}
+          <AvatarCard avatarStats={avatarStats} heroOffset={heroOffset} />
+        </section>
+
+        {/* ──────────────────────────────────────────────────── MARQUEE */}
+        <div className="border-t border-b border-[var(--border)] bg-[var(--bg-inset)] relative overflow-hidden">
+          <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-[var(--bg-inset)] to-transparent z-[2]" />
+          <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-[var(--bg-inset)] to-transparent z-[2]" />
+          <div className="py-3.5 overflow-hidden">
+            <div className="inline-flex whitespace-nowrap" style={{ animation: 'marquee 38s linear infinite' }}>
+              {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((item, i) => (
+                <span key={i} className="inline-flex items-center gap-3 px-5">
+                  <span className="font-body text-[9px] font-semibold tracking-[0.28em] uppercase text-[var(--text-ghost)]">{item}</span>
+                  <span className="w-[2px] h-[2px] rounded-full bg-[var(--border-mid)] shrink-0 inline-block" />
+                </span>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* ── THE PROBLEM ───────────────────────────────────────────────────── */}
-      <section className="px-[5vw] py-[100px] border-t border-[#1a1a1a]" id="problem">
-        <div className="max-w-[1100px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-[80px] items-center">
-          <div>
-            <motion.div {...fadeUp(0)}>
-              <Tag><RiErrorWarningLine size={11} /> The Problem</Tag>
+        {/* ──────────────────────────────────────────────────── THE PROBLEM */}
+        <section className="px-[5vw] py-[108px] border-t border-[var(--border)]" id="problem">
+          <div
+            className="max-w-[1100px] mx-auto grid gap-20 items-center"
+            style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}
+          >
+            <div>
+              <motion.div {...fadeUp(0)}><Tag><RiErrorWarningLine size={11} /> The Problem</Tag></motion.div>
+              <motion.h2
+                {...fadeUp(0.06)}
+                className="font-display font-bold leading-[1.0] tracking-[-0.02em] text-[var(--text-hi)] mb-6 text-[clamp(36px,5vw,64px)]"
+              >
+                You're not<br />lazy. You're<br />
+                <span className="text-[var(--text-lo)] italic">engineered<br />to scroll.</span>
+              </motion.h2>
+              <motion.p {...fadeUp(0.12)} className="text-[15px] text-[var(--text-mid)] leading-[1.9] font-light mb-6">
+                Billion-dollar teams optimize every pixel of TikTok, Instagram, and YouTube to
+                hijack your dopamine system. Your willpower was never the enemy — the incentive
+                mismatch was.
+              </motion.p>
+              <motion.button
+                {...fadeUp(0.18)}
+                onClick= {() => {}}
+                className="inline-flex items-center gap-1.5 cursor-pointer px-[18px] py-2 rounded-full text-[13px] font-light text-[var(--text-mid)] bg-[var(--bg-card)] border border-[var(--border-mid)] shadow-[var(--shadow-xs)] transition-all duration-200 hover:border-[rgba(55,38,22,0.22)] hover:shadow-[var(--shadow-sm)] hover:-translate-y-px active:scale-[0.975]"
+              >
+                Read the full manifesto <RiArrowRightLine size={14} />
+              </motion.button>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              {PROB_STATS.map(({ num, label }, i) => (
+                <motion.div
+                  key={label}
+                  {...fadeUp(i * 0.07)}
+                  className="flex items-center gap-5 px-6 py-5 rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--bg-card)] shadow-[var(--shadow-xs)] cursor-default transition-all duration-[280ms] hover:-translate-y-1 hover:shadow-[var(--shadow-lift)]"
+                >
+                  <div className="font-display font-bold text-[32px] tracking-[-0.02em] text-[var(--text-hi)] min-w-[110px] shrink-0">{num}</div>
+                  <div className="text-[13px] font-light text-[var(--text-mid)] leading-[1.6]">{label}</div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ──────────────────────────────────────────────────── FEATURES */}
+        <section className="px-[5vw] py-[108px] border-t border-[var(--border)]" id="features">
+          <div className="max-w-[1100px] mx-auto">
+            <motion.div {...fadeUp(0)}><Tag><RiSparkling2Line size={11} /> How It Works</Tag></motion.div>
+            <motion.h2
+              {...fadeUp(0.06)}
+              className="font-display font-bold leading-[1.05] tracking-[-0.02em] text-[var(--text-hi)] mb-14 text-[clamp(28px,4.5vw,54px)]"
+            >
+              Everything designed to<br />
+              <em className="italic text-[var(--text-lo)]">rewire your reward system.</em>
+            </motion.h2>
+
+            <div className="grid grid-cols-3 gap-3.5">
+              {/* Hero feature — spans 2 rows */}
+              <motion.div
+                {...fadeUp(0)}
+                className="row-span-2 flex flex-col justify-between p-8 rounded-[var(--r-lg)] min-h-[300px] cursor-default border border-[var(--border)] shadow-[var(--shadow-sm)] transition-all duration-[280ms] hover:-translate-y-1 hover:shadow-[var(--shadow-lift)]"
+                style={{ background: 'linear-gradient(145deg, var(--bg-card) 0%, var(--bg-inset) 100%)' }}
+              >
+                <div>
+                  <div className="w-[50px] h-[50px] rounded-[14px] flex items-center justify-center mb-5 bg-[var(--bg)] border border-[var(--border-mid)] shadow-[var(--shadow-xs)]">
+                    <RiUserHeartLine size={22} className="text-[var(--text-mid)]" />
+                  </div>
+                  <div className="font-display text-[22px] font-bold mb-3 text-[var(--text-hi)] tracking-[-0.01em]">Living Avatar</div>
+                  <div className="text-[14px] font-light text-[var(--text-mid)] leading-[1.8]">
+                    Your habits manifest in your character's stats in real time. Every deep work
+                    session fuels your avatar. Every scroll drains it. Watch yourself grow — or wither.
+                  </div>
+                </div>
+                <div className="mt-7 p-4 rounded-[var(--r-sm)] bg-[var(--bg)] border border-[var(--border)] shadow-[var(--shadow-xs)]">
+                  <div className="text-[10px] font-medium tracking-[0.16em] uppercase text-[var(--text-lo)] mb-1.5">Your stats right now</div>
+                  <div className="font-display font-bold text-[28px] text-[var(--text-hi)]">LV 14</div>
+                  <div className="text-[11px] font-light text-[var(--text-ghost)] mt-0.5">Focused Human · 2,340 XP</div>
+                </div>
+              </motion.div>
+
+              {FEATURES.slice(1).map(({ Icon, title, body }, i) => (
+                <motion.div
+                  key={title}
+                  {...fadeUp((i + 1) * 0.055)}
+                  className="p-6 rounded-[var(--r-md)] cursor-default bg-[var(--bg-card)] border border-[var(--border)] shadow-[var(--shadow-xs)] transition-all duration-[280ms] hover:-translate-y-1 hover:shadow-[var(--shadow-lift)]"
+                >
+                  <div className="w-[42px] h-[42px] rounded-[12px] flex items-center justify-center mb-4 bg-[var(--bg-inset)] border border-[var(--border)] shadow-[var(--shadow-xs)]">
+                    <Icon size={18} className="text-[var(--text-lo)]" />
+                  </div>
+                  <div className="font-display text-[16px] font-bold mb-1.5 text-[var(--text-hi)]">{title}</div>
+                  <div className="text-[12px] font-light text-[var(--text-lo)] leading-[1.75]">{body}</div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ──────────────────────────────────────────────────── RESOURCES */}
+        <section className="px-[5vw] py-[108px] border-t border-[var(--border)]" id="resources">
+          <div className="max-w-[1100px] mx-auto">
+
+            <motion.div {...fadeUp(0)} className="text-center mb-14">
+              <div className="inline-flex items-center gap-1.5 text-[10px] tracking-[0.24em] text-[var(--text-lo)] uppercase font-medium mb-6">
+                <RiYoutubeLine size={11} /> Resources
+              </div>
+              <h2 className="font-display font-bold text-[var(--text-hi)] leading-[0.92] tracking-[-0.02em] text-[clamp(36px,8vw,72px)]">
+                Providing<br />resources that<br />actually
+                <span className="block italic text-[var(--text-lo)] font-normal leading-[1.25] text-[clamp(26px,6vw,58px)]">
+                  move the needle.
+                </span>
+              </h2>
+              <p className="max-w-[560px] mx-auto mt-6 leading-[1.8] text-[var(--text-mid)] italic font-display text-[clamp(15px,1.2vw,18px)] font-normal">
+                Not dopamine junk — but{' '}
+                <strong className="not-italic text-[var(--text-hi)] underline underline-offset-[3px] decoration-[var(--border-mid)]">
+                  curated knowledge
+                </strong>{' '}
+                that builds you. Every playlist below has been selected for its ability to deepen
+                focus, rewire habits, or accelerate real growth.
+              </p>
+            </motion.div>
+
+            <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+              {PLAYLISTS.map((pl, i) => (
+                <motion.div
+                  key={pl.title}
+                  {...fadeUp(i * 0.04)}
+                  onClick={() => window.open(pl.url, '_blank')}
+                  className="rounded-[var(--r-lg)] overflow-hidden cursor-pointer bg-[var(--bg-card)] border border-[var(--border)] shadow-[var(--shadow-xs)] transition-all duration-[280ms] hover:-translate-y-1 hover:shadow-[var(--shadow-lift)]"
+                >
+                  {/* Thumbnail */}
+                  <div className="relative overflow-hidden bg-[var(--bg-inset)]" style={{ aspectRatio: '16/9' }}>
+                    <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #EDE5D5 0%, #E0D8C8 50%, #E8E0D0 100%)' }} />
+                    <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 14px, rgba(55,38,22,0.6) 15px)' }} />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-[46px] h-[46px] rounded-full flex items-center justify-center shadow-[var(--shadow-md)] opacity-[0.88]" style={{ background: 'var(--text-hi)' }}>
+                        <RiPlayFill size={18} className="text-[var(--bg)] ml-0.5" />
+                      </div>
+                    </div>
+                    <div className="absolute top-2.5 right-2.5 flex items-center gap-1 px-2 py-[3px] rounded-[6px] bg-[rgba(42,34,24,0.65)] border border-[rgba(255,255,255,0.08)]">
+                      <RiYoutubeLine size={10} className="text-[#F0E8DA]" />
+                      <span className="font-body text-[9px] font-semibold tracking-[0.08em] text-[#F0E8DA]">YT</span>
+                    </div>
+                  </div>
+                  <div className="px-4 pt-3 pb-4 border-t border-[var(--border)]">
+                    <div className="text-[9px] font-medium tracking-[0.18em] uppercase text-[var(--text-lo)] mb-1">{pl.channel}</div>
+                    <div className="font-display text-[14px] font-bold mb-1.5 leading-[1.35] text-[var(--text-hi)] tracking-[-0.01em]">{pl.title}</div>
+                    <div className="text-[10px] font-light text-[var(--text-ghost)]">{pl.meta}</div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ──────────────────────────────────────────────────── TESTIMONIALS */}
+        <section className="py-[108px] overflow-hidden border-t border-[var(--border)]">
+          <div className="text-center mb-14 px-[5vw]">
+            <motion.div {...fadeUp(0)} className="flex justify-center">
+              <Tag><RiChatQuoteLine size={11} /> Results</Tag>
             </motion.div>
             <motion.h2
               {...fadeUp(0.06)}
-              className="font-syne font-black leading-[1.0] tracking-[-0.04em] text-white mb-6"
-              style={{ fontSize: 'clamp(36px,5vw,62px)' }}
+              className="font-display font-bold leading-[1.05] tracking-[-0.02em] text-[var(--text-hi)] text-[clamp(26px,4vw,50px)]"
             >
-              You're not<br />lazy. You're<br /><span className="text-[#888888]">engineered</span><br />to scroll.
+              People who chose<br />
+              <em className="italic text-[var(--text-lo)]">the harder path.</em>
             </motion.h2>
-            <motion.p {...fadeUp(0.12)} className="text-[15px] text-[#888888] leading-[1.85] font-dm-sans mb-6">
-              Billion-dollar teams optimize every pixel of TikTok, Instagram, and YouTube to
-              hijack your dopamine system. Your willpower was never the enemy — the incentive
-              mismatch was.
-            </motion.p>
-            <motion.button
-              {...fadeUp(0.18)}
-              onClick={onProblem}
-              className="inline-flex items-center gap-[6px] text-[13px] text-[#cccccc] bg-transparent border border-[#2a2a2a] rounded-full px-[18px] py-2 cursor-pointer font-dm-sans font-semibold transition-all duration-200 hover:bg-white/[0.06] hover:border-[#555555]"
-            >
-              Read the full manifesto <RiArrowRightLine size={14} />
-            </motion.button>
           </div>
 
-          <div className="flex flex-col gap-[2px]">
-            {PROB_STATS.map(({ num, label }, i) => (
-              <motion.div
-                key={label}
-                {...fadeUp(i * 0.08)}
-                className="px-6 py-5 rounded-[14px] border border-[#1a1a1a] bg-white/[0.02] flex items-center gap-5 cursor-default transition-all duration-200 hover:bg-white/[0.04] hover:border-[#3a3a3a]"
-              >
-                <div className="font-syne font-black text-[32px] text-white tracking-[-0.03em] min-w-[110px] flex-shrink-0">{num}</div>
-                <div className="text-[13px] text-[#888888] leading-[1.5] font-dm-sans">{label}</div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── FEATURES ──────────────────────────────────────────────────────── */}
-      <section className="px-[5vw] py-[100px] border-t border-[#1a1a1a]" id="features">
-        <div className="max-w-[1100px] mx-auto">
-          <motion.div {...fadeUp(0)}>
-            <Tag><RiSparkling2Line size={11} /> How It Works</Tag>
-          </motion.div>
-          <motion.h2
-            {...fadeUp(0.06)}
-            className="font-syne font-black leading-[1.05] tracking-[-0.04em] text-white mb-14"
-            style={{ fontSize: 'clamp(28px,4.5vw,52px)' }}
-          >
-            Everything designed to<br />rewire your reward system.
-          </motion.h2>
-
-          {/* Bento grid — large card spans 2 rows */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-[14px]">
-            {/* Large hero feature */}
-            <motion.div
-              {...fadeUp(0)}
-              className="md:row-span-2 p-8 rounded-[22px] border border-[#2a2a2a] bg-gradient-to-br from-[#0a0a0a] to-black flex flex-col justify-between min-h-[300px] cursor-default transition-all duration-[250ms] hover:border-[#555555] hover:-translate-y-1"
+          <div className="relative overflow-hidden">
+            <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-[var(--bg)] to-transparent z-[2] pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-[var(--bg)] to-transparent z-[2] pointer-events-none" />
+            <div
+              id="testi-track"
+              className="inline-flex gap-4 px-4 py-2 whitespace-nowrap"
+              style={{ animation: 'marquee-testi 50s linear infinite' }}
             >
-              <div>
-                <div className="w-[52px] h-[52px] rounded-2xl flex items-center justify-center mb-[22px] border border-[#2a2a2a] bg-white/[0.04]">
-                  <RiUserHeartLine size={24} className="text-[#cccccc]" />
-                </div>
-                <div className="font-syne text-xl font-black mb-3 text-white">Living Avatar</div>
-                <div className="text-sm text-[#888888] leading-[1.75] font-dm-sans">
-                  Your habits manifest in your character's stats in real time. Every deep work
-                  session fuels your avatar. Every scroll drains it. Watch yourself grow — or wither.
-                </div>
-              </div>
-              <div className="mt-7 px-[18px] py-[14px] rounded-[14px] bg-white/[0.03] border border-[#1a1a1a]">
-                <div className="text-[10px] text-[#aaaaaa] uppercase tracking-[0.14em] font-bold mb-[6px] font-dm-sans">Your stats right now</div>
-                <div className="font-syne font-black text-[28px] text-white">LV 14</div>
-                <div className="text-[11px] text-[#555555] font-dm-sans">Discipline Monk · 2,340 XP</div>
-              </div>
-            </motion.div>
-
-            {/* Regular feature cards */}
-            {FEATURES.slice(1).map(({ Icon, title, body }, i) => (
-              <motion.div
-                key={title}
-                {...fadeUp((i + 1) * 0.06)}
-                className="p-6 rounded-[18px] border border-[#1a1a1a] bg-[#0a0a0a] cursor-default transition-all duration-[250ms] hover:border-[#3a3a3a] hover:-translate-y-[3px]"
-              >
-                <div className="w-[42px] h-[42px] rounded-xl flex items-center justify-center mb-4 border border-[#2a2a2a] bg-white/[0.04]">
-                  <Icon size={19} className="text-[#cccccc]" />
-                </div>
-                <div className="font-syne text-sm font-black mb-[7px] text-white">{title}</div>
-                <div className="text-xs text-[#555555] leading-[1.65] font-dm-sans">{body}</div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── RESOURCES ─────────────────────────────────────────────────────── */}
-      {/*   UI from doc 3: centered heading + Instrument Serif italic + 3-col grid */}
-      <section className="px-[5vw] py-[100px] border-t border-[#1a1a1a]" id="resources">
-        <div className="max-w-[1100px] mx-auto">
-
-          {/* Centered heading block — from doc 3's layout */}
-          <motion.div {...fadeUp(0)} className="text-center mb-14">
-            <div className="inline-flex items-center gap-[7px] text-[11px] tracking-[0.22em] text-[#cccccc] uppercase font-bold mb-7 font-dm-sans">
-              <RiYoutubeLine size={11} /> Resources
-            </div>
-            <h2
-              className="font-syne font-black text-white leading-[0.88] tracking-[-0.04em]"
-              style={{ fontSize: 'clamp(38px, 8.5vw, 70px)' }}
-            >
-              Providing<br />resources that<br />actually
-              <span
-                className="block italic text-[#888888] leading-[1.25]"
-                style={{
-                  fontFamily: "'Instrument Serif', Georgia, serif",
-                  fontSize: 'clamp(28px, 6vw, 56px)',
-                }}
-              >
-                move the needle.
-              </span>
-            </h2>
-            <p
-              className="max-w-[620px] mx-auto mt-7 leading-[1.7] text-[#aaaaaa] italic"
-              style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: 'clamp(15px, 1.3vw, 18px)' }}
-            >
-              Not dopamine junk — but{' '}
-              <strong className="not-italic text-white underline" style={{ fontFamily: "'Instrument Serif', Georgia, serif" }}>
-                curated knowledge
-              </strong>{' '}
-              that builds you. Every playlist below has been selected for its ability to deepen
-              focus, rewire habits, or accelerate real growth.
-            </p>
-          </motion.div>
-
-          {/* 3-column playlist grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[18px]">
-            {PLAYLISTS.map((pl, i) => (
-              <motion.div
-                key={pl.title}
-                {...fadeUp(i * 0.04)}
-                onClick={() => window.open(pl.url, '_blank')}
-                className="rounded-[20px] border border-[#1a1a1a] bg-[#0a0a0a] overflow-hidden cursor-pointer transition-all duration-[250ms] hover:border-[#555555] hover:-translate-y-1"
-              >
-                {/* Thumbnail — BNW gradient */}
-                <div className="aspect-video relative overflow-hidden bg-[#0d0d0d]">
-                  <div
-                    className="absolute inset-0"
-                    style={{ background: `linear-gradient(135deg, #0d0d0d 0%, #1c1c1c 50%, #0a0a0a 100%)` }}
-                  />
-                  {/* Subtle grid texture on thumbnail */}
-                  <div
-                    className="absolute inset-0 opacity-[0.07]"
-                    style={{ backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 11px,#fff 12px),repeating-linear-gradient(90deg,transparent,transparent 11px,#fff 12px)' }}
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-[52px] h-[52px] rounded-full bg-white/90 flex items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.6)]">
-                      <RiPlayFill size={22} className="text-black ml-[3px]" />
+              {[...TESTIMONIALS, ...TESTIMONIALS].map((t, i) => (
+                <div
+                  key={i}
+                  className="w-[308px] shrink-0 inline-block align-top whitespace-normal p-5 rounded-[var(--r-lg)] cursor-default bg-[var(--bg-card)] border border-[var(--border)] shadow-[var(--shadow-xs)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-md)] hover:border-[var(--border-mid)]"
+                  onMouseEnter={() => { document.getElementById('testi-track').style.animationPlayState = 'paused' }}
+                  onMouseLeave={() => { document.getElementById('testi-track').style.animationPlayState = 'running' }}
+                >
+                  {/* Stars — warm amber only; never terracotta */}
+                  <div className="flex gap-0.5 mb-3">
+                    {[...Array(5)].map((_, j) => <RiStarFill key={j} size={9} style={{ color: 'var(--amber)' }} />)}
+                  </div>
+                  <p className="font-display italic text-[15px] font-normal text-[var(--text-mid)] leading-[1.75] mb-4">"{t.quote}"</p>
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center font-display text-[13px] font-bold bg-[var(--bg-inset)] text-[var(--text-mid)] border border-[var(--border-mid)]">
+                      {t.initials}
+                    </div>
+                    <div>
+                      <div className="text-[12px] font-medium text-[var(--text-hi)]">{t.name}</div>
+                      <div className="text-[10px] font-light text-[var(--text-ghost)]">{t.role}</div>
                     </div>
                   </div>
-                  <div className="absolute top-[10px] right-[10px] bg-black/80 border border-[#2a2a2a] rounded-[6px] px-2 py-[3px] flex items-center gap-[5px] text-[10px] font-bold text-[#cccccc] font-dm-sans">
-                    <RiYoutubeLine size={10} /> YT
-                  </div>
                 </div>
-
-                {/* Card body */}
-                <div className="p-[14px_16px_16px] border-t border-[#1a1a1a]">
-                  <div className="text-[9px] text-[#aaaaaa] uppercase tracking-[0.16em] font-black mb-[5px] font-dm-sans">{pl.channel}</div>
-                  <div className="text-sm font-bold mb-[6px] leading-[1.35] text-white font-syne">{pl.title}</div>
-                  <div className="text-[10px] text-[#555555] font-dm-sans">{pl.meta}</div>
-                </div>
-              </motion.div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ── TESTIMONIALS ──────────────────────────────────────────────────── */}
-      {/*   Grayscale hover effect from doc 3 */}
-      <section className="py-[100px] overflow-hidden border-t border-[#1a1a1a]">
-        <div className="text-center mb-14 px-[5vw]">
+        {/* ──────────────────────────────────────────────────── FINAL CTA */}
+        <section className="relative overflow-hidden px-[5vw] py-[108px] pb-[128px] text-center border-t border-[var(--border)]">
+          <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 60% 60% at 50% 50%, rgba(184,112,78,0.06) 0%, transparent 68%)' }} />
           <motion.div {...fadeUp(0)} className="flex justify-center">
-            <Tag center><RiChatQuoteLine size={11} /> Results</Tag>
+            <Tag><RiSparkling2Line size={11} /> Your move</Tag>
           </motion.div>
           <motion.h2
             {...fadeUp(0.06)}
-            className="font-syne font-black leading-[1.05] tracking-[-0.04em] text-white"
-            style={{ fontSize: 'clamp(26px,4vw,48px)' }}
+            className="font-display font-bold leading-[1.0] tracking-[-0.02em] text-[var(--text-hi)] mb-5 text-[clamp(32px,5.5vw,66px)]"
           >
-            People who chose<br />the harder path.
+            Every day you wait<br />
+            <em className="italic text-[var(--text-lo)]">is a day on their terms.</em>
           </motion.h2>
-        </div>
-
-        <div className="relative overflow-hidden">
-          <div className="absolute left-0 top-0 bottom-0 w-[100px] bg-gradient-to-r from-black to-transparent z-[2] pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-[100px] bg-gradient-to-l from-black to-transparent z-[2] pointer-events-none" />
-
-          <div
-            id="testi-track"
-            className="inline-flex gap-4 px-4 py-2 whitespace-nowrap"
-            style={{ animation: 'marquee-testi 44s linear infinite' }}
+          <motion.p
+            {...fadeUp(0.12)}
+            className="max-w-[380px] mx-auto mb-10 text-[var(--text-mid)] leading-[1.9] text-[15px] font-light"
           >
-            {[...TESTIMONIALS, ...TESTIMONIALS].map((t, i) => (
-              <div
-                key={i}
-                className="testi-card w-[310px] flex-shrink-0 p-[22px_24px] rounded-[20px] border border-[#1a1a1a] bg-white/[0.025] whitespace-normal inline-block align-top cursor-default transition-all duration-[350ms] hover:border-[#555555] hover:bg-white/[0.06] hover:-translate-y-1"
-                onMouseEnter={() => { document.getElementById('testi-track').style.animationPlayState = 'paused' }}
-                onMouseLeave={() => { document.getElementById('testi-track').style.animationPlayState = 'running' }}
-              >
-                <div className="flex gap-[2px] mb-3">
-                  {[...Array(5)].map((_, j) => <RiStarFill key={j} size={9} className="text-white" />)}
-                </div>
-                <p className="font-dm-sans italic text-sm text-[#cccccc] leading-[1.75] mb-[18px]">"{t.quote}"</p>
-                <div className="flex items-center gap-[10px]">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center font-syne text-xs font-black bg-[#1a1a1a] text-[#cccccc] border border-[#2a2a2a] flex-shrink-0">
-                    {t.initials}
+            Stop watching other people live. Build the discipline system your future self will thank you for.
+          </motion.p>
+          <motion.div {...fadeUp(0.18)} className="flex gap-3 justify-center flex-wrap">
+            {/* ★ FINAL PRIMARY CTA — the second and last terracotta button */}
+            <button
+              onClick={()  => {}}
+              className="inline-flex items-center gap-2 cursor-pointer px-10 py-4 rounded-full bg-[var(--accent)] text-[#FAF5EC] border-0 text-[15px] font-medium tracking-[0.02em] shadow-[0_8px_28px_rgba(184,112,78,0.30)] transition-all duration-200 hover:-translate-y-[3px] hover:shadow-[0_14px_40px_rgba(184,112,78,0.38)] active:scale-[0.975]"
+            >
+              <RiRocketLine size={16} /> Forge Your Avatar Now
+            </button>
+          </motion.div>
+        </section>
+
+        {/* ──────────────────────────────────────────────────── FOOTER */}
+        <footer className="border-t border-[var(--border)] bg-[var(--bg-inset)] px-[5vw] pt-[60px] pb-10">
+          <div className="max-w-[1100px] mx-auto grid gap-10" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))' }}>
+
+            {/* Brand */}
+            <div>
+              <div className="font-display text-[22px] font-bold tracking-[0.12em] mb-4">
+                <span className="text-[var(--text-hi)]">VI</span>
+                <span className="text-[var(--text-ghost)]">RAM</span>
+              </div>
+              <p className="text-[13px] font-light text-[var(--text-lo)] leading-[1.8] max-w-[220px] mb-5">
+                The productivity system that fights back against the attention economy.
+              </p>
+              <div className="flex gap-2">
+                {[RiTwitterXLine, RiInstagramLine, RiDiscordLine, RiYoutubeLine].map((Icon, k) => (
+                  <div
+                    key={k}
+                    className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer bg-[var(--bg-card)] border border-[var(--border-mid)] shadow-[var(--shadow-xs)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-sm)]"
+                  >
+                    <Icon size={13} className="text-[var(--text-lo)]" />
                   </div>
-                  <div>
-                    <div className="text-xs font-bold text-white font-dm-sans">{t.name}</div>
-                    <div className="text-[10px] text-[#555555] font-dm-sans">{t.role}</div>
-                  </div>
-                </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Link columns */}
+            {[
+              { title: 'Product',    links: ['Get Started', 'Mind Library', 'Features', 'Dashboard'] },
+              { title: 'Resources',  links: ['Playlists', 'Deep Work', 'Scriptures', 'Digital Detox'] },
+              { title: 'Philosophy', links: ['The Problem', 'Our Manifesto', 'Privacy', 'Sign Up Free'] },
+            ].map(col => (
+              <div key={col.title}>
+                <div className="text-[9px] font-semibold tracking-[0.2em] uppercase text-[var(--text-ghost)] mb-4">{col.title}</div>
+                {col.links.map(label => (
+                  <Link
+                    key={label}
+                    to="/"
+                    className="block text-[13px] font-light text-[var(--text-lo)] mb-2.5 no-underline transition-colors duration-200 hover:text-[var(--text-hi)]"
+                  >
+                    {label}
+                  </Link>
+                ))}
               </div>
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* ── FINAL CTA ─────────────────────────────────────────────────────── */}
-      <section className="px-[5vw] py-[100px] pb-[120px] text-center border-t border-[#1a1a1a] relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full"
-            style={{ background: 'radial-gradient(ellipse,rgba(255,255,255,0.04) 0%,transparent 60%)', filter: 'blur(60px)' }}
-          />
-        </div>
-
-        <motion.div {...fadeUp(0)} className="flex justify-center">
-          <Tag><RiSparkling2Line size={11} /> Your move</Tag>
-        </motion.div>
-
-        <motion.h2
-          {...fadeUp(0.06)}
-          className="font-syne font-black leading-[1.0] tracking-[-0.04em] text-white mb-5"
-          style={{ fontSize: 'clamp(32px,5.5vw,64px)' }}
-        >
-          Every day you wait<br />is a day on their terms.
-        </motion.h2>
-
-        <motion.p {...fadeUp(0.12)} className="max-w-[400px] mx-auto mb-10 text-[#888888] leading-[1.8] text-[15px] font-dm-sans">
-          Stop watching other people live. Build the discipline system your future self
-          will thank you for.
-        </motion.p>
-
-        <motion.div {...fadeUp(0.18)} className="flex gap-3 justify-center flex-wrap">
-          <button
-            onClick={onStart}
-            className="px-[34px] py-[15px] rounded-full bg-white text-black border-none text-[15px] font-bold cursor-pointer font-dm-sans flex items-center gap-2 transition-all duration-200 shadow-[0_8px_40px_rgba(255,255,255,0.1)] hover:bg-[#e8e8e8] hover:-translate-y-[2px] hover:shadow-[0_14px_50px_rgba(255,255,255,0.18)]"
-          >
-            <RiRocketLine size={16} /> Forge Your Avatar Now
-          </button>
-        </motion.div>
-      </section>
-
-      {/* ── FOOTER ────────────────────────────────────────────────────────── */}
-      <footer className="border-t border-[#1a1a1a] px-[5vw] pt-[60px] pb-10 bg-black/40">
-        <div className="max-w-[1100px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-10">
-
-          {/* Brand col */}
-          <div>
-            <div className="mb-4 font-syne text-xl font-black tracking-[0.18em]">
-              <span className="text-white">VI</span>
-              <span className="text-[#3a3a3a]">RAM</span>
+          {/* Bottom bar */}
+          <div className="max-w-[1100px] mx-auto mt-10 pt-6 border-t border-[var(--border)] flex items-center justify-between flex-wrap gap-3">
+            <div className="text-[12px] font-light text-[var(--text-ghost)]">
+              © 2026 Viram. Built for those who refuse to be the product.
             </div>
-            <p className="text-[13px] text-[#555555] leading-[1.75] max-w-[230px] mb-[22px] font-dm-sans">
-              The productivity system that fights back against the attention economy.
-            </p>
-            <div className="flex gap-2">
-              {[RiTwitterXLine, RiInstagramLine, RiDiscordLine, RiYoutubeLine].map((Icon, k) => (
-                <div
-                  key={k}
-                  className="w-8 h-8 rounded-full border border-[#1a1a1a] flex items-center justify-center cursor-default transition-all duration-200 hover:border-[#555555] hover:bg-white/[0.06]"
-                >
-                  <Icon size={13} className="text-[#555555]" />
-                </div>
-              ))}
+            <div className="flex items-center gap-1.5 text-[12px] font-light text-[var(--text-ghost)]">
+              <span className="w-[5px] h-[5px] rounded-full bg-[var(--text-lo)] inline-block" style={{ animation: 'pulse-dot 3s ease-in-out infinite' }} />
+              Systems online
             </div>
           </div>
+        </footer>
 
-          {/* Link cols */}
-          {[
-            { title: 'Product',    links: [{ label: 'Get Started', to: '/' }, { label: 'Mind Library', to: '/' }, { label: 'Features', to: '/' }, { label: 'Dashboard', to: '/' }] },
-            { title: 'Resources',  links: [{ label: 'Playlists', to: '/' }, { label: 'Deep Work', to: '/' }, { label: 'Atomic Habits', to: '/' }, { label: 'Digital Detox', to: '/' }] },
-            { title: 'Philosophy', links: [{ label: 'The Problem', to: '/' }, { label: 'Our Manifesto', to: '/' }, { label: 'Privacy', to: '/' }, { label: 'Sign Up Free', to: '/' }] },
-          ].map(col => (
-            <div key={col.title}>
-              <div className="text-[10px] tracking-[0.16em] uppercase text-[#2a2a2a] font-black mb-[18px] font-dm-sans">{col.title}</div>
-              {col.links.map(({ label, to }) => (
-                <Link
-                  key={label}
-                  to={to}
-                  className="block text-[13px] text-[#555555] mb-[11px] no-underline font-dm-sans transition-colors duration-200 hover:text-white"
-                >
-                  {label}
-                </Link>
-              ))}
-            </div>
-          ))}
-        </div>
-
-        {/* Footer bottom bar */}
-        <div className="max-w-[1100px] mx-auto mt-10 pt-6 border-t border-[#1a1a1a] flex items-center justify-between flex-wrap gap-3">
-          <div className="text-xs text-[#3a3a3a] font-dm-sans">
-            © 2026 Viram. Built for those who refuse to be the product.
-          </div>
-          <div className="flex items-center gap-[7px] text-xs text-[#3a3a3a] font-dm-sans">
-            <span
-              className="w-[6px] h-[6px] rounded-full bg-white inline-block"
-              style={{ animation: 'pulse-dot 2s ease-in-out infinite' }}
-            />
-            Systems online
-          </div>
-        </div>
-      </footer>
-    </div>
-   </> 
-)
+      </div>
+    </>
+  )
 }
