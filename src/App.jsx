@@ -9,6 +9,7 @@ import Contact from './pages/Contact';
 import Start from "./pages/Start";
 import Onboarding from "./components/Onboarding";
 import Dashboard from './pages/Dashboard'
+import NotFound from "./pages/NotFound";
 
 export default function App() {
   return (  
@@ -22,6 +23,7 @@ export default function App() {
         <Route path="/start" element={<Start />} />
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="*" element={<NotFound />}/>
       </Routes>
     </BrowserRouter>
   );
