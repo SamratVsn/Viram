@@ -8,8 +8,10 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 import Start from "./pages/Start";
 import Onboarding from "./components/Onboarding";
-import Dashboard from './pages/Dashboard'
+import Dashboard from './pages/Dashboard';
 import NotFound from "./pages/NotFound";
+import Focus from './pages/Focus';
+import Confess from './pages/Confess';
 
 export default function App() {
   return (  
@@ -23,6 +25,8 @@ export default function App() {
         <Route path="/start" element={<Start />} />
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/focus" element={<Focus />} />
+        <Route path="/confess" element={<Confess />} />
         <Route path="*" element={<NotFound />}/>
       </Routes>
     </BrowserRouter>

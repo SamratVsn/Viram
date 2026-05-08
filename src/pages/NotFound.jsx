@@ -142,7 +142,7 @@ export default function NotFound() {
           }}
         >
           <motion.a
-            href="/"
+            href="/dashboard"
             whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(184,112,78,0.25)" }}
             whileTap={{ scale: 0.98 }}
             transition={{ duration: 0.25, ease: EASE }}
@@ -163,7 +163,7 @@ export default function NotFound() {
             }}
           >
             <RiHome4Line size={14} />
-            Back to Home
+            Back to Dashboard
           </motion.a>
 
           <motion.button
