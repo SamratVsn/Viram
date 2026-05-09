@@ -13,6 +13,7 @@ import NotFound from "./pages/NotFound";
 import Focus from './pages/Focus';
 import Confess from './pages/Confess';
 import Setting from './pages/Setting';
+import Problems from "./pages/Problems";
 
 export default function App() {
   return (  
@@ -29,6 +30,7 @@ export default function App() {
         <Route path="/focus" element={<Focus />} />
         <Route path="/confess" element={<Confess />} />
         <Route path="/settings" element={<Setting />} />
+        <Route path="/problems" element={<Problems />} />
         <Route path="*" element={<NotFound />}/>
       </Routes>
     </BrowserRouter>

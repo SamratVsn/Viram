@@ -32,8 +32,8 @@ const QUOTES = [
 ]
 
 export default function Focus({ G, setG }) {
-  const [durMin, setDurMin]         = useState(25)
-  const [secs, setSecs]             = useState(25 * 60)
+  const [durMin, setDurMin]         = useState(15)
+  const [secs, setSecs]             = useState(15 * 60)
   const [running, setRunning]       = useState(false)
   const [phase, setPhase]           = useState('Ready to focus')
   const [sessions, setSessions]     = useState(0)
@@ -191,7 +191,7 @@ export default function Focus({ G, setG }) {
             transition={{ delay: 0.1 }}
             className="flex gap-3 mb-12"
           >
-            {[25, 30, 45, 60].map(min => (
+            {[15, 30, 45, 60].map(min => (
               <motion.button
                 key={min}
                 whileHover={{ scale: 1.05 }}

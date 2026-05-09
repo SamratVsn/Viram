@@ -449,9 +449,9 @@ export default function Dashboard() {
                   />
                   <ActionCard
                     icon={RiLeafLine}
-                    label="Grow"
+                    label="The Problem"
                     sub="Reminders & motivation"
-                    onClick={() => navigate('/grow')}
+                    onClick={() => navigate('/problem')}
                     variant="warm"
                   />
                   <ActionCard
@@ -465,7 +465,7 @@ export default function Dashboard() {
                     icon={RiMentalHealthLine}
                     label="Reflect"
                     sub="End-of-day debrief"
-                    onClick={() => navigate('/reflect')}
+                    onClick={() => navigate('/library')}
                     variant="default"
                   />
                 </div>
