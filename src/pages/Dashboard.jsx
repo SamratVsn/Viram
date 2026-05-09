@@ -451,7 +451,7 @@ export default function Dashboard() {
                     icon={RiLeafLine}
                     label="The Problem"
                     sub="Reminders & motivation"
-                    onClick={() => navigate('/problem')}
+                    onClick={() => navigate('/problems')}
                     variant="warm"
                   />
                   <ActionCard
