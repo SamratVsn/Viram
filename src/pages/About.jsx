@@ -80,8 +80,8 @@ const TEAM = [
   {
     name: "Samrat Parajuli",
     handle: "@SamratVsn",
-    role: "Co-Founder & Lead Developer",
-    tags: ["Android", "Systems Engineering", "Full Stack"],
+    role: "Co-Founder, CTO & Lead Developer",
+    tags: ["Android", "Systems Engineering", "Kotlin"],
     bio: "Specializing in Android ecosystems and systems engineering, I thrive on solving complex backend challenges and building native mobile experiences with Kotlin and Jetpack Compose. As the Lead Developer of Viram, I focus on scaling robust focus infrastructure and implementing clean, MVVM-based architectures. With a background spanning over 26 projects, I view coding as a craft—dedicated to building software that is as reliable as it is engaging. I believe discipline shouldn't be a chore; it should be an experience.",
     website: "https://www.samratparajuli0.com.np",
     github: "https://github.com/SamratVsn",
@@ -91,7 +91,7 @@ const TEAM = [
   {
     name: "Prince Timilsina",
     handle: "@prince.env",
-    role: "Co-Founder",
+    role: "Co-Founder, CEO & Product Strategist",
     tags: ["Website", "Intelligent Systems", "Full Stack"],
     bio: "Passionate about technology, problem-solving, and continuous learning, I enjoy building creative projects, exploring new tools, and turning ideas into reality through code. I’m deeply interested in innovation and tech entrepreneurship, always looking for ways to create solutions that make a real impact. One day, while simply thinking about how productivity could be improved, I came up with an idea that kept evolving into something bigger and better. That idea eventually became, 'Viram' — a project built from curiosity, creativity, and the desire to help people work and think more effectively.",
     website: null,
