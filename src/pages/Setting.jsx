@@ -444,8 +444,20 @@ export default function Settings({ onBack, G, setG }) {
   const profile = (() => {
     try { return JSON.parse(localStorage.getItem('viram_profile') || '{}') } catch { return {} }
   })()
-  const displayName = profile.name || profile.username || 'Viram User'
-  const initials    = displayName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+  const userInfo = (() => {
+    try { return JSON.parse(localStorage.getItem('viram_user') || '{}') } catch { return {} }
+  })()
+  const displayName = profile.avatarName || userInfo.name?.split(' ')[0] || 'Viram User'
+  const initials    = (userInfo.name || profile.avatarName || 'VU').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+
+  const ARCHETYPE_MAP = {
+    study:      'THE SCHOLAR',
+    deepwork:   'THE ARCHITECT',
+    health:     'THE ATHLETE',
+    discipline: 'THE WARRIOR',
+    detox:      'THE MONK',
+  }
+  const archetypeTitle = ARCHETYPE_MAP[profile.mission] || ''
 
   /* ── Sections (declarative list makes adding later easy) ──────────────── */
   const sections = [
@@ -690,21 +702,29 @@ export default function Settings({ onBack, G, setG }) {
                 <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: 'linear-gradient(90deg, #B8704E, rgba(184,112,78,0.25), transparent)' }} />
 
                 <div className="relative z-[1] flex items-center gap-4">
-                  {/* Initials orb */}
+                  {/* Avatar orb */}
                   <div
-                    className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0"
+                    className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
                     style={{ background: '#EDE8DF', border: '1px solid rgba(55,38,22,0.14)' }}
                   >
-                    <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 600, color: '#2A2218' }}>
-                      {initials}
-                    </span>
+                    {userInfo.picture
+                      ? <img src={userInfo.picture} alt={displayName} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                      : <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 600, color: '#2A2218' }}>
+                          {initials}
+                        </span>
+                    }
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontWeight: 600, color: '#2A2218', letterSpacing: '-0.01em' }}>
                       {displayName}
                     </div>
-                    <div style={{ fontFamily: "'Jost', sans-serif", fontSize: 11, fontWeight: 400, color: '#A89B8C', letterSpacing: '0.04em', marginTop: 2 }}>
+                    {archetypeTitle && (
+                      <div style={{ fontFamily: "'Jost', sans-serif", fontSize: 10, fontWeight: 500, color: '#B8704E', letterSpacing: '0.06em', marginTop: 1 }}>
+                        {archetypeTitle}
+                      </div>
+                    )}
+                    <div style={{ fontFamily: "'Jost', sans-serif", fontSize: 11, fontWeight: 400, color: '#A89B8C', letterSpacing: '0.04em', marginTop: 1 }}>
                       Tap to edit profile
                     </div>
                   </div>

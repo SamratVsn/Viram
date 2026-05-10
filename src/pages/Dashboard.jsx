@@ -6,7 +6,7 @@ import {
   RiUserLine, RiSettings3Line, RiQuillPenLine,
   RiSparkling2Line, RiFireLine, RiMentalHealthLine,
   RiLeafLine, RiCalendarCheckLine, RiChat3Line,
-  RiDoubleQuotesL, RiBarChartFill, RiHeartPulseLine,
+  RiDoubleQuotesL, RiHeartPulseLine,
   RiArrowRightSLine, RiCheckLine, RiAddLine,
   RiAlarmWarningLine, RiDropLine, RiZzzLine,
   RiSmartphoneLine, RiLockLine, RiRadarLine,
@@ -256,17 +256,19 @@ export default function Dashboard() {
   const [intention, setIntention] = useState('')
   const [intentionSet, setIntentionSet] = useState(false)
   const [cleanDays, setCleanDays] = useState(4)
-  const [showCmp, setShowCmp]     = useState(false)
-  const intentionRef              = useRef(null)
+  const [focusPoints, setFocusPoints]       = useState(0)
+  const [disciplineIndex, setDisciplineIndex] = useState(0)
+  const [todayFocusMins, setTodayFocusMins]   = useState(0)
+  const [showCmp, setShowCmp]                 = useState(false)
+  const intentionRef                          = useRef(null)
 
-  /* Mocked recovery data */
   const stats = {
     xp:          340,
     streak:      cleanDays,
-    focusMins:   85,
+    focusMins:   todayFocusMins,
     confessions: 3,
-    disciplinePoints: 12,
-    focusPoints:      8,
+    disciplinePoints: disciplineIndex,
+    focusPoints:      focusPoints,
     energyPoints:     91,
   }
 
@@ -284,9 +286,19 @@ export default function Dashboard() {
 
   useEffect(() => {
     const u = localStorage.getItem('viram_user')
-    if (u) setUser(JSON.parse(u))
+    if (u) {
+      const parsed = JSON.parse(u)
+      setUser(parsed)
+      setDisciplineIndex(parsed.disciplineIndex || 0)
+      setFocusPoints(parsed.focusPoints || 0)
+    }
     const saved = localStorage.getItem('viram_intention')
     if (saved) { setIntention(saved); setIntentionSet(true) }
+    const ft = localStorage.getItem('viram_focus_today')
+    if (ft) {
+      const f = JSON.parse(ft)
+      if (f.date === new Date().toDateString()) setTodayFocusMins(f.mins || 0)
+    }
     const t = setTimeout(() => setShowCmp(true), 600)
     return () => clearTimeout(t)
   }, [])
@@ -372,8 +384,7 @@ export default function Dashboard() {
           <AnimatePresence mode="wait">
 
             {/* ══════════ HOME TAB ══════════ */}
-            {tab === 'home' && (
-              <motion.div key="home"
+            <motion.div key="home"
                 initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }}
                 transition={{ duration:0.3 }}
                 style={{ padding:'14px 14px 120px' }}
@@ -598,108 +609,6 @@ export default function Dashboard() {
                 </Card>
 
               </motion.div>
-            )}
-
-            {/* ══════════ STATS TAB ══════════ */}
-            {tab === 'stats' && (
-              <motion.div key="stats"
-                initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }}
-                transition={{ duration:0.3 }}
-                style={{ padding:'18px 14px 120px' }}
-              >
-                <div style={{ marginBottom:22 }}>
-                  <div style={{ fontFamily:T.body, fontSize:9, fontWeight:600, letterSpacing:'0.22em', textTransform:'uppercase', color:T.accent, marginBottom:6 }}>
-                    Your Progress
-                  </div>
-                  <h2 style={{ fontFamily:T.heading, fontWeight:700, fontSize:30, letterSpacing:'-0.02em', color:T.inkHigh, lineHeight:1 }}>
-                    Debrief<em style={{ color:T.accent, fontStyle:'italic' }}>.</em>
-                  </h2>
-                  <p style={{ fontFamily:T.body, fontWeight:300, fontSize:12.5, color:T.inkMid, marginTop:6, lineHeight:1.75 }}>
-                    Your full recovery picture.
-                  </p>
-                </div>
-
-                {/* 3 stat cards */}
-                <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8, marginBottom:20 }}>
-                  {[
-                    { label:'Discipline', value:stats.disciplinePoints, icon:RiCalendarCheckLine, c:T.accent,  bg:T.accentBg,  border:T.accentBorder },
-                    { label:'Focus',      value:stats.focusPoints,      icon:RiTimerFlashLine,    c:T.green,   bg:T.greenBg,   border:T.greenBorder  },
-                    { label:'Energy',     value:stats.energyPoints,     icon:RiHeartPulseLine,    c:T.inkMid,  bg:T.cardDeep,  border:T.border       },
-                  ].map(({ label, value, icon:Icon, c, bg, border }) => (
-                    <motion.div key={label}
-                      initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }}
-                      transition={{ duration:0.4 }}
-                      style={{
-                        background:bg, border:`1px solid ${border}`,
-                        borderTop:`3px solid ${c}`, borderRadius:T.rLg,
-                        padding:'14px 12px', textAlign:'center',
-                        boxShadow:`0 2px 8px rgba(55,38,22,0.05)`,
-                      }}
-                    >
-                      <Icon size={14} color={c} style={{ margin:'0 auto 6px', display:'block' }} />
-                      <div style={{ fontFamily:T.heading, fontWeight:700, fontSize:28, color:T.inkHigh }}>{value}</div>
-                      <div style={{ fontFamily:T.body, fontWeight:300, fontSize:9, color:T.inkLow, marginTop:3, letterSpacing:'0.1em', textTransform:'uppercase' }}>{label}</div>
-                    </motion.div>
-                  ))}
-                </div>
-
-                {/* weekly clean day calendar */}
-                <SectionLabel icon={RiCalendarCheckLine} label="This Week" />
-                <Card style={{ marginBottom:16 }}>
-                  <div style={{ padding:'16px 18px' }}>
-                    <div style={{ display:'flex', gap:6, justifyContent:'space-between' }}>
-                      {['M','T','W','T','F','S','S'].map((d, i) => {
-                        const isClean = i < cleanDays
-                        const isToday = i === cleanDays - 1
-                        return (
-                          <div key={i} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:5 }}>
-                            <span style={{ fontFamily:T.body, fontSize:9, color:T.inkLow, letterSpacing:'0.06em' }}>{d}</span>
-                            <div style={{
-                              width:'100%', aspectRatio:'1', borderRadius:T.rSm,
-                              background: isClean ? (isToday ? T.accent : T.accentBg) : T.cardDeep,
-                              border: `1px solid ${isClean ? T.accentBorder : T.border}`,
-                              display:'flex', alignItems:'center', justifyContent:'center',
-                            }}>
-                              {isClean && <RiCheckLine size={10} color={isToday ? '#FFF8F2' : T.accent} />}
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                </Card>
-
-                {/* Confessions summary */}
-                <SectionLabel icon={RiChat3Line} label="Recent Confessions" action="All" onAction={() => navigate('/confess')} />
-                <Card>
-                  <div style={{ padding:'14px 18px', display:'flex', flexDirection:'column', gap:0 }}>
-                    {[
-                      { text:'Opened Instagram without thinking', time:'Yesterday · 8pm', trigger:'Boredom' },
-                      { text:'Scrolled YouTube for 20 min',       time:'3 days ago · 2pm', trigger:'Stress'  },
-                      { text:'Checked Twitter before bed',         time:'5 days ago · 11pm', trigger:'Habit'   },
-                    ].map((c, i) => (
-                      <div key={i} style={{
-                        padding:'12px 0',
-                        borderBottom: i < 2 ? `1px solid ${T.border}` : 'none',
-                        display:'flex', gap:12, alignItems:'flex-start',
-                      }}>
-                        <div style={{ width:28, height:28, borderRadius:'50%', background:T.redBg, border:`1px solid ${T.redBorder}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                          <RiAlarmWarningLine size={11} color={T.red} />
-                        </div>
-                        <div style={{ flex:1 }}>
-                          <div style={{ fontFamily:T.body, fontWeight:400, fontSize:12, color:T.inkHigh, lineHeight:1.4 }}>{c.text}</div>
-                          <div style={{ fontFamily:T.body, fontWeight:300, fontSize:10, color:T.inkLow, marginTop:3 }}>{c.time}</div>
-                        </div>
-                        <div style={{ padding:'3px 9px', borderRadius:T.rPill, background:T.accentBg, border:`1px solid ${T.accentBorder}`, flexShrink:0 }}>
-                          <span style={{ fontFamily:T.body, fontSize:8.5, color:T.accent, fontWeight:500 }}>{c.trigger}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              </motion.div>
-            )}
-
           </AnimatePresence>
         </div>
 
@@ -733,11 +642,11 @@ export default function Dashboard() {
             { id:'home',    icon:RiFlashlightLine,  label:'Home'    },
             { id:'focus',   icon:RiTimerFlashLine,  label:'Focus'   },
             { id:'confess', icon:RiChat3Line,       label:'Confess' },
-            { id:'stats',   icon:RiBarChartFill,    label:'Debrief' },
+            { id:'profile', icon:RiUserLine,        label:'Profile' },
             { id:'library', icon:RiBookOpenLine,    label:'Library' },
           ].map(({ id, icon:Icon, label }) => {
             const isActive = tab === id
-            const hasRoute = ['focus','confess','library'].includes(id)
+            const hasRoute = ['focus','confess','library','profile'].includes(id)
             return (
               <button
                 key={id}

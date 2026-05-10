@@ -15,6 +15,7 @@ import Focus from "./pages/Focus";
 import Confess from "./pages/Confess";
 import Setting from "./pages/Setting";
 import Problems from "./pages/Problems";
+import Profile from "./pages/Profile";
 
 export default function App() {
   return (
@@ -81,6 +82,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <Problems />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
             </ProtectedRoute>
           }
         />

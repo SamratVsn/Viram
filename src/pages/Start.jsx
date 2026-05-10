@@ -336,8 +336,12 @@ export default function Start() {
         })
         const info = await res.json()
         const existed = !!localStorage.getItem('viram_user')
-        localStorage.setItem('viram_user', JSON.stringify(info))
-        setUser(info); setIsNew(!existed); setStatus('success')
+        const prev = existed ? JSON.parse(localStorage.getItem('viram_user')) : {}
+        const today = new Date().toDateString()
+        const disciplineIndex = prev.lastLoginDate !== today ? (prev.disciplineIndex || 0) + 1 : (prev.disciplineIndex || 0)
+        const merged = { ...info, focusPoints: prev.focusPoints || 0, focusMins: prev.focusMins || 0, disciplineIndex, lastLoginDate: today }
+        localStorage.setItem('viram_user', JSON.stringify(merged))
+        setUser(merged); setIsNew(!existed); setStatus('success')
       } catch {
         setStatus('error'); setErrMsg('Could not fetch profile. Try again.')
       }
@@ -354,8 +358,12 @@ export default function Start() {
     }
     const mock = { name: name || email.split('@')[0], email, picture: null }
     const existed = tab === 'login'
-    localStorage.setItem('viram_user', JSON.stringify(mock))
-    setUser(mock); setIsNew(!existed); setStatus('success')
+    const prev = existed ? JSON.parse(localStorage.getItem('viram_user')) : {}
+    const today = new Date().toDateString()
+    const disciplineIndex = prev.lastLoginDate !== today ? (prev.disciplineIndex || 0) + 1 : (prev.disciplineIndex || 0)
+    const merged = { ...mock, focusPoints: prev.focusPoints || 0, focusMins: prev.focusMins || 0, disciplineIndex, lastLoginDate: today }
+    localStorage.setItem('viram_user', JSON.stringify(merged))
+    setUser(merged); setIsNew(!existed); setStatus('success')
   }
 
   function handleLogout() {
