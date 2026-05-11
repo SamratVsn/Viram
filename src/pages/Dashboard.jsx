@@ -9,8 +9,11 @@ import {
   RiDoubleQuotesL, RiHeartPulseLine,
   RiArrowRightSLine, RiCheckLine, RiAddLine,
   RiAlarmWarningLine, RiDropLine, RiZzzLine,
-  RiSmartphoneLine, RiLockLine, RiRadarLine,
+  RiSmartphoneLine, RiLockLine, RiRadarLine, RiSunLine,
 } from 'react-icons/ri'
+import MorningIntention from '../components/MorningIntention'
+import DigitalFast from '../components/DigitalFast'
+import CuriositySeed from '../components/CuriositySeed'
 
 /* ─── Design Tokens ─────────────────────────────────────── */
 const T = {
@@ -299,6 +302,20 @@ export default function Dashboard() {
       const f = JSON.parse(ft)
       if (f.date === new Date().toDateString()) setTodayFocusMins(f.mins || 0)
     }
+
+    /* Daily login bonus */
+    if (u) {
+      const parsed = JSON.parse(u)
+      const today = new Date().toDateString()
+      if (parsed.lastLoginDate !== today) {
+        parsed.disciplinePoints = (parsed.disciplinePoints || 0) + 1
+        parsed.lastLoginDate = today
+        localStorage.setItem('viram_user', JSON.stringify(parsed))
+        setUser({ ...parsed })
+        setDisciplineIndex(parsed.disciplineIndex || 0)
+      }
+    }
+
     const t = setTimeout(() => setShowCmp(true), 600)
     return () => clearTimeout(t)
   }, [])
@@ -389,6 +406,9 @@ export default function Dashboard() {
                 transition={{ duration:0.3 }}
                 style={{ padding:'14px 14px 120px' }}
               >
+
+                {/* ── Morning Intention anchor ─────────────── */}
+                <MorningIntention />
 
                 {/* ── Hero identity card ───────────────────── */}
                 <Card style={{ marginBottom:12 }}>
@@ -586,6 +606,23 @@ export default function Dashboard() {
                       </button>
                     )
                   })}
+                </div>
+
+                {/* ── Digital Fast ──────────────────────────── */}
+                <div style={{ marginBottom: 18 }}>
+                  <DigitalFast onComplete={() => {
+                    const u = localStorage.getItem('viram_user')
+                    if (u) {
+                      const p = JSON.parse(u)
+                      setDisciplineIndex(p.disciplineIndex || 0)
+                      setUser(p)
+                    }
+                  }} />
+                </div>
+
+                {/* ── Curiosity Seed ───────────────────────── */}
+                <div style={{ marginBottom: 18 }}>
+                  <CuriositySeed />
                 </div>
 
                 {/* ── Quote of the day ─────────────────────── */}

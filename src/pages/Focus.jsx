@@ -115,8 +115,10 @@ const GLOBAL = `
 
 export default function Focus() {
   const navigate   = useNavigate()
-  const timerRef   = useRef(null)
-  const inputRef   = useRef(null)
+  const timerRef    = useRef(null)
+  const inputRef    = useRef(null)
+  const startTimeRef = useRef(null)
+  const accumRef     = useRef(0)
 
   const [durMin, setDurMin]         = useState(25)
   const [secs, setSecs]             = useState(25 * 60)
@@ -136,7 +138,7 @@ export default function Focus() {
   const R      = 96
   const circ   = 2 * Math.PI * R
   const pct    = secs / total
-  const offset = circ * pct           // drains: full at start, 0 at end
+  const offset = circ * pct
   const phase  = getPhase(elapsed, total)
   const isDark = running
 
@@ -166,6 +168,8 @@ export default function Focus() {
   function setDuration(min) {
     if (running) return
     setDurMin(min)
+    accumRef.current = 0
+    startTimeRef.current = null
     setSecs(min * 60)
     setElapsed(0)
     setDone(false)
@@ -175,28 +179,32 @@ export default function Focus() {
     if (done) return
     if (running) {
       clearInterval(timerRef.current)
+      accumRef.current += Date.now() - startTimeRef.current
       setRunning(false)
     } else {
       if (!intentLocked && intent.trim()) setIntentLocked(true)
+      startTimeRef.current = Date.now()
       setRunning(true)
       timerRef.current = setInterval(() => {
-        setSecs(s => {
-          if (s <= 1) {
-            clearInterval(timerRef.current)
-            setRunning(false)
-            completeSession()
-            return 0
-          }
-          return s - 1
-        })
-        setElapsed(e => e + 1)
-      }, 1000)
+        const elapsedMs = accumRef.current + (Date.now() - startTimeRef.current)
+        const elapsedSec = Math.floor(elapsedMs / 1000)
+        const remaining = Math.max(0, durMin * 60 - elapsedSec)
+        setSecs(remaining)
+        setElapsed(elapsedSec)
+        if (remaining <= 0) {
+          clearInterval(timerRef.current)
+          setRunning(false)
+          completeSession()
+        }
+      }, 200)
     }
   }
 
   function resetTimer() {
     clearInterval(timerRef.current)
     setRunning(false)
+    accumRef.current = 0
+    startTimeRef.current = null
     setSecs(durMin * 60)
     setElapsed(0)
     setDone(false)

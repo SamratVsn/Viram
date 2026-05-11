@@ -7,8 +7,9 @@ import {
   RiSwordLine, RiShieldLine, RiHeartPulseLine, RiBookOpenLine,
   RiMentalHealthLine, RiLeafLine, RiRocketLine, RiCheckLine,
   RiQuillPenLine, RiRadarLine, RiCoinLine, RiZzzLine,
-  RiEmotionLine, RiCalendarCheckLine,
+  RiEmotionLine, RiCalendarCheckLine, RiSparkling2Line, RiBarChartLine,
 } from 'react-icons/ri'
+import SkillTracker from '../components/SkillTracker'
 
 const T = {
   bg:           '#F4EEE3',
@@ -359,11 +360,50 @@ export default function Profile() {
               </Card>
             </motion.div>
 
-            {/* ── Stats ────────────────────────────────────── */}
+            {/* ── Focus Stats ──────────────────────────────── */}
             <motion.div
               initial={{ opacity:0, y:12 }}
               animate={{ opacity:1, y:0 }}
               transition={{ delay:0.08, duration:0.5, ease }}
+            >
+              <SectionLabel icon={RiTimerFlashLine} label="Focus Stats" />
+              <Card style={{ padding:'14px 18px' }}>
+                <div style={{ display:'flex', gap:16 }}>
+                  <div style={{ flex:1, textAlign:'center' }}>
+                    <div style={{ fontFamily:T.heading, fontWeight:700, fontSize:28, color:T.inkHigh, lineHeight:1 }}>
+                      {user?.focusMins || 0}
+                    </div>
+                    <div style={{ fontFamily:T.body, fontWeight:300, fontSize:9, color:T.inkLow, marginTop:4, letterSpacing:'0.1em', textTransform:'uppercase' }}>
+                      Total Focus Mins
+                    </div>
+                  </div>
+                  <div style={{ width:1, background:T.border }} />
+                  <div style={{ flex:1, textAlign:'center' }}>
+                    <div style={{ fontFamily:T.heading, fontWeight:700, fontSize:28, color:T.accent, lineHeight:1 }}>
+                      {user?.focusPoints || 0}
+                    </div>
+                    <div style={{ fontFamily:T.body, fontWeight:300, fontSize:9, color:T.inkLow, marginTop:4, letterSpacing:'0.1em', textTransform:'uppercase' }}>
+                      Focus Points
+                    </div>
+                  </div>
+                  <div style={{ width:1, background:T.border }} />
+                  <div style={{ flex:1, textAlign:'center' }}>
+                    <div style={{ fontFamily:T.heading, fontWeight:700, fontSize:28, color:T.green, lineHeight:1 }}>
+                      {user?.disciplinePoints || 0}
+                    </div>
+                    <div style={{ fontFamily:T.body, fontWeight:300, fontSize:9, color:T.inkLow, marginTop:4, letterSpacing:'0.1em', textTransform:'uppercase' }}>
+                      Discipline
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+
+            {/* ── Stats ────────────────────────────────────── */}
+            <motion.div
+              initial={{ opacity:0, y:12 }}
+              animate={{ opacity:1, y:0 }}
+              transition={{ delay:0.12, duration:0.5, ease }}
             >
               <SectionLabel icon={RiRadarLine} label="Avatar Stats" />
               <Card style={{ padding:'6px 18px 12px' }}>
@@ -375,11 +415,20 @@ export default function Profile() {
               </Card>
             </motion.div>
 
+            {/* ── Skill Tracker ────────────────────────────── */}
+            <motion.div
+              initial={{ opacity:0, y:12 }}
+              animate={{ opacity:1, y:0 }}
+              transition={{ delay:0.16, duration:0.5, ease }}
+            >
+              <SkillTracker />
+            </motion.div>
+
             {/* ── Onboarding Answers ───────────────────────── */}
             <motion.div
               initial={{ opacity:0, y:12 }}
               animate={{ opacity:1, y:0 }}
-              transition={{ delay:0.14, duration:0.5, ease }}
+              transition={{ delay:0.2, duration:0.5, ease }}
             >
               <SectionLabel icon={RiQuillPenLine} label="Onboarding Answers" />
               <Card style={{ padding:'6px 18px 6px' }}>
@@ -432,7 +481,7 @@ export default function Profile() {
             <motion.div
               initial={{ opacity:0, y:12 }}
               animate={{ opacity:1, y:0 }}
-              transition={{ delay:0.2, duration:0.5, ease }}
+              transition={{ delay:0.24, duration:0.5, ease }}
             >
               <SectionLabel icon={RiUserLine} label="Account" />
               <Card style={{ padding:'6px 18px 6px' }}>
