@@ -1,1 +1,18 @@
 @import "tailwindcss";
+
+@keyframes laurel-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50%      { opacity: 1;    transform: scale(1.08); }
+}
+@keyframes badge-glow {
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(184,112,78,0)); }
+  50%      { filter: drop-shadow(0 0 18px rgba(184,112,78,0.35)); }
+}
+@keyframes xp-fill {
+  from { width: 0%; }
+  to   { width: var(--xpw); }
+}
+@keyframes particle-float {
+  0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); opacity: var(--oa, 0.55); }
+  50%      { transform: translateY(-16px) rotate(calc(var(--r, 0deg) + 4deg)); opacity: var(--ob, 0.9); }
+}

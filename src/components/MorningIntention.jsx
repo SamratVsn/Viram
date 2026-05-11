@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion' // eslint-disable-line no-unused-vars
+import { motion, AnimatePresence } from 'framer-motion'
 import { RiQuillPenLine, RiCheckLine, RiSunLine } from 'react-icons/ri'
+import AdvancementToast, { checkCoinMilestone } from './AdvancementToast'
 
 const T = {
   bg: '#F4EEE3', card: '#F9F5EC',
@@ -19,6 +20,7 @@ export default function MorningIntention() {
   const [savedIntention, setSavedIntention] = useState('')
   const [input, setInput] = useState('')
   const [initialized, setInitialized] = useState(false)
+  const [advancement, setAdvancement] = useState(null)
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY)
@@ -47,9 +49,15 @@ export default function MorningIntention() {
     const coinKey = 'viram_morning_coin_date'
     if (localStorage.getItem(coinKey) !== new Date().toDateString()) {
       const cUser = JSON.parse(localStorage.getItem('viram_user') || '{}')
-      cUser.coins = (cUser.coins || 0) + 1
+      const oldCoins = cUser.coins || 0
+      cUser.coins = oldCoins + 1
       localStorage.setItem('viram_user', JSON.stringify(cUser))
       localStorage.setItem(coinKey, new Date().toDateString())
+
+      const milestone = checkCoinMilestone(oldCoins, cUser.coins)
+      if (milestone) {
+        setTimeout(() => setAdvancement(milestone), 600)
+      }
     }
   }
 
@@ -160,6 +168,11 @@ export default function MorningIntention() {
           <RiCheckLine size={14} color={T.green} style={{ flexShrink: 0 }} />
         </motion.div>
       )}
+      <AdvancementToast
+        visible={!!advancement}
+        onDismiss={() => setAdvancement(null)}
+        {...advancement}
+      />
     </>
   )
 }

@@ -45,13 +45,6 @@ const fadeUp = (delay = 0) => ({
   transition: { duration: 0.9, delay, ease: [0.22, 1, 0.36, 1] },
 })
 
-const fadeIn = (delay = 0) => ({
-  initial: { opacity: 0 },
-  whileInView: { opacity: 1 },
-  viewport: { once: true },
-  transition: { duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] },
-})
-
 /* ─── Data ────────────────────────────────────────────────────────────────── */
 const TICKER_STATS = [
   '📱 People check their phones 96× per day',
@@ -255,16 +248,13 @@ function ProblemCard({ p, delay }) {
 
 /* ─── Main Component ──────────────────────────────────────────────────────── */
 export default function ProblemPage({ onBack }) {
-  const navigate = typeof useNavigate === 'function' ? useNavigate() : null
+  const navigate = useNavigate()
   const heroRef = useRef(null)
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
   const heroOpacity = useTransform(scrollYProgress, [0, 0.6], [1, 0])
   const heroY       = useTransform(scrollYProgress, [0, 0.6], [0, 40])
 
-  const handleBack = () => {
-    if (navigate) navigate('/dashboard')
-    else if (onBack) onBack()
-  }
+  const handleBack = () => navigate('/dashboard')
 
   const pageStyle = {
     background: T.bg,
@@ -542,7 +532,7 @@ export default function ProblemPage({ onBack }) {
                 onMouseLeave={e => { e.currentTarget.style.boxShadow = T.shadow; e.currentTarget.style.transform = 'translateY(0)' }}>
                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${T.accent}40, transparent)` }} />
                 <div style={{ fontSize: 48, color: T.accent, opacity: 0.12, fontFamily: 'Georgia', lineHeight: 1, marginBottom: 16 }}>"</div>
-                <p style={{ fontSize: 13, color: T.charcoal, lineHeight: 1.9, marginBottom: 24, fontFamily: "'Cormorant Garamond', serif", fontStyle: 'italic', fontSize: 15 }}>
+                <p style={{ color: T.charcoal, lineHeight: 1.9, marginBottom: 24, fontFamily: "'Cormorant Garamond', serif", fontStyle: 'italic', fontSize: 15 }}>
                   {w.quote}
                 </p>
                 <div className="flex items-center gap-3">

@@ -6,11 +6,14 @@ import {
   RiUserLine, RiSettings3Line,
   RiFireLine, RiLeafLine, RiCalendarCheckLine, RiChat3Line,
   RiDoubleQuotesL, RiArrowRightSLine, RiCoinLine, RiRadarLine,
+  RiSparkling2Line,
 } from 'react-icons/ri'
 import MorningIntention from '../components/MorningIntention'
 import DigitalFast from '../components/DigitalFast'
 import CuriositySeed from '../components/CuriositySeed'
 import companionImg from '../assets/3dmodel.png'
+import useViramData from '../hooks/useViramData'
+import AdvancementToast from '../components/AdvancementToast'
 
 /* ─── Design Tokens ─────────────────────────────────────── */
 const T = {
@@ -170,21 +173,22 @@ function ProgressRing({ value, max, size = 64, stroke = 4, color = T.accent, chi
 /* ═══ DASHBOARD ═══════════════════════════════════════════ */
 export default function Dashboard() {
   const navigate = useNavigate()
-  const [tab, setTab]             = useState('home')
-  const [user, setUser]           = useState(null)
-  const [disciplineIndex, setDisciplineIndex] = useState(0)
-  const [todayFocusMins, setTodayFocusMins]   = useState(0)
-  const [totalXp, setTotalXp]                 = useState(0)
-  const [confessionCount, setConfessionCount] = useState(0)
+  const { user, focus, confessions, refresh } = useViramData()
   const [showCmp, setShowCmp] = useState(false)
+  const [loginAdvancement, setLoginAdvancement] = useState(null)
+
+  const todayFocusMins = focus?.mins || 0
+  const totalXp = focus?.xp || 0
+  const confessionCount = Array.isArray(confessions) ? confessions.length : 0
+  const disciplineIndex = user?.disciplineIndex || 0
 
   const stats = {
-    xp:          totalXp,
-    streak:      disciplineIndex,
-    focusMins:   todayFocusMins,
+    xp: totalXp,
+    streak: disciplineIndex,
+    focusMins: todayFocusMins,
     confessions: confessionCount,
-    disciplinePoints: disciplineIndex,
-    coins:            user?.coins || 0,
+    disciplinePoints: user?.disciplinePoints || 0,
+    coins: user?.coins || 0,
   }
 
   const todayQuote = QUOTES[new Date().getDate() % QUOTES.length]
@@ -193,39 +197,25 @@ export default function Dashboard() {
   const displayName = user?.name?.split(' ')[0] || 'Scholar'
 
   useEffect(() => {
-    const u = localStorage.getItem('viram_user')
-    if (u) {
-      const parsed = JSON.parse(u)
-      setUser(parsed)
-      setDisciplineIndex(parsed.disciplineIndex || 0)
-    }
-    const ft = localStorage.getItem('viram_focus_today')
-    if (ft) {
-      const f = JSON.parse(ft)
-      if (f.date === new Date().toDateString()) {
-        setTodayFocusMins(f.mins || 0)
-        setTotalXp(f.xp || 0)
-      }
-    }
-
-    const confs = localStorage.getItem('viram_confessions')
-    if (confs) {
-      try {
-        const c = JSON.parse(confs)
-        setConfessionCount(Array.isArray(c) ? c.length : 0)
-      } catch { /* ignore */ }
-    }
-
     /* Daily login bonus */
-    if (u) {
-      const parsed = JSON.parse(u)
+    const raw = localStorage.getItem('viram_user')
+    if (raw) {
+      const parsed = JSON.parse(raw)
       const today = new Date().toDateString()
       if (parsed.lastLoginDate !== today) {
         parsed.disciplinePoints = (parsed.disciplinePoints || 0) + 1
         parsed.lastLoginDate = today
         localStorage.setItem('viram_user', JSON.stringify(parsed))
-        setUser({ ...parsed })
-        setDisciplineIndex(parsed.disciplineIndex || 0)
+        refresh()
+        setTimeout(() => setLoginAdvancement({
+          type: 'custom',
+          tier: 'bronze',
+          title: 'Welcome Back',
+          rank: 'The Consistent',
+          subtitle: 'Daily login streak maintained. Presence is the practice.',
+          xpGained: 5,
+          chips: [{ icon: RiSparkling2Line, label: 'Daily login' }],
+        }), 900)
       }
     }
 
@@ -516,13 +506,13 @@ export default function Dashboard() {
             { id:'profile', icon:RiUserLine,        label:'Profile' },
             { id:'library', icon:RiBookOpenLine,    label:'Library' },
           ].map(({ id, icon:Icon, label }) => {
-            const isActive = tab === id
+            const isActive = id === 'home'
             const hasRoute = ['focus','confess','library','profile'].includes(id)
             return (
               <button
                 key={id}
                 className="nav-item"
-                onClick={() => hasRoute ? navigate(`/${id}`) : setTab(id)}
+                onClick={() => hasRoute && navigate(`/${id}`)}
                 style={{
                   display:'flex', flexDirection:'column', alignItems:'center', gap:3,
                   padding:'7px 12px', borderRadius:T.rMd, cursor:'pointer',
@@ -541,6 +531,12 @@ export default function Dashboard() {
         </div>
 
       </div>
+
+      <AdvancementToast
+        visible={!!loginAdvancement}
+        onDismiss={() => setLoginAdvancement(null)}
+        {...loginAdvancement}
+      />
     </>
   )
 }

@@ -9,6 +9,7 @@ import {
   RiLeafLine,
 } from 'react-icons/ri'
 import { useNavigate } from 'react-router-dom'
+import AdvancementToast, { checkCoinMilestone } from '../components/AdvancementToast'
 
 /* ─── Font loader ─────────────────────────────────────────────────────────── */
 const FontLoader = () => (
@@ -51,7 +52,7 @@ function loadConfessions() {
     const parsed = JSON.parse(raw)
     // purge entries older than 30 days
     const now = Date.now()
-    return parsed.filter(c => now - c.timestamp < THIRTY_DAYS)
+    return parsed.filter(c => now - (c.ts || c.timestamp) < THIRTY_DAYS)
   } catch {
     return []
   }
@@ -157,7 +158,7 @@ function ConfessionCard({ confession, onDelete }) {
               color: '#C4B8A8',
             }}
           >
-            {timeAgo(confession.timestamp)} · {formatDate(confession.timestamp)}
+            {timeAgo(confession.ts)} · {formatDate(confession.ts)}
           </span>
         </div>
 
@@ -243,7 +244,7 @@ function ConfessionCard({ confession, onDelete }) {
 
       {/* Expiry bar */}
       <div className="relative z-[1]">
-        <ExpiryBar timestamp={confession.timestamp} />
+        <ExpiryBar timestamp={confession.ts} />
       </div>
     </motion.div>
   )
@@ -302,6 +303,7 @@ export default function Confess({ onBack }) {
   const [draft,       setDraft]       = useState('')
   const [submitting,  setSubmitting]  = useState(false)
   const [charCount,   setCharCount]   = useState(0)
+  const [advancement, setAdvancement] = useState(null)
   const textareaRef                   = useRef(null)
   const MAX_CHARS                     = 400
 
@@ -334,10 +336,14 @@ export default function Confess({ onBack }) {
     setSubmitting(true)
 
     setTimeout(() => {
+      const ts = Date.now()
       const newEntry = {
-        id:        `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        id: `${ts}-${Math.random().toString(36).slice(2, 7)}`,
         text,
-        timestamp: Date.now(),
+        trigger: '',
+        app: '',
+        ts,
+        date: new Date().toDateString(),
       }
       const updated = [newEntry, ...confessions]
       setConfessions(updated)
@@ -346,10 +352,17 @@ export default function Confess({ onBack }) {
       setCharCount(0)
       setSubmitting(false)
 
-      // Award 1 coin for confession
+      // Award coins + discipline points
       const cUser = JSON.parse(localStorage.getItem('viram_user') || '{}')
-      cUser.coins = (cUser.coins || 0) + 1
+      const oldCoins = cUser.coins || 0
+      cUser.coins = oldCoins + 1
+      cUser.disciplinePoints = (cUser.disciplinePoints || 0) + 2
       localStorage.setItem('viram_user', JSON.stringify(cUser))
+
+      const milestone = checkCoinMilestone(oldCoins, cUser.coins)
+      if (milestone) {
+        setTimeout(() => setAdvancement(milestone), 600)
+      }
 
       // Reset textarea height
       if (textareaRef.current) textareaRef.current.style.height = 'auto'
@@ -678,6 +691,12 @@ export default function Confess({ onBack }) {
           </div>
         </div>
       </motion.div>
+
+      <AdvancementToast
+        visible={!!advancement}
+        onDismiss={() => setAdvancement(null)}
+        {...advancement}
+      />
     </>
   )
 }

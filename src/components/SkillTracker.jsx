@@ -2,8 +2,10 @@ import { useState, useEffect, useRef } from 'react'
 import {
   RiAddLine, RiTimerFlashLine, RiPlayFill, RiPauseFill,
   RiCheckLine, RiDeleteBinLine, RiBookOpenLine, RiQuillPenLine,
+
 } from 'react-icons/ri'
 import { motion, AnimatePresence } from 'framer-motion'
+import AdvancementToast, { checkCoinMilestone } from './AdvancementToast'
 
 const T = {
   bg: '#F4EEE3', card: '#F9F5EC', cardDeep: '#EDE5D4',
@@ -87,6 +89,7 @@ function SkillCard({ skill, onDelete, onUpdate }) {
   const accumRef = useRef(0)
   const sessionMinsRef = useRef(0)
 
+  const [advancement, setAdvancement] = useState(null)
   const progress = Math.min(skill.totalMinutes / TWENTY_HOUR_MINUTES, 1)
 
   useEffect(() => {
@@ -140,10 +143,16 @@ function SkillCard({ skill, onDelete, onUpdate }) {
     setShowMilestone(false)
 
     const user = JSON.parse(localStorage.getItem('viram_user') || '{}')
+    const oldCoins = user.coins || 0
     user.focusMins = (user.focusMins || 0) + sessionMin
-    user.coins = (user.coins || 0) + Math.floor(sessionMin / 5)
+    user.coins = oldCoins + Math.floor(sessionMin / 5)
     localStorage.setItem('viram_user', JSON.stringify(user))
     if (onUpdate) onUpdate()
+
+    const milestone = checkCoinMilestone(oldCoins, user.coins)
+    if (milestone) {
+      setTimeout(() => setAdvancement(milestone), 600)
+    }
   }
 
   const progressPct = Math.round(progress * 100)
@@ -285,6 +294,12 @@ function SkillCard({ skill, onDelete, onUpdate }) {
       <MilestoneInput
         show={showMilestone}
         onSave={saveMilestone}
+      />
+
+      <AdvancementToast
+        visible={!!advancement}
+        onDismiss={() => setAdvancement(null)}
+        {...advancement}
       />
     </div>
   )

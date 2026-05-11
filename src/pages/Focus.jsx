@@ -7,6 +7,7 @@ import {
   RiLeafLine, RiAlarmWarningLine,
 } from 'react-icons/ri'
 import { useNavigate } from 'react-router-dom'
+import AdvancementToast, { checkCoinMilestone, ACHIEVEMENTS } from '../components/AdvancementToast'
 
 /* ─── Tokens ─────────────────────────────────────────────── */
 const T = {
@@ -133,6 +134,7 @@ export default function Focus() {
   const [quote, setQuote]           = useState(QUOTES[0])
   const [showComplete, setShowComplete] = useState(false)
   const [lastXp, setLastXp]         = useState(0)
+  const [advancement, setAdvancement] = useState(null)
 
   const total  = durMin * 60
   const R      = 96
@@ -226,11 +228,20 @@ export default function Focus() {
     setShowComplete(true)
     saveFocusStats(newSessions, newMins, newXp)
 
-    /* Persist to user profile */
     const user = JSON.parse(localStorage.getItem('viram_user') || '{}')
+    const oldCoins = user.coins || 0
     user.focusMins = (user.focusMins || 0) + durMin
-    user.coins = (user.coins || 0) + Math.floor(durMin / 5)
+    user.coins = oldCoins + Math.floor(durMin / 5)
     localStorage.setItem('viram_user', JSON.stringify(user))
+
+    const milestone = checkCoinMilestone(oldCoins, user.coins)
+    setTimeout(() => {
+      if (milestone) {
+        setAdvancement(milestone)
+      } else {
+        setAdvancement(ACHIEVEMENTS.focusSession(durMin))
+      }
+    }, 1400)
 
     setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)])
     setTimeout(() => setShowComplete(false), 4500)
@@ -758,6 +769,12 @@ export default function Focus() {
         </AnimatePresence>
 
       </motion.div>
+
+      <AdvancementToast
+        visible={!!advancement}
+        onDismiss={() => setAdvancement(null)}
+        {...advancement}
+      />
     </>
   )
 }

@@ -624,7 +624,7 @@ export default function Library() {
               with it when you close this page?
             </p>
 
-            <CTAButton to="/start">
+            <CTAButton to={isLoggedIn ? '/dashboard' : '/start'}>
               <RiRocketLine size={14} /> Forge Your Avatar
             </CTAButton>
           </motion.div>

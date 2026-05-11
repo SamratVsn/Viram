@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { RiCheckLine, RiAlertLine, RiSwordLine } from 'react-icons/ri'
+import AdvancementToast, { ACHIEVEMENTS } from './AdvancementToast'
 
 const T = {
   bg: '#F4EEE3', card: '#F9F5EC', cardDeep: '#EDE5D4',
@@ -25,6 +26,7 @@ function grantPoints(onComplete) {
 export default function DigitalFast({ onComplete }) {
   const [status, setStatus] = useState('idle')
   const [remaining, setRemaining] = useState(FAST_DURATION)
+  const [showAchievement, setShowAchievement] = useState(false)
   const pollRef = useRef(null)
 
   useEffect(() => {
@@ -37,6 +39,7 @@ export default function DigitalFast({ onComplete }) {
           if (elapsed >= FAST_DURATION) {
             setStatus('completed')
             setRemaining(0)
+            setShowAchievement(true)
             grantPoints(onComplete)
           } else {
             setStatus('running')
@@ -86,6 +89,7 @@ export default function DigitalFast({ onComplete }) {
           clearInterval(pollRef.current)
           setStatus('completed')
           setRemaining(0)
+          setShowAchievement(true)
           grantPoints(onComplete)
         }
       }, 500)
@@ -263,6 +267,12 @@ export default function DigitalFast({ onComplete }) {
           </div>
         )}
       </div>
+
+      <AdvancementToast
+        visible={showAchievement}
+        onDismiss={() => setShowAchievement(false)}
+        {...ACHIEVEMENTS.detoxComplete(2)}
+      />
     </>
   )
 }
