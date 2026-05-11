@@ -229,7 +229,7 @@ export default function Focus() {
     /* Persist to user profile */
     const user = JSON.parse(localStorage.getItem('viram_user') || '{}')
     user.focusMins = (user.focusMins || 0) + durMin
-    user.focusPoints = Math.floor(user.focusMins / 10)
+    user.coins = (user.coins || 0) + Math.floor(durMin / 5)
     localStorage.setItem('viram_user', JSON.stringify(user))
 
     setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)])

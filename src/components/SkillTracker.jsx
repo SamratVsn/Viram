@@ -141,7 +141,7 @@ function SkillCard({ skill, onDelete, onUpdate }) {
 
     const user = JSON.parse(localStorage.getItem('viram_user') || '{}')
     user.focusMins = (user.focusMins || 0) + sessionMin
-    user.focusPoints = Math.floor(user.focusMins / 10)
+    user.coins = (user.coins || 0) + Math.floor(sessionMin / 5)
     localStorage.setItem('viram_user', JSON.stringify(user))
     if (onUpdate) onUpdate()
   }

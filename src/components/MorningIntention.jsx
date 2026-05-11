@@ -42,6 +42,15 @@ export default function MorningIntention() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
     setSavedIntention(input.trim())
     setShowModal(false)
+
+    // Award 1 coin for setting morning intention (once per day)
+    const coinKey = 'viram_morning_coin_date'
+    if (localStorage.getItem(coinKey) !== new Date().toDateString()) {
+      const cUser = JSON.parse(localStorage.getItem('viram_user') || '{}')
+      cUser.coins = (cUser.coins || 0) + 1
+      localStorage.setItem('viram_user', JSON.stringify(cUser))
+      localStorage.setItem(coinKey, new Date().toDateString())
+    }
   }
 
   if (!initialized) return null

@@ -346,6 +346,11 @@ export default function Confess({ onBack }) {
       setCharCount(0)
       setSubmitting(false)
 
+      // Award 1 coin for confession
+      const cUser = JSON.parse(localStorage.getItem('viram_user') || '{}')
+      cUser.coins = (cUser.coins || 0) + 1
+      localStorage.setItem('viram_user', JSON.stringify(cUser))
+
       // Reset textarea height
       if (textareaRef.current) textareaRef.current.style.height = 'auto'
     }, 320)

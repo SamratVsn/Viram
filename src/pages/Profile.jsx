@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   RiArrowLeftLine, RiUserLine, RiSmartphoneLine, RiTimerFlashLine,
   RiMoonLine, RiFireLine, RiBrainLine, RiAlarmWarningLine,
   RiSwordLine, RiShieldLine, RiHeartPulseLine, RiBookOpenLine,
   RiMentalHealthLine, RiLeafLine, RiRocketLine, RiCheckLine,
-  RiQuillPenLine, RiRadarLine, RiCoinLine, RiZzzLine,
+  RiQuillPenLine, RiCoinLine, RiZzzLine, RiEditLine,
   RiEmotionLine, RiCalendarCheckLine, RiSparkling2Line, RiBarChartLine,
 } from 'react-icons/ri'
 import SkillTracker from '../components/SkillTracker'
@@ -39,15 +39,6 @@ const T = {
 
 const GRAIN = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E")`
 const ease = [0.22, 1, 0.36, 1]
-
-const STAT_LABELS = {
-  vitality:   { label: 'Vitality',   icon: RiHeartPulseLine,  color: T.accent,  bg: T.accentBg,  border: T.accentBorder },
-  energy:     { label: 'Energy',     icon: RiFireLine,        color: T.accent,  bg: T.accentBg,  border: T.accentBorder },
-  discipline: { label: 'Discipline', icon: RiSwordLine,       color: T.green,   bg: T.greenBg,   border: T.greenBorder },
-  focus:      { label: 'Focus',      icon: RiRadarLine,       color: T.green,   bg: T.greenBg,   border: T.greenBorder },
-  shieldHP:   { label: 'Shield HP',  icon: RiShieldLine,      color: T.inkMid,  bg: T.cardDeep,  border: T.border },
-  coins:      { label: 'Coins',      icon: RiCoinLine,        color: '#D4A843', bg: 'rgba(212,168,67,0.10)', border: 'rgba(212,168,67,0.25)' },
-}
 
 const ARCHETYPE_MAP = {
   study:      { title: 'THE SCHOLAR',   sub: 'Knowledge as power.',      icon: '📖' },
@@ -93,6 +84,53 @@ const ATTEMPT_LABELS = {
 const STRESS_LABELS = ['Pretty calm', 'Moderate pressure', 'High stress', 'Burning out']
 const STRESS_COLORS = [T.green, T.accent, T.red, '#B85E5E']
 
+const WORST_APP_OPTIONS = [
+  { val:'reels', icon:'📱', label:'Instagram / TikTok', sub:'Endless scroll' },
+  { val:'youtube', icon:'▶', label:'YouTube', sub:'Video rabbit hole' },
+  { val:'chat', icon:'💬', label:'WhatsApp / Messaging', sub:'Constant pings' },
+  { val:'feed', icon:'📡', label:'Twitter / Reddit', sub:'Doomscroll' },
+  { val:'games', icon:'🎮', label:'Games', sub:'One more round' },
+  { val:'all', icon:'🌀', label:'All of them', sub:'Hard to pick one' },
+]
+
+const FOCUS_PEAK_OPTIONS = [
+  { val:'early', label:'Early morning (5–8 AM)' },
+  { val:'morning', label:'Morning (8–12 PM)' },
+  { val:'afternoon', label:'Afternoon (12–5 PM)' },
+  { val:'evening', label:'Evening (5–10 PM)' },
+  { val:'none', label:"I don't have a peak" },
+]
+
+const MISSION_OPTIONS = [
+  { val:'study', label:'Academic focus' },
+  { val:'deepwork', label:'Deep work / career' },
+  { val:'health', label:'Health & fitness' },
+  { val:'discipline', label:'General discipline' },
+  { val:'detox', label:'Digital detox' },
+]
+
+const ATTEMPT_OPTIONS = [
+  { val:'limits', label:'Screen time limits' },
+  { val:'timers', label:'Pomodoro / timers' },
+  { val:'willpower', label:'Willpower alone' },
+  { val:'apps', label:'Other apps' },
+  { val:'nothing', label:'Nothing yet' },
+]
+
+function calcStats(p) {
+  const st = p.screenTime ?? 4
+  const sl = p.sleep ?? 7
+  const str = p.stressLevel ?? 1
+  return {
+    vitality:   Math.max(15, Math.min(100, Math.round(100 - st*5  - str*6 + (sl-5)*3))),
+    energy:     Math.max(15, Math.min(100, Math.round(100 - st*4  - str*5 + (sl-5)*4))),
+    discipline: Math.max(20, Math.min(100, Math.round(100 - st*6  - str*4))),
+    focus:      Math.max(20, Math.min(100, Math.round(100 - st*7  - str*3 + (sl-5)*2))),
+    shieldHP:   Math.max(10, Math.min(100, Math.round(100 - st*8))),
+    coins:      Math.max(1,  Math.round(10 - st*0.7)),
+  }
+}
+
 function Grain() {
   return (
     <div style={{
@@ -134,34 +172,6 @@ function SectionLabel({ icon: Icon, label }) {
         {label}
       </span>
       <div style={{ flex:1, height:1, background:T.border }} />
-    </div>
-  )
-}
-
-function StatBar({ label, value, icon: Icon, color, bg, border }) {
-  return (
-    <div style={{ display:'flex', alignItems:'center', gap:12, padding:'8px 0' }}>
-      <div style={{
-        width:34, height:34, borderRadius:'50%', flexShrink:0,
-        background: bg, border:`1px solid ${border}`,
-        display:'flex', alignItems:'center', justifyContent:'center',
-        color: color,
-      }}>
-        <Icon size={14} />
-      </div>
-      <div style={{ flex:1, minWidth:0 }}>
-        <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
-          <span style={{ fontFamily:T.body, fontWeight:500, fontSize:12, color:T.inkMid }}>{label}</span>
-          <span style={{ fontFamily:T.heading, fontWeight:700, fontSize:14, color:T.inkHigh }}>{value}</span>
-        </div>
-        <div style={{ height:4, borderRadius:T.rPill, background:T.border, overflow:'hidden' }}>
-          <div style={{
-            height:'100%', borderRadius:T.rPill,
-            background: color, width:`${value}%`,
-            transition:'width 1s cubic-bezier(0.22,1,0.36,1)',
-          }} />
-        </div>
-      </div>
     </div>
   )
 }
@@ -216,6 +226,8 @@ export default function Profile() {
   const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
   const [user, setUser] = useState(null)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editProfile, setEditProfile] = useState(null)
 
   useEffect(() => {
     const p = localStorage.getItem('viram_profile')
@@ -243,6 +255,21 @@ export default function Profile() {
         </button>
       </div>
     )
+  }
+
+  function handleOpenEdit() {
+    setEditProfile({ ...profile })
+    setShowEditModal(true)
+  }
+
+  function handleSaveEdit() {
+    if (!editProfile) return
+    const stats = calcStats(editProfile)
+    const updated = { ...editProfile, ...stats }
+    localStorage.setItem('viram_profile', JSON.stringify(updated))
+    setProfile(updated)
+    setShowEditModal(false)
+    setEditProfile(null)
   }
 
   const archetype = ARCHETYPE_MAP[profile.mission] || ARCHETYPE_MAP.discipline
@@ -379,11 +406,11 @@ export default function Profile() {
                   </div>
                   <div style={{ width:1, background:T.border }} />
                   <div style={{ flex:1, textAlign:'center' }}>
-                    <div style={{ fontFamily:T.heading, fontWeight:700, fontSize:28, color:T.accent, lineHeight:1 }}>
-                      {user?.focusPoints || 0}
+                    <div style={{ fontFamily:T.heading, fontWeight:700, fontSize:28, color:'#D4A843', lineHeight:1 }}>
+                      {user?.coins || 0}
                     </div>
                     <div style={{ fontFamily:T.body, fontWeight:300, fontSize:9, color:T.inkLow, marginTop:4, letterSpacing:'0.1em', textTransform:'uppercase' }}>
-                      Focus Points
+                      Coins
                     </div>
                   </div>
                   <div style={{ width:1, background:T.border }} />
@@ -396,22 +423,6 @@ export default function Profile() {
                     </div>
                   </div>
                 </div>
-              </Card>
-            </motion.div>
-
-            {/* ── Stats ────────────────────────────────────── */}
-            <motion.div
-              initial={{ opacity:0, y:12 }}
-              animate={{ opacity:1, y:0 }}
-              transition={{ delay:0.12, duration:0.5, ease }}
-            >
-              <SectionLabel icon={RiRadarLine} label="Avatar Stats" />
-              <Card style={{ padding:'6px 18px 12px' }}>
-                {Object.entries(STAT_LABELS).map(([key, meta]) => {
-                  const val = profile[key]
-                  if (val === undefined || val === null) return null
-                  return <StatBar key={key} value={val} {...meta} />
-                })}
               </Card>
             </motion.div>
 
@@ -430,7 +441,28 @@ export default function Profile() {
               animate={{ opacity:1, y:0 }}
               transition={{ delay:0.2, duration:0.5, ease }}
             >
-              <SectionLabel icon={RiQuillPenLine} label="Onboarding Answers" />
+              <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12, marginTop:18 }}>
+                <RiQuillPenLine size={10} color={T.accentDim} />
+                <span style={{ fontFamily:T.body, fontSize:9, fontWeight:600, letterSpacing:'0.22em', textTransform:'uppercase', color:T.inkLow }}>
+                  Onboarding Answers
+                </span>
+                <div style={{ flex:1, height:1, background:T.border }} />
+                <motion.button
+                  whileHover={{ y:-1 }} whileTap={{ scale:0.95 }}
+                  onClick={handleOpenEdit}
+                  style={{
+                    display:'flex', alignItems:'center', gap:5,
+                    padding:'5px 12px', borderRadius:T.rPill,
+                    background:T.accentBg, border:`1px solid ${T.accentBorder}`,
+                    fontFamily:T.body, fontWeight:600, fontSize:9,
+                    letterSpacing:'0.08em', textTransform:'uppercase',
+                    color:T.accent, cursor:'pointer',
+                  }}
+                >
+                  <RiEditLine size={10} />
+                  Edit
+                </motion.button>
+              </div>
               <Card style={{ padding:'6px 18px 6px' }}>
                 <InfoRow
                   icon={RiSmartphoneLine}
@@ -493,6 +525,272 @@ export default function Profile() {
                 )}
               </Card>
             </motion.div>
+
+            {/* ── Edit Profile Modal ──────────────────────── */}
+            <AnimatePresence>
+              {showEditModal && editProfile && (
+                <motion.div
+                  initial={{ opacity:0 }}
+                  animate={{ opacity:1 }}
+                  exit={{ opacity:0 }}
+                  transition={{ duration:0.3 }}
+                  style={{
+                    position:'fixed', inset:0, zIndex:200,
+                    background:'rgba(28,21,16,0.72)', backdropFilter:'blur(8px)',
+                    display:'flex', alignItems:'center', justifyContent:'center', padding:16,
+                  }}
+                >
+                  <motion.div
+                    initial={{ opacity:0, scale:0.9, y:30 }}
+                    animate={{ opacity:1, scale:1, y:0 }}
+                    exit={{ opacity:0, scale:0.95, y:20 }}
+                    transition={{ duration:0.4, ease }}
+                    style={{
+                      background:T.card, borderRadius:28,
+                      border:`1px solid ${T.border}`,
+                      borderTop:`3px solid ${T.accent}`,
+                      width:'100%', maxWidth:460, maxHeight:'90vh',
+                      display:'flex', flexDirection:'column',
+                      boxShadow:'0 24px 64px rgba(28,21,16,0.40)',
+                    }}
+                    onClick={e => e.stopPropagation()}
+                  >
+                    {/* Header */}
+                    <div style={{
+                      display:'flex', alignItems:'center', justifyContent:'space-between',
+                      padding:'20px 24px 0',
+                    }}>
+                      <div style={{ fontFamily:T.heading, fontWeight:700, fontSize:20, color:T.inkHigh }}>
+                        Edit Profile
+                      </div>
+                      <motion.button
+                        whileHover={{ rotate:90 }} whileTap={{ scale:0.9 }}
+                        onClick={() => { setShowEditModal(false); setEditProfile(null) }}
+                        style={{
+                          width:30, height:30, borderRadius:'50%',
+                          background:T.cardDeep, border:`1px solid ${T.borderMid}`,
+                          display:'flex', alignItems:'center', justifyContent:'center',
+                          color:T.inkLow, cursor:'pointer', fontSize:14, lineHeight:1,
+                        }}
+                      >
+                        ✕
+                      </motion.button>
+                    </div>
+
+                    {/* Form body */}
+                    <div className="viram-scroll" style={{
+                      flex:1, overflowY:'auto', padding:'18px 24px 20px',
+                    }}>
+                      {/* Screen Time */}
+                      <div style={{ marginBottom:20 }}>
+                        <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
+                          <span style={{ fontFamily:T.body, fontWeight:600, fontSize:11, color:T.inkMid, letterSpacing:'0.06em' }}>
+                            Daily Screen Time
+                          </span>
+                          <span style={{ fontFamily:T.heading, fontWeight:700, fontSize:16, color:T.accent }}>
+                            {editProfile.screenTime}h
+                          </span>
+                        </div>
+                        <input
+                          type="range" min={0} max={14} step={0.5}
+                          value={editProfile.screenTime}
+                          onChange={e => setEditProfile(p => ({ ...p, screenTime: parseFloat(e.target.value) }))}
+                          style={{ width:'100%', accentColor:T.accent }}
+                        />
+                      </div>
+
+                      {/* Worst App */}
+                      <div style={{ marginBottom:20 }}>
+                        <span style={{ fontFamily:T.body, fontWeight:600, fontSize:11, color:T.inkMid, letterSpacing:'0.06em', display:'block', marginBottom:8 }}>
+                          Biggest Time Thief
+                        </span>
+                        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6 }}>
+                          {WORST_APP_OPTIONS.map(opt => (
+                            <button
+                              key={opt.val}
+                              onClick={() => setEditProfile(p => ({ ...p, worstApp: opt.val }))}
+                              style={{
+                                padding:'8px 10px', borderRadius:12, cursor:'pointer', textAlign:'left',
+                                background: editProfile.worstApp === opt.val ? T.accentBg : T.cardDeep,
+                                border: `1px solid ${editProfile.worstApp === opt.val ? T.accentBorder : T.border}`,
+                                fontFamily:T.body, fontSize:11, color:T.inkHigh,
+                                transition:'all 0.15s ease',
+                              }}
+                            >
+                              <span style={{ fontSize:14, marginRight:4 }}>{opt.icon}</span>
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Peak Focus */}
+                      <div style={{ marginBottom:20 }}>
+                        <span style={{ fontFamily:T.body, fontWeight:600, fontSize:11, color:T.inkMid, letterSpacing:'0.06em', display:'block', marginBottom:8 }}>
+                          Peak Focus Window
+                        </span>
+                        <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+                          {FOCUS_PEAK_OPTIONS.map(opt => (
+                            <button
+                              key={opt.val}
+                              onClick={() => setEditProfile(p => ({ ...p, focusPeak: opt.val }))}
+                              style={{
+                                padding:'8px 12px', borderRadius:10, cursor:'pointer', textAlign:'left',
+                                background: editProfile.focusPeak === opt.val ? T.accentBg : T.cardDeep,
+                                border: `1px solid ${editProfile.focusPeak === opt.val ? T.accentBorder : T.border}`,
+                                fontFamily:T.body, fontSize:11, color:T.inkHigh,
+                              }}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Mission */}
+                      <div style={{ marginBottom:20 }}>
+                        <span style={{ fontFamily:T.body, fontWeight:600, fontSize:11, color:T.inkMid, letterSpacing:'0.06em', display:'block', marginBottom:8 }}>
+                          Mission
+                        </span>
+                        <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+                          {MISSION_OPTIONS.map(opt => (
+                            <button
+                              key={opt.val}
+                              onClick={() => setEditProfile(p => ({ ...p, mission: opt.val }))}
+                              style={{
+                                padding:'8px 12px', borderRadius:10, cursor:'pointer', textAlign:'left',
+                                background: editProfile.mission === opt.val ? T.accentBg : T.cardDeep,
+                                border: `1px solid ${editProfile.mission === opt.val ? T.accentBorder : T.border}`,
+                                fontFamily:T.body, fontSize:11, color:T.inkHigh,
+                              }}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Past Attempts */}
+                      <div style={{ marginBottom:20 }}>
+                        <span style={{ fontFamily:T.body, fontWeight:600, fontSize:11, color:T.inkMid, letterSpacing:'0.06em', display:'block', marginBottom:8 }}>
+                          Past Attempts
+                        </span>
+                        <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+                          {ATTEMPT_OPTIONS.map(opt => (
+                            <button
+                              key={opt.val}
+                              onClick={() => setEditProfile(p => ({ ...p, pastAttempts: opt.val }))}
+                              style={{
+                                padding:'8px 12px', borderRadius:10, cursor:'pointer', textAlign:'left',
+                                background: editProfile.pastAttempts === opt.val ? T.accentBg : T.cardDeep,
+                                border: `1px solid ${editProfile.pastAttempts === opt.val ? T.accentBorder : T.border}`,
+                                fontFamily:T.body, fontSize:11, color:T.inkHigh,
+                              }}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Sleep */}
+                      <div style={{ marginBottom:20 }}>
+                        <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
+                          <span style={{ fontFamily:T.body, fontWeight:600, fontSize:11, color:T.inkMid, letterSpacing:'0.06em' }}>
+                            Sleep
+                          </span>
+                          <span style={{ fontFamily:T.heading, fontWeight:700, fontSize:16, color:T.green }}>
+                            {editProfile.sleep}h
+                          </span>
+                        </div>
+                        <input
+                          type="range" min={2} max={12} step={0.5}
+                          value={editProfile.sleep}
+                          onChange={e => setEditProfile(p => ({ ...p, sleep: parseFloat(e.target.value) }))}
+                          style={{ width:'100%', accentColor:T.green }}
+                        />
+                      </div>
+
+                      {/* Stress Level */}
+                      <div style={{ marginBottom:20 }}>
+                        <span style={{ fontFamily:T.body, fontWeight:600, fontSize:11, color:T.inkMid, letterSpacing:'0.06em', display:'block', marginBottom:8 }}>
+                          Stress Level
+                        </span>
+                        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6 }}>
+                          {STRESS_LABELS.map((label, i) => (
+                            <button
+                              key={i}
+                              onClick={() => setEditProfile(p => ({ ...p, stressLevel: i }))}
+                              style={{
+                                padding:'8px 10px', borderRadius:12, cursor:'pointer', textAlign:'center',
+                                background: editProfile.stressLevel === i ? T.accentBg : T.cardDeep,
+                                border: `1px solid ${editProfile.stressLevel === i ? T.accentBorder : T.border}`,
+                                fontFamily:T.body, fontSize:10, color:T.inkHigh,
+                              }}
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Avatar Name */}
+                      <div style={{ marginBottom:8 }}>
+                        <span style={{ fontFamily:T.body, fontWeight:600, fontSize:11, color:T.inkMid, letterSpacing:'0.06em', display:'block', marginBottom:6 }}>
+                          Avatar Name
+                        </span>
+                        <input
+                          type="text"
+                          maxLength={20}
+                          value={editProfile.avatarName || ''}
+                          onChange={e => setEditProfile(p => ({ ...p, avatarName: e.target.value }))}
+                          placeholder="Monk, Nova, Stoic…"
+                          style={{
+                            width:'100%', padding:'10px 14px', borderRadius:12,
+                            background:T.bg, border:`1px solid ${T.borderMid}`,
+                            fontFamily:T.heading, fontStyle:'italic', fontSize:15, color:T.inkHigh,
+                            outline:'none',
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Footer buttons */}
+                    <div style={{
+                      display:'flex', gap:10, padding:'0 24px 20px',
+                    }}>
+                      <motion.button
+                        whileHover={{ y:-1 }} whileTap={{ scale:0.97 }}
+                        onClick={() => { setShowEditModal(false); setEditProfile(null) }}
+                        style={{
+                          flex:1, padding:'12px 20px', borderRadius:T.rPill,
+                          background:T.cardDeep, border:`1px solid ${T.borderMid}`,
+                          fontFamily:T.body, fontWeight:600, fontSize:11,
+                          letterSpacing:'0.08em', textTransform:'uppercase',
+                          color:T.inkLow, cursor:'pointer',
+                        }}
+                      >
+                        Cancel
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ y:-1 }} whileTap={{ scale:0.97 }}
+                        onClick={handleSaveEdit}
+                        style={{
+                          flex:1, padding:'12px 20px', borderRadius:T.rPill,
+                          background:T.accent, border:'none',
+                          fontFamily:T.body, fontWeight:600, fontSize:11,
+                          letterSpacing:'0.08em', textTransform:'uppercase',
+                          color:'#FFF8F2', cursor:'pointer',
+                          boxShadow:'0 4px 16px rgba(184,112,78,0.25)',
+                        }}
+                      >
+                        Save Changes
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* ── Footer ────────────────────────────────────── */}
             <motion.div

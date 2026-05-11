@@ -1,19 +1,16 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   RiFlashlightLine, RiTimerFlashLine, RiBookOpenLine,
-  RiUserLine, RiSettings3Line, RiQuillPenLine,
-  RiSparkling2Line, RiFireLine, RiMentalHealthLine,
-  RiLeafLine, RiCalendarCheckLine, RiChat3Line,
-  RiDoubleQuotesL, RiHeartPulseLine,
-  RiArrowRightSLine, RiCheckLine, RiAddLine,
-  RiAlarmWarningLine, RiDropLine, RiZzzLine,
-  RiSmartphoneLine, RiLockLine, RiRadarLine, RiSunLine,
+  RiUserLine, RiSettings3Line,
+  RiFireLine, RiLeafLine, RiCalendarCheckLine, RiChat3Line,
+  RiDoubleQuotesL, RiArrowRightSLine, RiCoinLine, RiRadarLine,
 } from 'react-icons/ri'
 import MorningIntention from '../components/MorningIntention'
 import DigitalFast from '../components/DigitalFast'
 import CuriositySeed from '../components/CuriositySeed'
+import companionImg from '../assets/3dmodel.png'
 
 /* ─── Design Tokens ─────────────────────────────────────── */
 const T = {
@@ -54,19 +51,6 @@ const QUOTES = [
   { text: "In the age of distraction, attention is rebellion.", author: "Viram" },
 ]
 
-/* ─── Platform icons data ───────────────────────────────── */
-const PLATFORMS = [
-  { id: 'ig',  label: 'Instagram', color: '#C13584', bg: 'rgba(193,53,132,0.08)'  },
-  { id: 'tw',  label: 'Twitter/X', color: '#1DA1F2', bg: 'rgba(29,161,242,0.08)'  },
-  { id: 'tk',  label: 'TikTok',    color: '#69C9D0', bg: 'rgba(105,201,208,0.08)' },
-  { id: 'yt',  label: 'YouTube',   color: '#FF0000', bg: 'rgba(255,0,0,0.08)'     },
-  { id: 'fb',  label: 'Facebook',  color: '#1877F2', bg: 'rgba(24,119,242,0.08)'  },
-]
-
-/* ─── Heatmap hours ─────────────────────────────────────── */
-const HOURS = ['6a','8a','10a','12p','2p','4p','6p','8p','10p']
-const MOCK_HEAT = [0,0,1,2,1,3,4,5,3] // mock relapse intensity by hour
-
 /* ─── CSS ───────────────────────────────────────────────── */
 const GLOBAL = `
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,500;1,600&family=Jost:wght@300;400;500;600&display=swap');
@@ -79,13 +63,9 @@ const GLOBAL = `
     opacity:0.032; pointer-events:none; z-index:9999;
   }
 
-  @keyframes pulse-dot  { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.35;transform:scale(.6)} }
   @keyframes float-slow { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
   @keyframes spin-slow  { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
   @keyframes spin-rev   { from{transform:rotate(0deg)} to{transform:rotate(-360deg)} }
-  @keyframes bar-fill   { from{width:0%} to{width:var(--w)} }
-  @keyframes ring-in    { from{stroke-dashoffset:var(--full)} to{stroke-dashoffset:var(--offset)} }
-
   .viram-scroll::-webkit-scrollbar { width:2px; }
   .viram-scroll::-webkit-scrollbar-track { background:transparent; }
   .viram-scroll::-webkit-scrollbar-thumb { background:${T.borderMid}; border-radius:2px; }
@@ -96,22 +76,8 @@ const GLOBAL = `
   .nav-item:hover { background:${T.accentBg}; color:${T.accent}; }
   .nav-item { transition: all 0.18s ease; }
 
-  .heat-cell { transition: opacity 0.2s ease; }
-  .heat-cell:hover { opacity:0.7 !important; }
 
-  .intention-input {
-    background: transparent;
-    border: none;
-    outline: none;
-    width: 100%;
-    font-family: ${T.heading};
-    font-style: italic;
-    font-size: 15px;
-    color: ${T.inkHigh};
-    resize: none;
-    line-height: 1.6;
-  }
-  .intention-input::placeholder { color: ${T.inkGhost}; }
+
 `
 
 /* ─── Helpers ───────────────────────────────────────────── */
@@ -201,86 +167,25 @@ function ProgressRing({ value, max, size = 64, stroke = 4, color = T.accent, chi
   )
 }
 
-/* ─── Mini bar chart ────────────────────────────────────── */
-function MiniBar({ label, value, max, color, bg }) {
-  const pct = Math.round((value / max) * 100)
-  return (
-    <div>
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:5 }}>
-        <span style={{ fontFamily:T.body, fontWeight:400, fontSize:11, color:T.inkMid }}>{label}</span>
-        <span style={{ fontFamily:T.heading, fontWeight:600, fontSize:13, color:T.inkHigh }}>{value}h</span>
-      </div>
-      <div style={{ height:5, borderRadius:T.rPill, background:bg, overflow:'hidden' }}>
-        <div style={{
-          height:'100%', borderRadius:T.rPill,
-          background:color, width:`${pct}%`,
-          transition:'width 1.1s cubic-bezier(0.22,1,0.36,1)',
-        }} />
-      </div>
-    </div>
-  )
-}
-
-/* ─── Heatmap ───────────────────────────────────────────── */
-function HeatmapRow({ hours, data }) {
-  const max = Math.max(...data, 1)
-  return (
-    <div style={{ display:'flex', gap:5, alignItems:'flex-end' }}>
-      {data.map((val, i) => {
-        const intensity = val / max
-        return (
-          <div key={i} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
-            <div
-              className="heat-cell"
-              title={`${hours[i]}: ${val} relapse${val !== 1 ? 's' : ''}`}
-              style={{
-                height: 28,
-                borderRadius: 4,
-                background: val === 0
-                  ? T.cardDeep
-                  : `rgba(184,112,78,${0.15 + intensity * 0.7})`,
-                width: '100%',
-                border: `1px solid ${val === 0 ? T.border : T.accentBorder}`,
-              }}
-            />
-            <span style={{ fontFamily:T.body, fontSize:8, color:T.inkLow, letterSpacing:'0.04em' }}>{hours[i]}</span>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
 /* ═══ DASHBOARD ═══════════════════════════════════════════ */
 export default function Dashboard() {
   const navigate = useNavigate()
   const [tab, setTab]             = useState('home')
   const [user, setUser]           = useState(null)
-  const [intention, setIntention] = useState('')
-  const [intentionSet, setIntentionSet] = useState(false)
-  const [cleanDays, setCleanDays] = useState(4)
-  const [focusPoints, setFocusPoints]       = useState(0)
   const [disciplineIndex, setDisciplineIndex] = useState(0)
   const [todayFocusMins, setTodayFocusMins]   = useState(0)
-  const [showCmp, setShowCmp]                 = useState(false)
-  const intentionRef                          = useRef(null)
+  const [totalXp, setTotalXp]                 = useState(0)
+  const [confessionCount, setConfessionCount] = useState(0)
+  const [showCmp, setShowCmp] = useState(false)
 
   const stats = {
-    xp:          340,
-    streak:      cleanDays,
+    xp:          totalXp,
+    streak:      disciplineIndex,
     focusMins:   todayFocusMins,
-    confessions: 3,
+    confessions: confessionCount,
     disciplinePoints: disciplineIndex,
-    focusPoints:      focusPoints,
-    energyPoints:     91,
+    coins:            user?.coins || 0,
   }
-
-  /* Usage data (hours saved this week) */
-  const usage = [
-    { label:'Instagram', value:1.2, max:6, color:'#C13584', bg:'rgba(193,53,132,0.10)' },
-    { label:'TikTok',    value:0.4, max:6, color:'#69C9D0', bg:'rgba(105,201,208,0.10)' },
-    { label:'Twitter/X', value:0.8, max:6, color:'#1DA1F2', bg:'rgba(29,161,242,0.10)'  },
-  ]
 
   const todayQuote = QUOTES[new Date().getDate() % QUOTES.length]
   const hour = new Date().getHours()
@@ -293,14 +198,22 @@ export default function Dashboard() {
       const parsed = JSON.parse(u)
       setUser(parsed)
       setDisciplineIndex(parsed.disciplineIndex || 0)
-      setFocusPoints(parsed.focusPoints || 0)
     }
-    const saved = localStorage.getItem('viram_intention')
-    if (saved) { setIntention(saved); setIntentionSet(true) }
     const ft = localStorage.getItem('viram_focus_today')
     if (ft) {
       const f = JSON.parse(ft)
-      if (f.date === new Date().toDateString()) setTodayFocusMins(f.mins || 0)
+      if (f.date === new Date().toDateString()) {
+        setTodayFocusMins(f.mins || 0)
+        setTotalXp(f.xp || 0)
+      }
+    }
+
+    const confs = localStorage.getItem('viram_confessions')
+    if (confs) {
+      try {
+        const c = JSON.parse(confs)
+        setConfessionCount(Array.isArray(c) ? c.length : 0)
+      } catch { /* ignore */ }
     }
 
     /* Daily login bonus */
@@ -319,21 +232,6 @@ export default function Dashboard() {
     const t = setTimeout(() => setShowCmp(true), 600)
     return () => clearTimeout(t)
   }, [])
-
-  function saveIntention() {
-    if (!intention.trim()) return
-    localStorage.setItem('viram_intention', intention)
-    setIntentionSet(true)
-  }
-
-  /* ── NAV ITEMS ─────────────────────────────────────────── */
-  const NAV = [
-    { id:'home',    icon:RiFlashlightLine,  label:'Home'    },
-    { id:'focus',   icon:RiTimerFlashLine,  label:'Focus',   route:'/focus'   },
-    { id:'confess', icon:RiChat3Line,       label:'Confess', route:'/confess' },
-    { id:'library', icon:RiBookOpenLine,    label:'Library', route:'/library' },
-    { id:'profile', icon:RiUserLine,        label:'Profile', route:'/profile' },
-  ]
 
   return (
     <>
@@ -422,15 +320,15 @@ export default function Dashboard() {
                           {displayName}
                         </div>
                         <div style={{ fontFamily:T.body, fontWeight:300, fontSize:10.5, color:T.inkLow, marginTop:3 }}>
-                          {stats.xp} XP · {stats.focusMins} focus mins today
+                          {stats.focusMins}m focus · {stats.coins} coins · {stats.confessions} confessions
                         </div>
 
                         {/* Stat pills */}
                         <div style={{ display:'flex', gap:6, marginTop:9, flexWrap:'wrap' }}>
                           {[
                             { icon:RiCalendarCheckLine, val:stats.disciplinePoints, label:'Discipline', c:T.accent,     bg:T.accentBg,  border:T.accentBorder },
-                            { icon:RiTimerFlashLine,    val:stats.focusPoints,      label:'Focus',      c:'#6B8F5E',    bg:T.greenBg,   border:T.greenBorder  },
-                            { icon:RiHeartPulseLine,    val:stats.energyPoints,     label:'Energy',     c:T.inkMid,     bg:T.cardDeep,  border:T.border       },
+                            { icon:RiCoinLine,          val:stats.coins,             label:'Coins',      c:'#D4A843',    bg:'rgba(212,168,67,0.10)', border:'rgba(212,168,67,0.25)' },
+                            { icon:RiTimerFlashLine,    val:stats.focusMins,         label:'Focus Min',  c:'#6B8F5E',    bg:T.greenBg,   border:T.greenBorder  },
                           ].map(({ icon:Icon, val, label, c, bg, border }) => (
                             <div key={label} style={{ display:'flex', alignItems:'center', gap:5, padding:'4px 10px', borderRadius:T.rPill, background:bg, border:`1px solid ${border}` }}>
                               <Icon size={10} color={c} />
@@ -444,49 +342,6 @@ export default function Dashboard() {
                   </div>
                 </Card>
 
-                {/* ── Daily Intention ──────────────────────── */}
-                <Card style={{ marginBottom:12, border:`1px solid ${intentionSet ? T.greenBorder : T.border}` }}>
-                  <div style={{ padding:'14px 18px' }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
-                      <RiQuillPenLine size={12} color={intentionSet ? T.green : T.accentDim} />
-                      <span style={{ fontFamily:T.body, fontSize:9, fontWeight:600, letterSpacing:'0.2em', textTransform:'uppercase', color: intentionSet ? T.green : T.inkLow }}>
-                        Today's Intention
-                      </span>
-                      {intentionSet && (
-                        <div style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:4 }}>
-                          <RiCheckLine size={10} color={T.green} />
-                          <span style={{ fontFamily:T.body, fontSize:9, color:T.green }}>Set</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <textarea
-                      ref={intentionRef}
-                      className="intention-input"
-                      rows={2}
-                      placeholder="What will you protect your attention for today?"
-                      value={intention}
-                      onChange={e => { setIntention(e.target.value); setIntentionSet(false) }}
-                    />
-
-                    {!intentionSet && intention.trim() && (
-                      <motion.button
-                        initial={{ opacity:0, y:4 }} animate={{ opacity:1, y:0 }}
-                        onClick={saveIntention}
-                        style={{
-                          marginTop:10, padding:'7px 18px', borderRadius:T.rPill,
-                          background:T.accent, border:'none', cursor:'pointer',
-                          fontFamily:T.body, fontWeight:600, fontSize:11,
-                          letterSpacing:'0.08em', textTransform:'uppercase',
-                          color:'#FFF8F2',
-                        }}
-                      >
-                        Commit
-                      </motion.button>
-                    )}
-                  </div>
-                </Card>
-
                 {/* ── Recovery Stats Row ───────────────────── */}
                 <SectionLabel icon={RiRadarLine} label="Recovery Overview" />
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:18 }}>
@@ -497,14 +352,14 @@ export default function Dashboard() {
                       <div style={{ fontFamily:T.body, fontSize:9, fontWeight:600, letterSpacing:'0.18em', textTransform:'uppercase', color:T.inkLow }}>
                         Clean Days
                       </div>
-                      <ProgressRing value={cleanDays} max={7} size={72} stroke={4} color={T.accent}>
+                      <ProgressRing value={disciplineIndex} max={7} size={72} stroke={4} color={T.accent}>
                         <div style={{ textAlign:'center' }}>
-                          <div style={{ fontFamily:T.heading, fontWeight:700, fontSize:22, color:T.inkHigh, lineHeight:1 }}>{cleanDays}</div>
+                          <div style={{ fontFamily:T.heading, fontWeight:700, fontSize:22, color:T.inkHigh, lineHeight:1 }}>{disciplineIndex}</div>
                           <div style={{ fontFamily:T.body, fontWeight:300, fontSize:8, color:T.inkLow }}>/ 7 day</div>
                         </div>
                       </ProgressRing>
                       <div style={{ fontFamily:T.body, fontWeight:300, fontSize:10, color:T.inkLow, fontStyle:'italic', textAlign:'center' }}>
-                        {cleanDays >= 7 ? 'Full week clean 🌿' : `${7 - cleanDays} more to go`}
+                        {disciplineIndex >= 7 ? 'Full week clean 🌿' : `${7 - disciplineIndex} more to go`}
                       </div>
                     </div>
                   </Card>
@@ -527,46 +382,6 @@ export default function Dashboard() {
                     </div>
                   </Card>
                 </div>
-
-                {/* ── Usage reduced this week ──────────────── */}
-                <SectionLabel icon={RiSmartphoneLine} label="Screen Time Reduced" action="See all" onAction={() => navigate('/problems')} />
-                <Card style={{ marginBottom:18 }}>
-                  <div style={{ padding:'16px 18px', display:'flex', flexDirection:'column', gap:13 }}>
-                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
-                      <div>
-                        <div style={{ fontFamily:T.heading, fontWeight:700, fontSize:28, color:T.inkHigh, lineHeight:1 }}>
-                          3.6<span style={{ fontSize:14, fontWeight:400, color:T.inkLow }}> hrs</span>
-                        </div>
-                        <div style={{ fontFamily:T.body, fontWeight:300, fontSize:11, color:T.green, marginTop:2 }}>
-                          ↓ saved vs. last week
-                        </div>
-                      </div>
-                      <div style={{ padding:'6px 12px', borderRadius:T.rPill, background:T.greenBg, border:`1px solid ${T.greenBorder}` }}>
-                        <span style={{ fontFamily:T.body, fontWeight:600, fontSize:10, color:T.green }}>This Week</span>
-                      </div>
-                    </div>
-                    <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-                      {usage.map(u => <MiniBar key={u.label} {...u} />)}
-                    </div>
-                  </div>
-                </Card>
-
-                {/* ── Trigger Heatmap ──────────────────────── */}
-                <SectionLabel icon={RiAlarmWarningLine} label="Relapse Heatmap" action="Full report" onAction={() => navigate('/problems')} />
-                <Card style={{ marginBottom:18 }}>
-                  <div style={{ padding:'14px 16px' }}>
-                    <div style={{ fontFamily:T.body, fontWeight:300, fontSize:11, color:T.inkMid, marginBottom:12, lineHeight:1.6 }}>
-                      When you're most vulnerable today — avoid these windows.
-                    </div>
-                    <HeatmapRow hours={HOURS} data={MOCK_HEAT} />
-                    <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:12 }}>
-                      <div style={{ width:8, height:8, borderRadius:2, background:T.cardDeep, border:`1px solid ${T.border}` }} />
-                      <span style={{ fontFamily:T.body, fontSize:9, color:T.inkLow }}>No urge</span>
-                      <div style={{ width:8, height:8, borderRadius:2, background:`rgba(184,112,78,0.85)`, marginLeft:8 }} />
-                      <span style={{ fontFamily:T.body, fontSize:9, color:T.inkLow }}>High urge</span>
-                    </div>
-                  </div>
-                </Card>
 
                 {/* ── Actions grid ─────────────────────────── */}
                 <SectionLabel icon={RiFlashlightLine} label="Actions" />
@@ -653,17 +468,36 @@ export default function Dashboard() {
         {showCmp && (
           <div className="companion" style={{
             position:'fixed', bottom:58, right:0,
-            width:110, pointerEvents:'none', zIndex:15,
+            width:140, pointerEvents:'none', zIndex:15,
           }}>
             <img
-              src="/src/assets/3dmodel.png"
+              src={companionImg}
               alt="Viram companion"
               style={{
                 width:'100%', objectFit:'contain', objectPosition:'bottom right',
                 filter:'drop-shadow(0 8px 28px rgba(55,38,22,0.20))',
-                userSelect:'none',
+                userSelect:'none', display:'block',
               }}
             />
+            {/* Speech bubble */}
+            <div style={{
+              position:'absolute', bottom:90, right:72,
+              background:T.card, border:`1px solid ${T.borderMid}`,
+              borderRadius:12, padding:'4px 14px',
+              whiteSpace:'nowrap', zIndex:16,
+              boxShadow:'0 4px 16px rgba(55,38,22,0.15)',
+              fontFamily:T.heading, fontStyle:'italic',
+              fontSize:13, color:T.inkHigh,
+            }}>
+              Hello {displayName} ✦
+              <div style={{
+                position:'absolute', bottom:-6, right:24,
+                width:10, height:10, background:T.card,
+                borderRight:`1px solid ${T.borderMid}`,
+                borderBottom:`1px solid ${T.borderMid}`,
+                transform:'rotate(45deg)',
+              }} />
+            </div>
           </div>
         )}
 
