@@ -138,8 +138,8 @@ function Grain() {
   return (
     <div style={{
       position:'absolute', inset:0, pointerEvents:'none', zIndex:0,
-      backgroundImage: GRAIN, backgroundRepeat:'repeat',
-      opacity:0.032, borderRadius:'inherit',
+      backgroundImage: GRAIN, backgroundSize:'180px', backgroundRepeat:'repeat',
+      opacity:0.065, borderRadius:'inherit',
     }} />
   )
 }
@@ -213,7 +213,7 @@ const GLOBAL = `
   .viram-prof::after {
     content:''; position:fixed; inset:0;
     background-image:${GRAIN}; background-repeat:repeat;
-    opacity:0.032; pointer-events:none; z-index:9999;
+    background-size:180px; opacity:0.065; pointer-events:none; z-index:9999;
   }
 
   .viram-scroll::-webkit-scrollbar { width:2px; }

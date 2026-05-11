@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { useState, useEffect, useCallback } from 'react'
+import { motion, useScroll, useTransform } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import {
   RiArrowLeftLine,
@@ -40,7 +40,7 @@ const Grain = () => (
     aria-hidden="true"
     className="absolute inset-0 pointer-events-none z-0 rounded-[inherit]"
     style={{
-      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23g)' opacity='0.03'/%3E%3C/svg%3E")`,
+      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23g)' opacity='0.065'/%3E%3C/svg%3E")`,
     }}
   />
 )
@@ -352,12 +352,163 @@ function InsightCard({ icon, label, title, body }) {
   )
 }
 
+/* ─── Reading progress bar ────────────────────────────────────────────────── */
+function ReadingProgress() {
+  const { scrollYProgress } = useScroll()
+  const scaleX = useTransform(scrollYProgress, [0, 1], [0, 1])
+  return (
+    <motion.div
+      className="fixed top-0 left-0 right-0 z-[100] h-[3px] origin-left pointer-events-none"
+      style={{ scaleX, background: 'linear-gradient(90deg, #B8704E, #D4A08A)' }}
+    />
+  )
+}
+
+/* ─── Table of Contents ──────────────────────────────────────────────────── */
+function TableOfContents({ chapters, readChapters, onChapterClick }) {
+  const [expanded, setExpanded] = useState(false)
+  const readCount = readChapters.length
+  const total = chapters.length
+
+  return (
+    <LiftCard className="mb-16 rounded-[18px] overflow-hidden" style={{
+      background: '#F9F5EC',
+      border: '1px solid rgba(55,38,22,0.10)',
+    }}>
+      <Grain />
+      <div className="relative z-[1] p-6">
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="flex items-center justify-between w-full text-left"
+          style={{ cursor: 'pointer' }}
+        >
+          <div>
+            <div className="flex items-center gap-2 mb-1"
+              style={{ fontFamily: "'Jost', sans-serif", fontSize: 9, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#B8704E' }}
+            >
+              <RiBookOpenLine size={11} />
+              Reading Progress
+            </div>
+            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontWeight: 600, color: '#2A2218' }}>
+              {readCount} of {total} chapters read
+            </div>
+          </div>
+          <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{ background: '#EDE8DF', border: '2px solid rgba(184,112,78,0.25)' }}>
+            <span style={{ fontFamily: "'Jost', sans-serif", fontSize: 12, fontWeight: 600, color: '#B8704E' }}>
+              {Math.round((readCount / total) * 100)}%
+            </span>
+          </div>
+        </button>
+
+        <div className="mt-4 h-[6px] rounded-full overflow-hidden" style={{ background: '#EDE8DF' }}>
+          <motion.div
+            className="h-full rounded-full"
+            style={{ background: 'linear-gradient(90deg, #B8704E, #D4A08A)', width: `${(readCount / total) * 100}%` }}
+            layout
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          />
+        </div>
+
+        <motion.div
+          animate={{ height: expanded ? 'auto' : 0, opacity: expanded ? 1 : 0 }}
+          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+          className="overflow-hidden"
+        >
+          <div className="mt-5 space-y-2">
+            {chapters.map(ch => {
+              const isRead = readChapters.includes(ch.num)
+              return (
+                <button
+                  key={ch.num}
+                  onClick={() => onChapterClick(ch.num)}
+                  className="flex items-center gap-3 w-full text-left px-4 py-3 rounded-xl transition-all duration-200"
+                  style={{
+                    background: isRead ? 'rgba(184,112,78,0.06)' : 'transparent',
+                    border: `1px solid ${isRead ? 'rgba(184,112,78,0.12)' : 'rgba(55,38,22,0.06)'}`,
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(184,112,78,0.08)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = isRead ? 'rgba(184,112,78,0.06)' : 'transparent' }}
+                >
+                  <div style={{
+                    width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                    background: isRead ? '#B8704E' : 'rgba(55,38,22,0.12)',
+                    transition: 'background 0.3s',
+                  }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontFamily: "'Jost', sans-serif", fontSize: 10, fontWeight: 600, color: '#C4B8A8', letterSpacing: '0.10em', textTransform: 'uppercase' }}>
+                      Chapter {ch.num}
+                    </div>
+                    <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 15, fontWeight: 500, color: '#2A2218' }}>
+                      {ch.title}
+                    </div>
+                  </div>
+                  <DynIcon name={ch.icon} size={13} color={isRead ? '#B8704E' : '#C4B8A8'} />
+                </button>
+              )
+            })}
+          </div>
+        </motion.div>
+
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="mt-4 w-full text-center transition-all duration-200"
+          style={{
+            fontFamily: "'Jost', sans-serif", fontSize: 11, fontWeight: 500, color: '#A89B8C', letterSpacing: '0.06em',
+            cursor: 'pointer',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.color = '#5A4E42' }}
+          onMouseLeave={e => { e.currentTarget.style.color = '#A89B8C' }}
+        >
+          {expanded ? 'Collapse \u2191' : 'View all chapters \u2193'}
+        </button>
+      </div>
+    </LiftCard>
+  )
+}
+
 /* ─── Main export ─────────────────────────────────────────────────────────── */
 export default function Library() {
   const isLoggedIn = typeof localStorage !== 'undefined' && !!localStorage.getItem('viram_user')
+  const [readChapters, setReadChapters] = useState([])
+
+  const handleChapterClick = useCallback((num) => {
+    const el = document.querySelector(`[data-chapter="${num}"]`)
+    if (el) {
+      const top = el.getBoundingClientRect().top + window.scrollY - 72
+      window.scrollTo({ top, behavior: 'smooth' })
+    }
+  }, [])
+
+  useEffect(() => {
+    const stored = JSON.parse(localStorage.getItem('viram_library_progress') || '[]')
+    if (Array.isArray(stored)) setReadChapters(stored)
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const num = entry.target.getAttribute('data-chapter')
+          if (num) {
+            setReadChapters(prev => {
+              if (prev.includes(num)) return prev
+              const next = [...prev, num]
+              localStorage.setItem('viram_library_progress', JSON.stringify(next))
+              return next
+            })
+          }
+        }
+      })
+    }, { threshold: 0.3 })
+
+    const els = document.querySelectorAll('[data-chapter]')
+    if (els.length) els.forEach(el => observer.observe(el))
+
+    return () => observer.disconnect()
+  }, [])
 
   return (
     <>
+      <ReadingProgress />
       <FontLoader />
 
       <div
@@ -492,8 +643,12 @@ export default function Library() {
 
         {/* ── Chapter content ───────────────────────────────────────────── */}
         <div className="max-w-[740px] mx-auto px-[5vw] pt-[80px] pb-[120px]">
+
+          {/* ── Table of Contents ──────────────────────────────────────── */}
+          <TableOfContents chapters={CHAPTERS} readChapters={readChapters} onChapterClick={handleChapterClick} />
+
           {CHAPTERS.map((ch, idx) => (
-            <div key={ch.num}>
+            <div key={ch.num} data-chapter={ch.num}>
               <motion.article {...fadeUp(0)}>
 
                 {/* Chapter badge row */}
@@ -624,7 +779,7 @@ export default function Library() {
               with it when you close this page?
             </p>
 
-            <CTAButton to={isLoggedIn ? '/dashboard' : '/start'}>
+            <CTAButton to="/start">
               <RiRocketLine size={14} /> Forge Your Avatar
             </CTAButton>
           </motion.div>

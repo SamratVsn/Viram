@@ -320,10 +320,10 @@ export default function Start() {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
         const profile = await getProfile(session.user.id)
-        if (profile) setUser(profile)
+        navigate(profile?.onboarded ? '/dashboard' : '/onboarding', { replace: true })
       }
     })
-  }, [])
+  }, [navigate])
 
   useEffect(() => {
     if (status === 'success') {

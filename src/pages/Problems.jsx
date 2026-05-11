@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -35,7 +35,7 @@ const T = {
 }
 
 /* ─── Grain overlay SVG ───────────────────────────────────────────────────── */
-const GRAIN_SVG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E")`
+const GRAIN_SVG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.065'/%3E%3C/svg%3E")`
 
 /* ─── Animation helpers ───────────────────────────────────────────────────── */
 const fadeUp = (delay = 0) => ({
@@ -153,6 +153,16 @@ const VIRAM_SOLUTIONS = [
   { Icon: RiBrainLine, title: 'Rewire, Not Restrict', body: 'We don\'t block apps. Restriction creates rebellion. We replace shallow dopamine loops with deep-work loops that compound into mastery, identity, and genuine self-respect.' },
 ]
 
+const SECTIONS = [
+  { id: 'core-problems', label: 'The Problems' },
+  { id: 'dopamine-loop', label: 'The Addiction Loop' },
+  { id: 'mental-health', label: 'Mental Health' },
+  { id: 'stolen-time', label: 'The Cost' },
+  { id: 'whistleblowers', label: 'Whistleblowers' },
+  { id: 'sleep', label: 'Sleep' },
+  { id: 'answer', label: 'The Answer' },
+]
+
 /* ─── Sub-components ──────────────────────────────────────────────────────── */
 
 function GrainLayer() {
@@ -246,15 +256,79 @@ function ProblemCard({ p, delay }) {
   )
 }
 
+/* ─── Reading progress bar ────────────────────────────────────────────────── */
+function ReadingProgress() {
+  const { scrollYProgress } = useScroll()
+  const scaleX = useTransform(scrollYProgress, [0, 1], [0, 1])
+  return (
+    <motion.div
+      className="fixed top-0 left-0 right-0 z-[100] h-[3px] origin-left pointer-events-none"
+      style={{ scaleX, background: 'linear-gradient(90deg, #B8704E, #D4A08A)' }}
+    />
+  )
+}
+
+/* ─── Section navigation ─────────────────────────────────────────────────── */
+function SectionNav({ sections, activeSection, onSectionClick }) {
+  return (
+    <div className="flex justify-center" style={{ margin: '0 auto', maxWidth: 880 }}>
+      <div className="flex gap-1.5 overflow-x-auto px-2 py-1 scrollbar-none" style={{ scrollbarWidth: 'none' }}>
+        {sections.map(s => (
+          <button
+            key={s.id}
+            onClick={() => onSectionClick(s.id)}
+            className="px-3 py-1.5 rounded-full text-[10px] font-semibold tracking-wider whitespace-nowrap transition-all duration-200 flex-shrink-0"
+            style={{
+              fontFamily: "'Jost', sans-serif",
+              textTransform: 'uppercase',
+              letterSpacing: '0.12em',
+              background: activeSection === s.id ? T.accentBg : 'rgba(244,238,227,0.8)',
+              color: activeSection === s.id ? T.accent : T.faint,
+              border: `1px solid ${activeSection === s.id ? T.accentBdr : T.border}`,
+            }}
+            onMouseEnter={e => { if (activeSection !== s.id) e.currentTarget.style.background = 'rgba(184,112,78,0.06)' }}
+            onMouseLeave={e => { if (activeSection !== s.id) e.currentTarget.style.background = 'rgba(244,238,227,0.8)' }}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 /* ─── Main Component ──────────────────────────────────────────────────────── */
 export default function ProblemPage({ onBack }) {
   const navigate = useNavigate()
   const heroRef = useRef(null)
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.6], [1, 0])
-  const heroY       = useTransform(scrollYProgress, [0, 0.6], [0, 40])
+  const { scrollYProgress: heroScroll } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
+  const heroOpacity = useTransform(heroScroll, [0, 0.6], [1, 0])
+  const heroY       = useTransform(heroScroll, [0, 0.6], [0, 40])
 
+  const [activeSection, setActiveSection] = useState('')
   const handleBack = () => navigate('/dashboard')
+
+  const handleSectionClick = useCallback((id) => {
+    const el = document.getElementById(id)
+    if (el) {
+      const top = el.getBoundingClientRect().top + window.scrollY - 72
+      window.scrollTo({ top, behavior: 'smooth' })
+    }
+  }, [])
+
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          setActiveSection(entry.target.id)
+        }
+      })
+    }, { threshold: 0.15, rootMargin: '-80px 0px -40% 0px' })
+
+    const els = document.querySelectorAll('[data-section]')
+    els.forEach(el => observer.observe(el))
+    return () => observer.disconnect()
+  }, [])
 
   const pageStyle = {
     background: T.bg,
@@ -266,6 +340,8 @@ export default function ProblemPage({ onBack }) {
 
   return (
     <div className="fixed inset-0 z-10 overflow-y-auto" style={pageStyle}>
+
+      <ReadingProgress />
 
       {/* ── Sticky nav ─────────────────────────────────────────────────── */}
       <div className="sticky top-0 z-50 flex items-center justify-between px-8 py-5 border-b"
@@ -334,6 +410,11 @@ export default function ProblemPage({ onBack }) {
         </motion.div>
       </div>
 
+      {/* ── Section nav ──────────────────────────────────────────────────── */}
+      <div style={{ padding: '24px 6vw 0', maxWidth: 1160, margin: '0 auto' }}>
+        <SectionNav sections={SECTIONS} activeSection={activeSection} onSectionClick={handleSectionClick} />
+      </div>
+
       {/* ── Pull quote ──────────────────────────────────────────────────── */}
       <div className="relative overflow-hidden" style={{ borderTop: `1px solid ${T.border}`, borderBottom: `1px solid ${T.border}`, background: T.cardDeep, backgroundImage: GRAIN_SVG }}>
         <div style={{ maxWidth: 820, margin: '0 auto', padding: '64px 6vw', textAlign: 'center' }}>
@@ -350,7 +431,7 @@ export default function ProblemPage({ onBack }) {
       </div>
 
       {/* ── Nine Core Problems ──────────────────────────────────────────── */}
-      <div style={{ padding: '96px 6vw', maxWidth: 1160, margin: '0 auto' }}>
+      <div data-section="core-problems" style={{ padding: '96px 6vw', maxWidth: 1160, margin: '0 auto' }}>
         <motion.div {...fadeUp(0)} style={{ textAlign: 'center', marginBottom: 64 }}>
           <SectionTag Icon={RiErrorWarningLine}>What It's Actually Doing to You</SectionTag>
           <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, color: T.ink, fontSize: 'clamp(26px, 3.5vw, 48px)', lineHeight: 1.1, letterSpacing: '-0.02em', marginBottom: 16 }}>
@@ -369,7 +450,7 @@ export default function ProblemPage({ onBack }) {
       </div>
 
       {/* ── Dopamine Loop ───────────────────────────────────────────────── */}
-      <div style={{ background: T.cardDeep, backgroundImage: GRAIN_SVG, borderTop: `1px solid ${T.border}`, borderBottom: `1px solid ${T.border}` }}>
+      <div data-section="dopamine-loop" style={{ background: T.cardDeep, backgroundImage: GRAIN_SVG, borderTop: `1px solid ${T.border}`, borderBottom: `1px solid ${T.border}` }}>
         <div style={{ maxWidth: 1000, margin: '0 auto', padding: '96px 6vw' }}>
           <motion.div {...fadeUp(0)} style={{ textAlign: 'center', marginBottom: 64 }}>
             <SectionTag Icon={RiBrainLine}>Neuroscience of Addiction</SectionTag>
@@ -414,7 +495,7 @@ export default function ProblemPage({ onBack }) {
       </div>
 
       {/* ── Mental Health Crisis ─────────────────────────────────────────── */}
-      <div style={{ padding: '96px 6vw' }}>
+      <div data-section="mental-health" style={{ padding: '96px 6vw' }}>
         <div style={{ maxWidth: 1080, margin: '0 auto' }}>
           <motion.div {...fadeUp(0)} style={{ textAlign: 'center', marginBottom: 56 }}>
             <SectionTag Icon={RiMentalHealthLine}>The Mental Health Emergency</SectionTag>
@@ -467,7 +548,7 @@ export default function ProblemPage({ onBack }) {
       </div>
 
       {/* ── Stolen Time ─────────────────────────────────────────────────── */}
-      <div style={{ background: T.cardDeep, backgroundImage: GRAIN_SVG, borderTop: `1px solid ${T.border}`, borderBottom: `1px solid ${T.border}`, padding: '96px 6vw' }}>
+      <div data-section="stolen-time" style={{ background: T.cardDeep, backgroundImage: GRAIN_SVG, borderTop: `1px solid ${T.border}`, borderBottom: `1px solid ${T.border}`, padding: '96px 6vw' }}>
         <div style={{ maxWidth: 920, margin: '0 auto' }}>
           <motion.div {...fadeUp(0)} style={{ textAlign: 'center', marginBottom: 56 }}>
             <SectionTag Icon={RiTimeLine}>The Compounding Cost</SectionTag>
@@ -513,7 +594,7 @@ export default function ProblemPage({ onBack }) {
       </div>
 
       {/* ── Whistleblowers ──────────────────────────────────────────────── */}
-      <div style={{ padding: '96px 6vw' }}>
+      <div data-section="whistleblowers" style={{ padding: '96px 6vw' }}>
         <div style={{ maxWidth: 980, margin: '0 auto' }}>
           <motion.div {...fadeUp(0)} style={{ textAlign: 'center', marginBottom: 56 }}>
             <SectionTag Icon={RiUserVoiceLine}>From the Inside</SectionTag>
@@ -551,7 +632,7 @@ export default function ProblemPage({ onBack }) {
       </div>
 
       {/* ── Sleep section ───────────────────────────────────────────────── */}
-      <div style={{ background: T.cardDeep, backgroundImage: GRAIN_SVG, borderTop: `1px solid ${T.border}`, borderBottom: `1px solid ${T.border}`, padding: '80px 6vw' }}>
+      <div data-section="sleep" style={{ background: T.cardDeep, backgroundImage: GRAIN_SVG, borderTop: `1px solid ${T.border}`, borderBottom: `1px solid ${T.border}`, padding: '80px 6vw' }}>
         <div style={{ maxWidth: 880, margin: '0 auto' }}>
           <motion.div {...fadeUp(0)}>
             <div style={{ padding: '40px 44px', background: T.card, borderRadius: T.rLg, border: `1px solid ${T.border}`, boxShadow: T.shadow, backgroundImage: GRAIN_SVG, position: 'relative', overflow: 'hidden' }}>
@@ -626,7 +707,7 @@ export default function ProblemPage({ onBack }) {
       </div>
 
       {/* ── The Viram Answer ────────────────────────────────────────────── */}
-      <div style={{ background: T.cardDeep, backgroundImage: GRAIN_SVG, borderTop: `1px solid ${T.border}`, padding: '96px 6vw 112px' }}>
+      <div data-section="answer" style={{ background: T.cardDeep, backgroundImage: GRAIN_SVG, borderTop: `1px solid ${T.border}`, padding: '96px 6vw 112px' }}>
         <div style={{ maxWidth: 840, margin: '0 auto', textAlign: 'center' }}>
           <motion.div {...fadeUp(0)}>
             <SectionTag>The Answer</SectionTag>

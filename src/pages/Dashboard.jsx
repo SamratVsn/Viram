@@ -6,7 +6,7 @@ import {
   RiUserLine, RiSettings3Line,
   RiFireLine, RiLeafLine, RiCalendarCheckLine, RiChat3Line,
   RiDoubleQuotesL, RiArrowRightSLine, RiCoinLine, RiRadarLine,
-
+  RiBarChartBoxLine, RiMentalHealthLine,
 } from 'react-icons/ri'
 import MorningIntention from '../components/MorningIntention'
 import DigitalFast from '../components/DigitalFast'
@@ -21,6 +21,7 @@ const T = {
   card:         '#F9F5EC',
   cardDeep:     '#EDE5D4',
   cardSunken:   '#E6DCC8',
+  surface:      '#FFFFFF',
   inkHigh:      '#2A2218',
   inkMid:       '#5A4E42',
   inkLow:       '#8A7B6E',
@@ -35,6 +36,9 @@ const T = {
   green:        '#6B8F5E',
   greenBg:      'rgba(107,143,94,0.10)',
   greenBorder:  'rgba(107,143,94,0.25)',
+  gold:         '#D4A843',
+  goldBg:       'rgba(212,168,67,0.10)',
+  goldBorder:   'rgba(212,168,67,0.25)',
   red:          '#B85E5E',
   redBg:        'rgba(184,94,94,0.08)',
   redBorder:    'rgba(184,94,94,0.20)',
@@ -62,13 +66,14 @@ const GLOBAL = `
   .viram-dash { background:${T.bg}; }
   .viram-dash::after {
     content:''; position:fixed; inset:0;
-    background-image:${GRAIN}; background-repeat:repeat;
-    opacity:0.032; pointer-events:none; z-index:9999;
+    background-image:${GRAIN}; background-size:180px;
+    opacity:0.065; pointer-events:none; z-index:9999;
   }
 
   @keyframes float-slow { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
   @keyframes spin-slow  { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
   @keyframes spin-rev   { from{transform:rotate(0deg)} to{transform:rotate(-360deg)} }
+  @keyframes value-pop  { 0%{transform:scale(1)} 40%{transform:scale(1.18)} 100%{transform:scale(1)} }
   .viram-scroll::-webkit-scrollbar { width:2px; }
   .viram-scroll::-webkit-scrollbar-track { background:transparent; }
   .viram-scroll::-webkit-scrollbar-thumb { background:${T.borderMid}; border-radius:2px; }
@@ -78,6 +83,9 @@ const GLOBAL = `
 
   .nav-item:hover { background:${T.accentBg}; color:${T.accent}; }
   .nav-item { transition: all 0.18s ease; }
+
+  .dash-card { transition: box-shadow 0.3s ease, transform 0.22s ease; }
+  .dash-card:hover { box-shadow:0 6px 20px rgba(42,34,24,0.10) !important; transform:translateY(-1px); }
 
 
 
@@ -101,17 +109,27 @@ function SectionLabel({ icon: Icon, label, action, onAction }) {
   )
 }
 
-function Card({ children, style = {}, accent = false }) {
+function Card({ children, style = {}, accent = false, variant = 'default' }) {
+  const variants = {
+    default:  { bg: T.card,       shadow: '0 2px 12px rgba(55,38,22,0.06), inset 0 1px 0 rgba(255,255,255,0.55)' },
+    raised:   { bg: T.surface,    shadow: '0 4px 20px rgba(42,34,24,0.10), inset 0 1px 0 rgba(255,255,255,0.8)' },
+    sunken:   { bg: T.cardSunken, shadow: 'inset 0 1px 3px rgba(55,38,22,0.08)' },
+  }
+  const v = variants[variant] || variants.default
   return (
-    <div style={{
-      background: T.card,
-      border: `1px solid ${accent ? T.accentBorder : T.border}`,
-      borderRadius: T.rLg,
-      boxShadow: `0 2px 12px rgba(55,38,22,0.06), inset 0 1px 0 rgba(255,255,255,0.55)`,
-      position: 'relative',
-      overflow: 'hidden',
-      ...style,
-    }}>
+    <div
+      className="dash-card"
+      style={{
+        background: v.bg,
+        border: `1px solid ${accent ? T.accentBorder : T.border}`,
+        borderRadius: T.rLg,
+        boxShadow: v.shadow,
+        position: 'relative',
+        overflow: 'hidden',
+        cursor: 'default',
+        ...style,
+      }}
+    >
       {children}
     </div>
   )
@@ -167,6 +185,24 @@ function ProgressRing({ value, max, size = 64, stroke = 4, color = T.accent, chi
         {children}
       </div>
     </div>
+  )
+}
+
+/* ─── ValuePop — micro-moment on stat change ────────────── */
+function ValuePop({ val, style = {} }) {
+  return (
+    <AnimatePresence mode="popLayout">
+      <motion.span
+        key={val}
+        initial={{ opacity:0, scale:0.6 }}
+        animate={{ opacity:1, scale:1 }}
+        exit={{ opacity:0 }}
+        transition={{ duration:0.28, ease:[0.22,1,0.36,1] }}
+        style={style}
+      >
+        {val}
+      </motion.span>
+    </AnimatePresence>
   )
 }
 
@@ -301,22 +337,7 @@ export default function Dashboard() {
                           {displayName}
                         </div>
                         <div style={{ fontFamily:T.body, fontWeight:300, fontSize:10.5, color:T.inkLow, marginTop:3 }}>
-                          {stats.focusMins}m focus · {stats.coins} coins · {stats.confessions} confessions
-                        </div>
-
-                        {/* Stat pills */}
-                        <div style={{ display:'flex', gap:6, marginTop:9, flexWrap:'wrap' }}>
-                          {[
-                            { icon:RiCalendarCheckLine, val:stats.disciplinePoints, label:'Discipline', c:T.accent,     bg:T.accentBg,  border:T.accentBorder },
-                            { icon:RiCoinLine,          val:stats.coins,             label:'Coins',      c:'#D4A843',    bg:'rgba(212,168,67,0.10)', border:'rgba(212,168,67,0.25)' },
-                            { icon:RiTimerFlashLine,    val:stats.focusMins,         label:'Focus Min',  c:'#6B8F5E',    bg:T.greenBg,   border:T.greenBorder  },
-                          ].map(({ icon:Icon, val, label, c, bg, border }) => (
-                            <div key={label} style={{ display:'flex', alignItems:'center', gap:5, padding:'4px 10px', borderRadius:T.rPill, background:bg, border:`1px solid ${border}` }}>
-                              <Icon size={10} color={c} />
-                              <span style={{ fontFamily:T.heading, fontWeight:700, fontSize:13, color:T.inkHigh }}>{val}</span>
-                              <span style={{ fontFamily:T.body, fontWeight:300, fontSize:9, color:T.inkLow }}>{label}</span>
-                            </div>
-                          ))}
+                          {stats.focusMins}m focused · {stats.coins} coins · {stats.confessions} unburdened
                         </div>
                       </div>
                     </div>
@@ -325,44 +346,52 @@ export default function Dashboard() {
 
                 {/* ── Recovery Stats Row ───────────────────── */}
                 <SectionLabel icon={RiRadarLine} label="Recovery Overview" />
-                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:18 }}>
-
-                  {/* Clean days ring */}
-                  <Card>
-                    <div style={{ padding:'16px 14px', display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}>
-                      <div style={{ fontFamily:T.body, fontSize:9, fontWeight:600, letterSpacing:'0.18em', textTransform:'uppercase', color:T.inkLow }}>
-                        Clean Days
-                      </div>
-                      <ProgressRing value={disciplineIndex} max={7} size={72} stroke={4} color={T.accent}>
-                        <div style={{ textAlign:'center' }}>
-                          <div style={{ fontFamily:T.heading, fontWeight:700, fontSize:22, color:T.inkHigh, lineHeight:1 }}>{disciplineIndex}</div>
-                          <div style={{ fontFamily:T.body, fontWeight:300, fontSize:8, color:T.inkLow }}>/ 7 day</div>
+                <Card style={{ marginBottom:18 }}>
+                  <div style={{ padding:'16px 14px' }}>
+                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:14 }}>
+                      <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:6 }}>
+                        <div style={{ fontFamily:T.body, fontSize:8, fontWeight:600, letterSpacing:'0.18em', textTransform:'uppercase', color:T.inkLow }}>Clean Days</div>
+                        <ProgressRing value={disciplineIndex} max={7} size={68} stroke={4} color={T.accent}>
+                          <div style={{ textAlign:'center' }}>
+                            <ValuePop val={disciplineIndex} style={{ fontFamily:T.heading, fontWeight:700, fontSize:22, color:T.inkHigh, lineHeight:1 }} />
+                            <div style={{ fontFamily:T.body, fontWeight:300, fontSize:8, color:T.inkLow }}>/ 7</div>
+                          </div>
+                        </ProgressRing>
+                        <div style={{ fontFamily:T.body, fontWeight:300, fontSize:9.5, color:T.inkLow, fontStyle:'italic', textAlign:'center' }}>
+                          {disciplineIndex >= 7 ? 'Full week' : `${7 - disciplineIndex}d to go`}
                         </div>
-                      </ProgressRing>
-                      <div style={{ fontFamily:T.body, fontWeight:300, fontSize:10, color:T.inkLow, fontStyle:'italic', textAlign:'center' }}>
-                        {disciplineIndex >= 7 ? 'Full week clean 🌿' : `${7 - disciplineIndex} more to go`}
+                      </div>
+                      <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:6 }}>
+                        <div style={{ fontFamily:T.body, fontSize:8, fontWeight:600, letterSpacing:'0.18em', textTransform:'uppercase', color:T.inkLow }}>Focus Today</div>
+                        <ProgressRing value={stats.focusMins} max={120} size={68} stroke={4} color={T.green}>
+                          <div style={{ textAlign:'center' }}>
+                            <ValuePop val={`${stats.focusMins}m`} style={{ fontFamily:T.heading, fontWeight:700, fontSize:17, color:T.inkHigh, lineHeight:1 }} />
+                            <div style={{ fontFamily:T.body, fontWeight:300, fontSize:8, color:T.inkLow }}>/ 120</div>
+                          </div>
+                        </ProgressRing>
+                        <div style={{ fontFamily:T.body, fontWeight:300, fontSize:9.5, color:T.inkLow, fontStyle:'italic', textAlign:'center' }}>
+                          {stats.focusMins >= 60 ? 'Great session' : 'Keep building'}
+                        </div>
                       </div>
                     </div>
-                  </Card>
-
-                  {/* Focus time ring */}
-                  <Card>
-                    <div style={{ padding:'16px 14px', display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}>
-                      <div style={{ fontFamily:T.body, fontSize:9, fontWeight:600, letterSpacing:'0.18em', textTransform:'uppercase', color:T.inkLow }}>
-                        Focus Today
-                      </div>
-                      <ProgressRing value={stats.focusMins} max={120} size={72} stroke={4} color={T.green}>
-                        <div style={{ textAlign:'center' }}>
-                          <div style={{ fontFamily:T.heading, fontWeight:700, fontSize:18, color:T.inkHigh, lineHeight:1 }}>{stats.focusMins}m</div>
-                          <div style={{ fontFamily:T.body, fontWeight:300, fontSize:8, color:T.inkLow }}>/ 120m</div>
+                    {/* Bottom stat bar — gives the pills a home */}
+                    <div style={{ display:'flex', gap:0, borderRadius:T.rMd, overflow:'hidden', border:`1px solid ${T.border}` }}>
+                      {[
+                        { icon:RiCalendarCheckLine, val:stats.disciplinePoints, label:'Discipline', c:T.accent, bg:T.accentBg },
+                        { icon:RiCoinLine,          val:stats.coins,             label:'Coins',      c:T.gold,   bg:T.goldBg },
+                        { icon:RiTimerFlashLine,    val:stats.focusMins,         label:'Focus Min',  c:T.green,  bg:T.greenBg },
+                        { icon:RiFireLine,          val:stats.streak,            label:'Streak',     c:T.accent, bg:T.accentBg },
+                        { icon:RiChat3Line,         val:stats.confessions,       label:'Confessed',  c:T.inkMid, bg:T.cardDeep },
+                      ].map(({ icon:Icon, val, label, c, bg }, i) => (
+                        <div key={label} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:4, padding:'10px 4px', background:bg, borderRight:i<4?`1px solid ${T.border}`:'none' }}>
+                          <Icon size={11} color={c} />
+                          <ValuePop val={val} style={{ fontFamily:T.heading, fontWeight:700, fontSize:15, color:T.inkHigh, lineHeight:1 }} />
+                          <span style={{ fontFamily:T.body, fontWeight:300, fontSize:7.5, color:T.inkLow, letterSpacing:'0.06em', textTransform:'uppercase', whiteSpace:'nowrap' }}>{label}</span>
                         </div>
-                      </ProgressRing>
-                      <div style={{ fontFamily:T.body, fontWeight:300, fontSize:10, color:T.inkLow, fontStyle:'italic', textAlign:'center' }}>
-                        {stats.focusMins >= 60 ? 'Great session today' : 'Keep building'}
-                      </div>
+                      ))}
                     </div>
-                  </Card>
-                </div>
+                  </div>
+                </Card>
 
                 {/* ── Actions grid ─────────────────────────── */}
                 <SectionLabel icon={RiFlashlightLine} label="Actions" />

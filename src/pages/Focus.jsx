@@ -90,9 +90,15 @@ const GLOBAL = `
     60%  { transform:scale(1.03) translateY(-4px); }
     100% { opacity:1; transform:scale(1) translateY(0); }
   }
+  @keyframes complete-glow {
+    0%   { filter:drop-shadow(0 0 4px rgba(107,143,94,0.2)); }
+    50%  { filter:drop-shadow(0 0 24px rgba(107,143,94,0.6)); }
+    100% { filter:drop-shadow(0 0 4px rgba(107,143,94,0.2)); }
+  }
 
   .breath-ring { animation: breath-ring 4s ease-in-out infinite; }
   .breath-time { animation: breath 4s ease-in-out infinite; }
+  .complete-ring { animation: complete-glow 1.6s ease-in-out infinite; }
 
   .intent-input {
     background: transparent;
@@ -324,7 +330,7 @@ export default function Focus() {
         {/* Grain */}
         <div style={{
           position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0,
-          backgroundImage: GRAIN, backgroundRepeat: 'repeat', opacity: 0.03,
+          backgroundImage: GRAIN, backgroundSize: '180px', backgroundRepeat: 'repeat', opacity: 0.065,
         }} />
 
         {/* Ambient glow when running */}
@@ -485,7 +491,7 @@ export default function Focus() {
             <svg
               viewBox="0 0 220 220"
               style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', transform: 'rotate(-90deg)' }}
-              className={running ? 'breath-ring' : ''}
+              className={done ? 'complete-ring' : running ? 'breath-ring' : ''}
             >
               <defs>
                 <linearGradient id="fg" x1="0%" y1="0%" x2="100%" y2="0%">
