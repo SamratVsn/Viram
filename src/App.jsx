@@ -1,13 +1,14 @@
 import React from "react";
 import { Route } from "react-router-dom";
 import { BrowserRouter, Routes } from "react-router-dom";
-import ProtectedRoute from "./components/ProtectedRoute";
+import AuthGuard from "./components/AuthGuard";
 import Home from "./pages/Home";
 import LandingPage from "./pages/LandingPage";
 import Library from "./pages/Library";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Start from "./pages/Start";
+import AuthCallback from "./pages/AuthCallback";
 import Onboarding from "./components/Onboarding";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
@@ -24,73 +25,74 @@ export default function App() {
         {/* Public */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/start" element={<Start />} />
+        <Route path="/callback" element={<AuthCallback />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/library" element={<Library />} />
-        
+
         {/* Protected */}
         <Route
           path="/onboarding"
           element={
-            <ProtectedRoute>
+            <AuthGuard>
               <Onboarding />
-            </ProtectedRoute>
+            </AuthGuard>
           }
         />
         <Route
           path="/home"
           element={
-            <ProtectedRoute>
+            <AuthGuard>
               <Home />
-            </ProtectedRoute>
+            </AuthGuard>
           }
         />
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute>
+            <AuthGuard>
               <Dashboard />
-            </ProtectedRoute>
+            </AuthGuard>
           }
         />
         <Route
           path="/focus"
           element={
-            <ProtectedRoute>
+            <AuthGuard>
               <Focus />
-            </ProtectedRoute>
+            </AuthGuard>
           }
         />
         <Route
           path="/confess"
           element={
-            <ProtectedRoute>
+            <AuthGuard>
               <Confess />
-            </ProtectedRoute>
+            </AuthGuard>
           }
         />
         <Route
           path="/settings"
           element={
-            <ProtectedRoute>
+            <AuthGuard>
               <Setting />
-            </ProtectedRoute>
+            </AuthGuard>
           }
         />
         <Route
           path="/problems"
           element={
-            <ProtectedRoute>
+            <AuthGuard>
               <Problems />
-            </ProtectedRoute>
+            </AuthGuard>
           }
         />
         <Route
           path="/profile"
           element={
-            <ProtectedRoute>
+            <AuthGuard>
               <Profile />
-            </ProtectedRoute>
+            </AuthGuard>
           }
         />
 

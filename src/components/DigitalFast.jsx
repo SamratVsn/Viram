@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { RiCheckLine, RiAlertLine, RiSwordLine } from 'react-icons/ri'
+import { supabase } from '../lib/supabase'
+import { updateProfile, getProfile } from '../lib/db'
 import AdvancementToast, { ACHIEVEMENTS } from './AdvancementToast'
 
 const T = {
@@ -16,41 +18,63 @@ const T = {
 const FAST_DURATION = 120 * 60 * 1000
 const STORAGE_KEY = 'viram_digital_fast'
 
-function grantPoints(onComplete) {
-  const user = JSON.parse(localStorage.getItem('viram_user') || '{}')
-  user.disciplinePoints = (user.disciplinePoints || 0) + 10
-  localStorage.setItem('viram_user', JSON.stringify(user))
-  if (onComplete) onComplete()
+function grantPoints(onComplete, userId) {
+  if (userId) {
+    getProfile(userId).then(profile => {
+      const currentPoints = profile?.disciplinePoints || 0
+      const newPoints = currentPoints + 10
+
+      updateProfile(userId, { disciplinePoints: newPoints })
+
+      /* Mirror to localStorage */
+      const lsUser = JSON.parse(localStorage.getItem('viram_user') || '{}')
+      lsUser.disciplinePoints = newPoints
+      localStorage.setItem('viram_user', JSON.stringify(lsUser))
+
+      if (onComplete) onComplete()
+    })
+  } else {
+    /* Fallback: localStorage only (no auth) */
+    const lsUser = JSON.parse(localStorage.getItem('viram_user') || '{}')
+    lsUser.disciplinePoints = (lsUser.disciplinePoints || 0) + 10
+    localStorage.setItem('viram_user', JSON.stringify(lsUser))
+    if (onComplete) onComplete()
+  }
 }
 
 export default function DigitalFast({ onComplete }) {
   const [status, setStatus] = useState('idle')
   const [remaining, setRemaining] = useState(FAST_DURATION)
   const [showAchievement, setShowAchievement] = useState(false)
+  const userIdRef = useRef(null)
   const pollRef = useRef(null)
 
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (saved) {
-      try {
-        const data = JSON.parse(saved)
-        if (data.status === 'running') {
-          const elapsed = Date.now() - data.startTime
-          if (elapsed >= FAST_DURATION) {
-            setStatus('completed')
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      const uid = user?.id || null
+      userIdRef.current = uid
+      const saved = localStorage.getItem(STORAGE_KEY)
+      if (saved) {
+        try {
+          const data = JSON.parse(saved)
+          if (data.status === 'running') {
+            const elapsed = Date.now() - data.startTime
+            if (elapsed >= FAST_DURATION) {
+              setStatus('completed')
+              setRemaining(0)
+              setShowAchievement(true)
+              grantPoints(onComplete, uid)
+            } else {
+              setStatus('running')
+              setRemaining(FAST_DURATION - elapsed)
+            }
+          } else if (data.status === 'broken') {
+            setStatus('broken')
             setRemaining(0)
-            setShowAchievement(true)
-            grantPoints(onComplete)
-          } else {
-            setStatus('running')
-            setRemaining(FAST_DURATION - elapsed)
           }
-        } else if (data.status === 'broken') {
-          setStatus('broken')
-          setRemaining(0)
-        }
-      } catch { /* ignore */ }
-    }
+        } catch { /* ignore */ }
+      }
+    })
   }, [])
 
   useEffect(() => {
@@ -90,7 +114,7 @@ export default function DigitalFast({ onComplete }) {
           setStatus('completed')
           setRemaining(0)
           setShowAchievement(true)
-          grantPoints(onComplete)
+          grantPoints(onComplete, userIdRef.current)
         }
       }, 500)
     }

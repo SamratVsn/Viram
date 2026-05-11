@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { RiQuillPenLine, RiCheckLine, RiSunLine } from 'react-icons/ri'
+import { supabase } from '../lib/supabase'
+import { saveTodayIntention, updateProfile, getProfile } from '../lib/db'
 import AdvancementToast, { checkCoinMilestone } from './AdvancementToast'
 
 const T = {
@@ -21,8 +23,12 @@ export default function MorningIntention() {
   const [input, setInput] = useState('')
   const [initialized, setInitialized] = useState(false)
   const [advancement, setAdvancement] = useState(null)
+  const userIdRef = useRef(null)
 
   useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) userIdRef.current = user.id
+    })
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored) {
       try {
@@ -40,23 +46,50 @@ export default function MorningIntention() {
 
   function saveIntention() {
     if (!input.trim()) return
-    const data = { text: input.trim(), date: new Date().toDateString(), timestamp: Date.now() }
+    const text = input.trim()
+    const data = { text, date: new Date().toDateString(), timestamp: Date.now() }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
-    setSavedIntention(input.trim())
+    setSavedIntention(text)
     setShowModal(false)
+
+    // TODO: remove localStorage fallback after migration
+    if (userIdRef.current) {
+      saveTodayIntention(userIdRef.current, text)
+    }
 
     // Award 1 coin for setting morning intention (once per day)
     const coinKey = 'viram_morning_coin_date'
     if (localStorage.getItem(coinKey) !== new Date().toDateString()) {
-      const cUser = JSON.parse(localStorage.getItem('viram_user') || '{}')
-      const oldCoins = cUser.coins || 0
-      cUser.coins = oldCoins + 1
-      localStorage.setItem('viram_user', JSON.stringify(cUser))
-      localStorage.setItem(coinKey, new Date().toDateString())
+      if (userIdRef.current) {
+        getProfile(userIdRef.current).then(profile => {
+          const currentCoins = profile?.coins || 0
+          const newCoins = currentCoins + 1
 
-      const milestone = checkCoinMilestone(oldCoins, cUser.coins)
-      if (milestone) {
-        setTimeout(() => setAdvancement(milestone), 600)
+          updateProfile(userIdRef.current, { coins: newCoins })
+
+          /* Mirror to localStorage */
+          const lsUser = JSON.parse(localStorage.getItem('viram_user') || '{}')
+          lsUser.coins = newCoins
+          localStorage.setItem('viram_user', JSON.stringify(lsUser))
+          localStorage.setItem(coinKey, new Date().toDateString())
+
+          const milestone = checkCoinMilestone(currentCoins, newCoins)
+          if (milestone) {
+            setTimeout(() => setAdvancement(milestone), 600)
+          }
+        })
+      } else {
+        /* Fallback: localStorage only (no auth) */
+        const lsUser = JSON.parse(localStorage.getItem('viram_user') || '{}')
+        const oldCoins = lsUser.coins || 0
+        lsUser.coins = oldCoins + 1
+        localStorage.setItem('viram_user', JSON.stringify(lsUser))
+        localStorage.setItem(coinKey, new Date().toDateString())
+
+        const milestone = checkCoinMilestone(oldCoins, lsUser.coins)
+        if (milestone) {
+          setTimeout(() => setAdvancement(milestone), 600)
+        }
       }
     }
   }

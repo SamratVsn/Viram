@@ -220,12 +220,14 @@ export default function AdvancementToast({
   icon        = null,          // override icon
 }) {
   const c = TIERS[tier] || TIERS.bronze
+  const onDismissRef = useRef(onDismiss)
+  onDismissRef.current = onDismiss
 
   useEffect(() => {
     if (!visible) return
-    const t = setTimeout(onDismiss, autoHide)
+    const t = setTimeout(() => onDismissRef.current(), autoHide)
     return () => clearTimeout(t)
-  }, [visible, onDismiss, autoHide])
+  }, [visible, autoHide])
 
   /* Default icons per type */
   const defaultIcon = {
@@ -244,6 +246,7 @@ export default function AdvancementToast({
         {visible && (
           /* Backdrop */
           <motion.div
+            key="adv"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -429,7 +432,7 @@ export default function AdvancementToast({
                   transition={{ delay: 0.62, duration: 0.45, ease }}
                   whileHover={{ y: -2, boxShadow: `0 14px 36px rgba(42,34,24,0.22)` }}
                   whileTap={{ scale: 0.97 }}
-                  onClick={onDismiss}
+                  onClick={e => { e.stopPropagation(); onDismiss() }}
                   style={{
                     width: '100%', padding: '13px 24px', borderRadius: 100,
                     background: T.inkHigh, border: 'none', cursor: 'pointer',

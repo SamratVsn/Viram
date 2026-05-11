@@ -8,6 +8,9 @@ import {
 } from 'react-icons/ri'
 import { useNavigate } from 'react-router-dom'
 import AdvancementToast, { checkCoinMilestone, ACHIEVEMENTS } from '../components/AdvancementToast'
+import { supabase } from '../lib/supabase'
+import { getTodayFocus, saveFocusSession, getProfile, updateProfile } from '../lib/db'
+import { loadPrefs } from './Setting'
 
 /* ─── Tokens ─────────────────────────────────────────────── */
 const T = {
@@ -121,8 +124,9 @@ export default function Focus() {
   const startTimeRef = useRef(null)
   const accumRef     = useRef(0)
 
-  const [durMin, setDurMin]         = useState(25)
-  const [secs, setSecs]             = useState(25 * 60)
+  const prefs = loadPrefs()
+  const [durMin, setDurMin]         = useState(prefs.defaultPomodoro)
+  const [secs, setSecs]             = useState(prefs.defaultPomodoro * 60)
   const [running, setRunning]       = useState(false)
   const [elapsed, setElapsed]       = useState(0)
   const [done, setDone]             = useState(false)
@@ -144,15 +148,28 @@ export default function Focus() {
   const phase  = getPhase(elapsed, total)
   const isDark = running
 
-  /* Load today's focus stats */
+  /* Load today's focus stats from Supabase + localStorage fallback */
   useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        getTodayFocus(user.id).then(today => {
+          if (today.mins > 0) {
+            setSessions(today.sessions)
+            setMinsDone(today.mins)
+            setXpEarned(today.xp)
+          }
+        })
+      }
+    })
     const saved = localStorage.getItem('viram_focus_today')
     if (saved) {
       const d = JSON.parse(saved)
       if (d.date === new Date().toDateString()) {
-        setSessions(d.sessions || 0)
-        setMinsDone(d.mins || 0)
-        setXpEarned(d.xp || 0)
+        if (d.mins > 0) {
+          setSessions(d.sessions || 0)
+          setMinsDone(d.mins || 0)
+          setXpEarned(d.xp || 0)
+        }
       }
     }
     setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)])
@@ -165,6 +182,7 @@ export default function Focus() {
       mins: newMins,
       xp: newXp,
     }))
+    // TODO: remove localStorage fallback after migration
   }
 
   function setDuration(min) {
@@ -228,20 +246,49 @@ export default function Focus() {
     setShowComplete(true)
     saveFocusStats(newSessions, newMins, newXp)
 
-    const user = JSON.parse(localStorage.getItem('viram_user') || '{}')
-    const oldCoins = user.coins || 0
-    user.focusMins = (user.focusMins || 0) + durMin
-    user.coins = oldCoins + Math.floor(durMin / 5)
-    localStorage.setItem('viram_user', JSON.stringify(user))
+    const coinsEarned = Math.floor(durMin / 5)
 
-    const milestone = checkCoinMilestone(oldCoins, user.coins)
-    setTimeout(() => {
-      if (milestone) {
-        setAdvancement(milestone)
+    /* Source of truth: Supabase profile */
+    supabase.auth.getUser().then(({ data: { user: authUser } }) => {
+      if (authUser) {
+        saveFocusSession({ userId: authUser.id, duration: durMin, xpEarned: xpGained, coinsEarned, intent })
+        getProfile(authUser.id).then(profile => {
+          const currentCoins = profile?.coins || 0
+          const newCoins = currentCoins + coinsEarned
+          const currentXp = profile?.xp || 0
+
+          updateProfile(authUser.id, {
+            coins: newCoins,
+            xp: currentXp + xpGained,
+          })
+
+          /* Mirror to localStorage */
+          const lsUser = JSON.parse(localStorage.getItem('viram_user') || '{}')
+          lsUser.coins = newCoins
+          lsUser.focusMins = (lsUser.focusMins || 0) + durMin
+          localStorage.setItem('viram_user', JSON.stringify(lsUser))
+
+          const milestone = checkCoinMilestone(currentCoins, newCoins)
+          setTimeout(() => {
+            if (milestone) setAdvancement(milestone)
+            else setAdvancement(ACHIEVEMENTS.focusSession(durMin))
+          }, 1400)
+        })
       } else {
-        setAdvancement(ACHIEVEMENTS.focusSession(durMin))
+        /* Fallback: localStorage only (no auth) */
+        const lsUser = JSON.parse(localStorage.getItem('viram_user') || '{}')
+        const oldCoins = lsUser.coins || 0
+        lsUser.coins = oldCoins + coinsEarned
+        lsUser.focusMins = (lsUser.focusMins || 0) + durMin
+        localStorage.setItem('viram_user', JSON.stringify(lsUser))
+
+        const milestone = checkCoinMilestone(oldCoins, lsUser.coins)
+        setTimeout(() => {
+          if (milestone) setAdvancement(milestone)
+          else setAdvancement(ACHIEVEMENTS.focusSession(durMin))
+        }, 1400)
       }
-    }, 1400)
+    })
 
     setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)])
     setTimeout(() => setShowComplete(false), 4500)

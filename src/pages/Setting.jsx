@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -20,6 +20,9 @@ import {
   RiFireLine,
   RiBarChartLine,
 } from 'react-icons/ri'
+import { supabase } from '../lib/supabase'
+import { updateProfile, getProfile, clearAllConfessions } from '../lib/db'
+import useViramData from '../hooks/useViramData'
 
 /* ─── Font loader ─────────────────────────────────────────────────────────── */
 const FontLoader = () => (
@@ -40,11 +43,11 @@ const Grain = () => (
   />
 )
 
-/* ─── Storage helpers ─────────────────────────────────────────────────────── */
+/* ─── Storage helpers (exported for Focus etc.) ──────────────────────────── */
 const PREFS_KEY = 'viram_prefs'
 
-const DEFAULT_PREFS = {
-  defaultPomodoro:   15,
+export const DEFAULT_PREFS = {
+  defaultPomodoro:   25,
   soundEnabled:      true,
   autoStartBreak:    false,
   dailyReminder:     false,
@@ -54,7 +57,7 @@ const DEFAULT_PREFS = {
   confessionsLocked: false,
 }
 
-function loadPrefs() {
+export function loadPrefs() {
   try {
     return { ...DEFAULT_PREFS, ...JSON.parse(localStorage.getItem(PREFS_KEY) || '{}') }
   } catch { return { ...DEFAULT_PREFS } }
@@ -64,14 +67,24 @@ function savePrefs(p) {
   try { localStorage.setItem(PREFS_KEY, JSON.stringify(p)) } catch {}
 }
 
-function exportData() {
+async function exportData() {
   const data = {
     exported_at:  new Date().toISOString(),
-    user:         JSON.parse(localStorage.getItem('viram_user')         || 'null'),
-    profile:      JSON.parse(localStorage.getItem('viram_profile')      || 'null'),
-    confessions:  JSON.parse(localStorage.getItem('viram_confessions')  || '[]'),
     preferences:  loadPrefs(),
   }
+  try {
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+    if (authUser) {
+      const profile = await getProfile(authUser.id)
+      if (profile) data.profile = profile
+    }
+  } catch (e) {
+    console.error('exportData profile fetch:', e)
+    data.user    = JSON.parse(localStorage.getItem('viram_user')    || 'null')
+    data.profile = JSON.parse(localStorage.getItem('viram_profile') || 'null')
+  }
+  data.confessions = JSON.parse(localStorage.getItem('viram_confessions') || '[]')
+
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
   const url  = URL.createObjectURL(blob)
   const a    = document.createElement('a')
@@ -398,11 +411,12 @@ function ConfirmModal({ icon: Icon, title, body, confirmLabel, cancelLabel = 'Ca
 }
 
 /* ─── Main ────────────────────────────────────────────────────────────────── */
-export default function Settings({ onBack, G, setG }) {
+export default function Settings({ G, setG }) {
   const navigate              = useNavigate()
   const [prefs, setPrefs]     = useState(loadPrefs)
   const [modal, setModal]     = useState(null)
   const [toast, setToast]     = useState({ visible: false, message: '' })
+  const { user: profileData, loading: profileLoading } = useViramData()
 
   const showToast = (msg) => {
     setToast({ visible: true, message: msg })
@@ -417,38 +431,62 @@ export default function Settings({ onBack, G, setG }) {
   }
 
   /* ── Actions ─────────────────────────────────────────────────────────── */
-  const doLogout = () => {
-    localStorage.removeItem('viram_user')
-    localStorage.removeItem('viram_profile')
+  const userId = profileData?.id
+
+  const doLogout = async () => {
+    try {
+      await supabase.auth.signOut()
+    } catch (e) {
+      console.error('doLogout:', e)
+    }
+    ;['viram_user', 'viram_profile', 'viram_confessions', PREFS_KEY].forEach(k => localStorage.removeItem(k))
     navigate('/start')
   }
 
-  const doResetAvatar = () => {
-    if (setG) setG(g => ({ ...g, xp: 0, energy: 70, disc: 50, clarity: 60, hp: 80, streak: 0, debt: 0, level: 1, logs: [] }))
+  const doResetAvatar = async () => {
+    if (userId) {
+      try {
+        await updateProfile(userId, {
+          xp: 0, coins: 0, discipline_points: 0, streak: 0,
+          last_login: null,
+        })
+      } catch (e) {
+        console.error('doResetAvatar:', e)
+      }
+    }
+    localStorage.setItem('viram_profile', JSON.stringify({}))
+    localStorage.setItem('viram_user', JSON.stringify({}))
     showToast('Avatar reset — start from zero')
     setModal(null)
   }
 
-  const doClearConfessions = () => {
+  const doClearConfessions = async () => {
+    if (userId) {
+      try {
+        await clearAllConfessions(userId)
+      } catch (e) {
+        console.error('doClearConfessions:', e)
+      }
+    }
     localStorage.removeItem('viram_confessions')
     showToast('Confessions cleared')
     setModal(null)
   }
 
-  const doClearAll = () => {
-    ['viram_user', 'viram_profile', 'viram_confessions', PREFS_KEY].forEach(k => localStorage.removeItem(k))
+  const doClearAll = async () => {
+    try {
+      await supabase.auth.signOut()
+    } catch (e) {
+      console.error('doClearAll:', e)
+    }
+    ;['viram_user', 'viram_profile', 'viram_confessions', PREFS_KEY].forEach(k => localStorage.removeItem(k))
     navigate('/start')
   }
 
   /* ── Read profile ─────────────────────────────────────────────────────── */
-  const profile = (() => {
-    try { return JSON.parse(localStorage.getItem('viram_profile') || '{}') } catch { return {} }
-  })()
-  const userInfo = (() => {
-    try { return JSON.parse(localStorage.getItem('viram_user') || '{}') } catch { return {} }
-  })()
-  const displayName = profile.avatarName || userInfo.name?.split(' ')[0] || 'Viram User'
-  const initials    = (userInfo.name || profile.avatarName || 'VU').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+  const profile   = profileData || {}
+  const displayName = profile.avatarName || profile.name?.split(' ')[0] || 'Viram User'
+  const initials    = (profile.name || profile.avatarName || 'VU').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
 
   const ARCHETYPE_MAP = {
     study:      'THE SCHOLAR',
@@ -707,8 +745,8 @@ export default function Settings({ onBack, G, setG }) {
                     className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
                     style={{ background: '#EDE8DF', border: '1px solid rgba(55,38,22,0.14)' }}
                   >
-                    {userInfo.picture
-                      ? <img src={userInfo.picture} alt={displayName} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                    {profile.picture
+                      ? <img src={profile.picture} alt={displayName} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
                       : <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 600, color: '#2A2218' }}>
                           {initials}
                         </span>

@@ -5,6 +5,8 @@ import {
 
 } from 'react-icons/ri'
 import { motion, AnimatePresence } from 'framer-motion'
+import { supabase } from '../lib/supabase'
+import { updateProfile, getProfile } from '../lib/db'
 import AdvancementToast, { checkCoinMilestone } from './AdvancementToast'
 
 const T = {
@@ -88,11 +90,15 @@ function SkillCard({ skill, onDelete, onUpdate }) {
   const startRef = useRef(null)
   const accumRef = useRef(0)
   const sessionMinsRef = useRef(0)
+  const userIdRef = useRef(null)
 
   const [advancement, setAdvancement] = useState(null)
   const progress = Math.min(skill.totalMinutes / TWENTY_HOUR_MINUTES, 1)
 
   useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) userIdRef.current = user.id
+    })
     return () => clearInterval(timerRef.current)
   }, [])
 
@@ -142,16 +148,42 @@ function SkillCard({ skill, onDelete, onUpdate }) {
     saveSkills(skills)
     setShowMilestone(false)
 
-    const user = JSON.parse(localStorage.getItem('viram_user') || '{}')
-    const oldCoins = user.coins || 0
-    user.focusMins = (user.focusMins || 0) + sessionMin
-    user.coins = oldCoins + Math.floor(sessionMin / 5)
-    localStorage.setItem('viram_user', JSON.stringify(user))
-    if (onUpdate) onUpdate()
+    if (userIdRef.current) {
+      getProfile(userIdRef.current).then(profile => {
+        const currentCoins = profile?.coins || 0
+        const coinsToAdd = Math.floor(sessionMin / 5)
+        const newCoins = currentCoins + coinsToAdd
 
-    const milestone = checkCoinMilestone(oldCoins, user.coins)
-    if (milestone) {
-      setTimeout(() => setAdvancement(milestone), 600)
+        updateProfile(userIdRef.current, { coins: newCoins })
+
+        /* Mirror to localStorage */
+        const lsUser = JSON.parse(localStorage.getItem('viram_user') || '{}')
+        lsUser.coins = newCoins
+        lsUser.focusMins = (lsUser.focusMins || 0) + sessionMin
+        localStorage.setItem('viram_user', JSON.stringify(lsUser))
+
+        if (onUpdate) onUpdate()
+
+        const milestone = checkCoinMilestone(currentCoins, newCoins)
+        if (milestone) {
+          setTimeout(() => setAdvancement(milestone), 600)
+        }
+      })
+    } else {
+      /* Fallback: localStorage only (no auth) */
+      const lsUser = JSON.parse(localStorage.getItem('viram_user') || '{}')
+      const oldCoins = lsUser.coins || 0
+      const coinsToAdd = Math.floor(sessionMin / 5)
+      lsUser.coins = oldCoins + coinsToAdd
+      lsUser.focusMins = (lsUser.focusMins || 0) + sessionMin
+      localStorage.setItem('viram_user', JSON.stringify(lsUser))
+
+      if (onUpdate) onUpdate()
+
+      const milestone = checkCoinMilestone(oldCoins, lsUser.coins)
+      if (milestone) {
+        setTimeout(() => setAdvancement(milestone), 600)
+      }
     }
   }
 

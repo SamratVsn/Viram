@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useGoogleLogin, googleLogout } from '@react-oauth/google'
 import { motion, AnimatePresence } from 'framer-motion'
+import { supabase } from '../lib/supabase'
+import { getProfile } from '../lib/db'
 import {
   RiArrowLeftLine,
   RiArrowRightLine,
@@ -316,8 +317,12 @@ export default function Start() {
   const [errMsg,   setErrMsg]   = useState('')
 
   useEffect(() => {
-    const stored = localStorage.getItem('viram_user')
-    if (stored) setUser(JSON.parse(stored))
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session) {
+        const profile = await getProfile(session.user.id)
+        if (profile) setUser(profile)
+      }
+    })
   }, [])
 
   useEffect(() => {
@@ -327,27 +332,18 @@ export default function Start() {
     }
   }, [status, navigate])
 
-  const googleLogin = useGoogleLogin({
-    onSuccess: async (token) => {
-      try {
-        setStatus('loading')
-        const res  = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-          headers: { Authorization: `Bearer ${token.access_token}` },
-        })
-        const info = await res.json()
-        const existed = !!localStorage.getItem('viram_user')
-        const prev = existed ? JSON.parse(localStorage.getItem('viram_user')) : {}
-        const today = new Date().toDateString()
-        const disciplineIndex = prev.lastLoginDate !== today ? (prev.disciplineIndex || 0) + 1 : (prev.disciplineIndex || 0)
-        const merged = { ...info, focusPoints: prev.focusPoints || 0, focusMins: prev.focusMins || 0, disciplineIndex, lastLoginDate: today }
-        localStorage.setItem('viram_user', JSON.stringify(merged))
-        setUser(merged); setIsNew(!existed); setStatus('success')
-      } catch {
-        setStatus('error'); setErrMsg('Could not fetch profile. Try again.')
-      }
-    },
-    onError: () => { setStatus('error'); setErrMsg('Google sign-in failed.') },
-  })
+  const handleGoogleLogin = async () => {
+    try {
+      setStatus('loading')
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: `${window.location.origin}/callback` },
+      })
+      if (error) throw error
+    } catch {
+      setStatus('error'); setErrMsg('Google sign-in failed.')
+    }
+  }
 
   function handleEmailSubmit(e) {
     e.preventDefault()
@@ -366,10 +362,18 @@ export default function Start() {
     setUser(merged); setIsNew(!existed); setStatus('success')
   }
 
-  function handleLogout() {
-    googleLogout()
-    localStorage.removeItem('viram_user')
+  async function handleLogout() {
+    try {
+      await supabase.auth.signOut()
+    } catch (err) {
+      console.error('signOut:', err)
+    }
+    /* Clear any remaining localStorage data */
+    ;['viram_user', 'viram_focus_today', 'viram_confessions', 'viram_morning_intention',
+      'viram_digital_fast', 'viram_skills', 'viram_profile', 'viram_morning_coin_date',
+    ].forEach(k => localStorage.removeItem(k))
     setUser(null); setStatus(''); setIsNew(false); setErrMsg('')
+    navigate('/')
   }
 
   const isLoading = status === 'loading'
@@ -650,7 +654,7 @@ export default function Start() {
 
                   {/* Google OAuth */}
                   <motion.button
-                    onClick={() => googleLogin()}
+                    onClick={handleGoogleLogin}
                     disabled={isLoading}
                     whileHover={{ y: -1, boxShadow: `0 8px 24px rgba(55,38,22,0.10)` }}
                     whileTap={{ y: 0 }}

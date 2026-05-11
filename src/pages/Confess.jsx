@@ -9,6 +9,8 @@ import {
   RiLeafLine,
 } from 'react-icons/ri'
 import { useNavigate } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
+import { saveConfession, updateProfile, deleteConfession, getProfile } from '../lib/db'
 import AdvancementToast, { checkCoinMilestone } from '../components/AdvancementToast'
 
 /* ─── Font loader ─────────────────────────────────────────────────────────── */
@@ -305,10 +307,14 @@ export default function Confess({ onBack }) {
   const [charCount,   setCharCount]   = useState(0)
   const [advancement, setAdvancement] = useState(null)
   const textareaRef                   = useRef(null)
+  const userIdRef                     = useRef(null)
   const MAX_CHARS                     = 400
 
   /* Load from localStorage on mount, purge expired */
   useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) userIdRef.current = user.id
+    })
     const loaded = loadConfessions()
     setConfessions(loaded)
     saveConfessions(loaded)           // persist after purge
@@ -353,15 +359,48 @@ export default function Confess({ onBack }) {
       setSubmitting(false)
 
       // Award coins + discipline points
-      const cUser = JSON.parse(localStorage.getItem('viram_user') || '{}')
-      const oldCoins = cUser.coins || 0
-      cUser.coins = oldCoins + 1
-      cUser.disciplinePoints = (cUser.disciplinePoints || 0) + 2
-      localStorage.setItem('viram_user', JSON.stringify(cUser))
+      if (userIdRef.current) {
+        saveConfession({ userId: userIdRef.current, text, trigger: '', app: '' }).then(result => {
+          if (result?.id) {
+            const withSupabase = loadConfessions().map(c =>
+              c.id === newEntry.id ? { ...c, supabaseId: result.id } : c
+            )
+            saveConfessions(withSupabase)
+          }
+        })
+        getProfile(userIdRef.current).then(profile => {
+          const currentCoins = profile?.coins || 0
+          const newCoins = currentCoins + 1
+          const currentDisc = profile?.disciplinePoints || 0
 
-      const milestone = checkCoinMilestone(oldCoins, cUser.coins)
-      if (milestone) {
-        setTimeout(() => setAdvancement(milestone), 600)
+          updateProfile(userIdRef.current, {
+            coins: newCoins,
+            disciplinePoints: currentDisc + 2,
+          })
+
+          /* Mirror to localStorage */
+          const lsUser = JSON.parse(localStorage.getItem('viram_user') || '{}')
+          lsUser.coins = newCoins
+          lsUser.disciplinePoints = currentDisc + 2
+          localStorage.setItem('viram_user', JSON.stringify(lsUser))
+
+          const milestone = checkCoinMilestone(currentCoins, newCoins)
+          if (milestone) {
+            setTimeout(() => setAdvancement(milestone), 600)
+          }
+        })
+      } else {
+        /* Fallback: localStorage only (no auth) */
+        const lsUser = JSON.parse(localStorage.getItem('viram_user') || '{}')
+        const oldCoins = lsUser.coins || 0
+        lsUser.coins = oldCoins + 1
+        lsUser.disciplinePoints = (lsUser.disciplinePoints || 0) + 2
+        localStorage.setItem('viram_user', JSON.stringify(lsUser))
+
+        const milestone = checkCoinMilestone(oldCoins, lsUser.coins)
+        if (milestone) {
+          setTimeout(() => setAdvancement(milestone), 600)
+        }
       }
 
       // Reset textarea height
@@ -370,9 +409,13 @@ export default function Confess({ onBack }) {
   }
 
   const handleDelete = (id) => {
+    const item = confessions.find(c => c.id === id)
     const updated = confessions.filter(c => c.id !== id)
     setConfessions(updated)
     saveConfessions(updated)
+    if (item?.supabaseId && userIdRef.current) {
+      deleteConfession(item.supabaseId)
+    }
   }
 
   const handleKeyDown = (e) => {

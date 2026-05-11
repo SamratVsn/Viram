@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { supabase } from '../lib/supabase'
+import { updateProfile } from '../lib/db'
 import {
   RiArrowRightLine,
   RiArrowLeftLine,
@@ -482,8 +484,14 @@ export default function Onboarding() {
     const pVal = overrideVal ?? profile[cur.key]
     if (!cur.autoAdvance && !hasValue()) return
     if (isLast) {
-      const finalStats = calcStats(profile)
+      const finalStats = { ...calcStats(profile), disciplineIndex: 1, disciplinePoints: 0 }
       localStorage.setItem('viram_profile', JSON.stringify({ ...profile, ...finalStats }))
+      // TODO: remove localStorage fallback after migration
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user) {
+          updateProfile(user.id, { ...profile, ...finalStats, onboarded: true })
+        }
+      })
       setShowStamp(true)
       return
     }

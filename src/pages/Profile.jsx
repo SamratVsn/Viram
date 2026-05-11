@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -10,6 +10,9 @@ import {
   RiEmotionLine, RiCalendarCheckLine, RiSparkling2Line, RiBarChartLine,
 } from 'react-icons/ri'
 import SkillTracker from '../components/SkillTracker'
+import useViramData from '../hooks/useViramData'
+import { getTotalFocus, updateProfile } from '../lib/db'
+import { supabase } from '../lib/supabase'
 
 const T = {
   bg:           '#F4EEE3',
@@ -224,59 +227,63 @@ const GLOBAL = `
 
 export default function Profile() {
   const navigate = useNavigate()
-  const [profile, setProfile] = useState(null)
-  const [user, setUser] = useState(null)
+  const { user: profileData, loading } = useViramData()
+  const [totalFocusMins, setTotalFocusMins] = useState(0)
+  const [authEmail, setAuthEmail] = useState('')
   const [showEditModal, setShowEditModal] = useState(false)
   const [editProfile, setEditProfile] = useState(null)
 
   useEffect(() => {
-    const p = localStorage.getItem('viram_profile')
-    if (p) setProfile(JSON.parse(p))
-    const u = localStorage.getItem('viram_user')
-    if (u) setUser(JSON.parse(u))
-  }, [])
+    if (profileData?.id) {
+      getTotalFocus(profileData.id).then(setTotalFocusMins)
+    }
+    supabase.auth.getUser().then(({ data: { user: au } }) => {
+      if (au?.email) setAuthEmail(au.email)
+    })
+  }, [profileData?.id])
 
-  if (!profile) {
+  if (loading || !profileData) {
     return (
       <div style={{ minHeight:'100vh', background:T.bg, display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:12 }}>
         <style>{GLOBAL}</style>
-        <div style={{ fontFamily:T.heading, fontSize:22, color:T.inkLow }}>No profile found</div>
-        <button
-          onClick={() => navigate('/onboarding')}
-          style={{
-            padding:'10px 22px', borderRadius:T.rPill,
-            background:T.accent, border:'none', cursor:'pointer',
-            fontFamily:T.body, fontWeight:600, fontSize:12,
-            letterSpacing:'0.08em', textTransform:'uppercase',
-            color:'#FFF8F2',
-          }}
-        >
-          Start Onboarding
-        </button>
+        <div style={{ fontFamily:T.heading, fontSize:22, color:T.inkLow }}>{loading ? 'Loading…' : 'No profile found'}</div>
+        {!loading && (
+          <button
+            onClick={() => navigate('/onboarding')}
+            style={{
+              padding:'10px 22px', borderRadius:T.rPill,
+              background:T.accent, border:'none', cursor:'pointer',
+              fontFamily:T.body, fontWeight:600, fontSize:12,
+              letterSpacing:'0.08em', textTransform:'uppercase',
+              color:'#FFF8F2',
+            }}
+          >
+            Start Onboarding
+          </button>
+        )}
       </div>
     )
   }
 
   function handleOpenEdit() {
-    setEditProfile({ ...profile })
+    setEditProfile({ ...profileData })
     setShowEditModal(true)
   }
 
-  function handleSaveEdit() {
+  async function handleSaveEdit() {
     if (!editProfile) return
     const stats = calcStats(editProfile)
     const updated = { ...editProfile, ...stats }
-    localStorage.setItem('viram_profile', JSON.stringify(updated))
-    setProfile(updated)
+    await updateProfile(profileData.id, updated)
     setShowEditModal(false)
     setEditProfile(null)
   }
 
-  const archetype = ARCHETYPE_MAP[profile.mission] || ARCHETYPE_MAP.discipline
-  const stressColor = STRESS_COLORS[profile.stressLevel] || T.inkLow
-  const stressLabel = STRESS_LABELS[profile.stressLevel] || 'Unknown'
-  const displayName = user?.name?.split(' ')[0] || profile.avatarName || 'Scholar'
-  const initial = (user?.name || profile.avatarName || '?').charAt(0).toUpperCase()
+  const archetype = ARCHETYPE_MAP[profileData.mission] || ARCHETYPE_MAP.discipline
+  const stressColor = STRESS_COLORS[profileData.stressLevel] || T.inkLow
+  const stressLabel = STRESS_LABELS[profileData.stressLevel] || 'Unknown'
+  const displayName = profileData.name?.split(' ')[0] || profileData.avatarName || 'Scholar'
+  const initial = (profileData.name || profileData.avatarName || '?').charAt(0).toUpperCase()
 
   return (
     <>
@@ -351,8 +358,8 @@ export default function Profile() {
                       display:'flex', alignItems:'center', justifyContent:'center',
                       overflow:'hidden', animation:'float-slow 5s ease-in-out infinite',
                     }}>
-                      {user?.picture
-                        ? <img src={user.picture} alt={displayName} style={{ width:'100%', height:'100%', objectFit:'cover', filter:'sepia(0.12)' }} />
+                      {profileData?.picture
+                        ? <img src={profileData.picture} alt={displayName} style={{ width:'100%', height:'100%', objectFit:'cover', filter:'sepia(0.12)' }} />
                         : <span style={{ fontFamily:T.heading, fontWeight:700, fontStyle:'italic', fontSize:32, color:T.inkHigh }}>{initial}</span>
                       }
                     </div>
@@ -360,7 +367,7 @@ export default function Profile() {
 
                   {/* Name */}
                   <div style={{ fontFamily:T.heading, fontWeight:700, fontStyle:'italic', fontSize:26, color:T.inkHigh, letterSpacing:'-0.01em', lineHeight:1.1 }}>
-                    {profile.avatarName || displayName}
+                    {profileData.avatarName || displayName}
                   </div>
 
                   {/* Archetype stamp */}
@@ -378,9 +385,9 @@ export default function Profile() {
                   </div>
 
                   {/* User email */}
-                  {user?.email && (
+                  {authEmail && (
                     <div style={{ fontFamily:T.body, fontWeight:300, fontSize:11, color:T.inkLow, marginTop:10, letterSpacing:'0.02em' }}>
-                      {user.email}
+                      {authEmail}
                     </div>
                   )}
                 </div>
@@ -398,7 +405,7 @@ export default function Profile() {
                 <div style={{ display:'flex', gap:16 }}>
                   <div style={{ flex:1, textAlign:'center' }}>
                     <div style={{ fontFamily:T.heading, fontWeight:700, fontSize:28, color:T.inkHigh, lineHeight:1 }}>
-                      {user?.focusMins || 0}
+                      {totalFocusMins}
                     </div>
                     <div style={{ fontFamily:T.body, fontWeight:300, fontSize:9, color:T.inkLow, marginTop:4, letterSpacing:'0.1em', textTransform:'uppercase' }}>
                       Total Focus Mins
@@ -407,7 +414,7 @@ export default function Profile() {
                   <div style={{ width:1, background:T.border }} />
                   <div style={{ flex:1, textAlign:'center' }}>
                     <div style={{ fontFamily:T.heading, fontWeight:700, fontSize:28, color:'#D4A843', lineHeight:1 }}>
-                      {user?.coins || 0}
+                      {profileData?.coins || 0}
                     </div>
                     <div style={{ fontFamily:T.body, fontWeight:300, fontSize:9, color:T.inkLow, marginTop:4, letterSpacing:'0.1em', textTransform:'uppercase' }}>
                       Coins
@@ -416,7 +423,7 @@ export default function Profile() {
                   <div style={{ width:1, background:T.border }} />
                   <div style={{ flex:1, textAlign:'center' }}>
                     <div style={{ fontFamily:T.heading, fontWeight:700, fontSize:28, color:T.green, lineHeight:1 }}>
-                      {user?.disciplinePoints || 0}
+                      {profileData?.disciplinePoints || 0}
                     </div>
                     <div style={{ fontFamily:T.body, fontWeight:300, fontSize:9, color:T.inkLow, marginTop:4, letterSpacing:'0.1em', textTransform:'uppercase' }}>
                       Discipline
@@ -467,38 +474,38 @@ export default function Profile() {
                 <InfoRow
                   icon={RiSmartphoneLine}
                   label="Daily Screen Time"
-                  value={`${profile.screenTime} hrs`}
-                  color={profile.screenTime > 5 ? T.red : T.accent}
+                  value={`${profileData.screenTime} hrs`}
+                  color={profileData.screenTime > 5 ? T.red : T.accent}
                 />
                 <InfoRow
                   icon={RiAlarmWarningLine}
                   label="Biggest Time Thief"
-                  value={APP_LABELS[profile.worstApp] || profile.worstApp || '—'}
+                  value={APP_LABELS[profileData.worstApp] || profileData.worstApp || '—'}
                   color={T.red}
                 />
                 <InfoRow
                   icon={RiTimerFlashLine}
                   label="Peak Focus Window"
-                  value={PEAK_LABELS[profile.focusPeak] || profile.focusPeak || '—'}
+                  value={PEAK_LABELS[profileData.focusPeak] || profileData.focusPeak || '—'}
                   color={T.green}
                 />
                 <InfoRow
                   icon={RiRocketLine}
                   label="Mission"
-                  value={MISSION_LABELS[profile.mission] || profile.mission || '—'}
+                  value={MISSION_LABELS[profileData.mission] || profileData.mission || '—'}
                   color={T.accent}
                 />
                 <InfoRow
                   icon={RiShieldLine}
                   label="Past Attempts"
-                  value={ATTEMPT_LABELS[profile.pastAttempts] || profile.pastAttempts || '—'}
+                  value={ATTEMPT_LABELS[profileData.pastAttempts] || profileData.pastAttempts || '—'}
                   color={T.inkMid}
                 />
                 <InfoRow
                   icon={RiZzzLine}
                   label="Sleep"
-                  value={`${profile.sleep} hrs`}
-                  color={profile.sleep >= 7 ? T.green : T.red}
+                  value={`${profileData.sleep} hrs`}
+                  color={profileData.sleep >= 7 ? T.green : T.red}
                 />
                 <InfoRow
                   icon={RiMentalHealthLine}
@@ -517,11 +524,11 @@ export default function Profile() {
             >
               <SectionLabel icon={RiUserLine} label="Account" />
               <Card style={{ padding:'6px 18px 6px' }}>
-                {user?.name && (
-                  <InfoRow icon={RiUserLine} label="Name" value={user.name} color={T.accent} />
+                  {profileData?.name && (
+                  <InfoRow icon={RiUserLine} label="Name" value={profileData.name} color={T.accent} />
                 )}
-                {user?.email && (
-                  <InfoRow icon={RiCalendarCheckLine} label="Email" value={user.email} color={T.inkMid} />
+                {authEmail && (
+                  <InfoRow icon={RiCalendarCheckLine} label="Email" value={authEmail} color={T.inkMid} />
                 )}
               </Card>
             </motion.div>

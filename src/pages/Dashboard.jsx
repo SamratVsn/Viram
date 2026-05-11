@@ -6,14 +6,14 @@ import {
   RiUserLine, RiSettings3Line,
   RiFireLine, RiLeafLine, RiCalendarCheckLine, RiChat3Line,
   RiDoubleQuotesL, RiArrowRightSLine, RiCoinLine, RiRadarLine,
-  RiSparkling2Line,
+
 } from 'react-icons/ri'
 import MorningIntention from '../components/MorningIntention'
 import DigitalFast from '../components/DigitalFast'
 import CuriositySeed from '../components/CuriositySeed'
 import companionImg from '../assets/3dmodel.png'
 import useViramData from '../hooks/useViramData'
-import AdvancementToast from '../components/AdvancementToast'
+import { updateProfile } from '../lib/db'
 
 /* ─── Design Tokens ─────────────────────────────────────── */
 const T = {
@@ -175,7 +175,6 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const { user, focus, confessions, refresh } = useViramData()
   const [showCmp, setShowCmp] = useState(false)
-  const [loginAdvancement, setLoginAdvancement] = useState(null)
 
   const todayFocusMins = focus?.mins || 0
   const totalXp = focus?.xp || 0
@@ -196,32 +195,24 @@ export default function Dashboard() {
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
   const displayName = user?.name?.split(' ')[0] || 'Scholar'
 
-  useEffect(() => {
-    /* Daily login bonus */
-    const raw = localStorage.getItem('viram_user')
-    if (raw) {
-      const parsed = JSON.parse(raw)
+  useEffect(() => {  
+    if (user) {
       const today = new Date().toDateString()
-      if (parsed.lastLoginDate !== today) {
-        parsed.disciplinePoints = (parsed.disciplinePoints || 0) + 1
-        parsed.lastLoginDate = today
-        localStorage.setItem('viram_user', JSON.stringify(parsed))
-        refresh()
-        setTimeout(() => setLoginAdvancement({
-          type: 'custom',
-          tier: 'bronze',
-          title: 'Welcome Back',
-          rank: 'The Consistent',
-          subtitle: 'Daily login streak maintained. Presence is the practice.',
-          xpGained: 5,
-          chips: [{ icon: RiSparkling2Line, label: 'Daily login' }],
-        }), 900)
+      if (user.lastLoginDate !== today) {
+        updateProfile(user.id, {
+          disciplinePoints: (user.disciplinePoints || 0) + 1,
+          disciplineIndex: (user.disciplineIndex || 0) + 1,
+          lastLoginDate: today,
+        }).then(() => {
+          refresh()
+        })
       }
     }
 
     const t = setTimeout(() => setShowCmp(true), 600)
     return () => clearTimeout(t)
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
 
   return (
     <>
@@ -415,14 +406,7 @@ export default function Dashboard() {
 
                 {/* ── Digital Fast ──────────────────────────── */}
                 <div style={{ marginBottom: 18 }}>
-                  <DigitalFast onComplete={() => {
-                    const u = localStorage.getItem('viram_user')
-                    if (u) {
-                      const p = JSON.parse(u)
-                      setDisciplineIndex(p.disciplineIndex || 0)
-                      setUser(p)
-                    }
-                  }} />
+                  <DigitalFast onComplete={() => refresh()} />
                 </div>
 
                 {/* ── Curiosity Seed ───────────────────────── */}
@@ -531,12 +515,6 @@ export default function Dashboard() {
         </div>
 
       </div>
-
-      <AdvancementToast
-        visible={!!loginAdvancement}
-        onDismiss={() => setLoginAdvancement(null)}
-        {...loginAdvancement}
-      />
     </>
   )
 }
