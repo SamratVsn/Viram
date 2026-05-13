@@ -9,13 +9,21 @@ export async function getProfile(userId) {
       .single()
     if (error) { console.error('getProfile:', error); return null }
     if (!data) return null
-    /* Map DB field names to what frontend expects */
     return {
       ...data,
       disciplineIndex: data.streak,
       disciplinePoints: data.discipline_points,
       lastLoginDate: data.last_login,
       goal: data.goal,
+      screenTime: data.screen_time,
+      worstApp: data.worst_app,
+      focusPeak: data.focus_peak,
+      pastAttempts: data.past_attempts,
+      stressLevel: data.stress_level,
+      avatarName: data.avatar_name,
+      shieldHP: data.shield_hp,
+      focus: data.focus_stat,
+      discipline: data.discipline_stat,
     }
   } catch (err) {
     console.error('getProfile:', err)
@@ -25,11 +33,19 @@ export async function getProfile(userId) {
 
 export async function updateProfile(userId, updates) {
   try {
-    /* Map frontend → DB field names */
     const db = { ...updates }
     if ('disciplineIndex' in db) { db.streak = db.disciplineIndex; delete db.disciplineIndex }
     if ('disciplinePoints' in db) { db.discipline_points = db.disciplinePoints; delete db.disciplinePoints }
     if ('lastLoginDate' in db) { db.last_login = db.lastLoginDate; delete db.lastLoginDate }
+    if ('screenTime' in db) { db.screen_time = db.screenTime; delete db.screenTime }
+    if ('worstApp' in db) { db.worst_app = db.worstApp; delete db.worstApp }
+    if ('focusPeak' in db) { db.focus_peak = db.focusPeak; delete db.focusPeak }
+    if ('pastAttempts' in db) { db.past_attempts = db.pastAttempts; delete db.pastAttempts }
+    if ('stressLevel' in db) { db.stress_level = db.stressLevel; delete db.stressLevel }
+    if ('avatarName' in db) { db.avatar_name = db.avatarName; delete db.avatarName }
+    if ('shieldHP' in db) { db.shield_hp = db.shieldHP; delete db.shieldHP }
+    if ('focus' in db && !('focus_stat' in db)) { db.focus_stat = db.focus; delete db.focus }
+    if ('discipline' in db && !('discipline_stat' in db)) { db.discipline_stat = db.discipline; delete db.discipline }
 
     const { error } = await supabase
       .from('profiles')

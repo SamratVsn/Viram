@@ -1,9 +1,4 @@
-/**
- * Viram — 404 Not Found (Minimal)
- * Fonts: add to global CSS —
- *   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Jost:wght@300;400;500&display=swap');
- */
-
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { RiHome4Line, RiArrowLeftLine } from "react-icons/ri";
 
@@ -17,6 +12,8 @@ const up = (delay = 0) => ({
 const GRAIN = `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E")`;
 
 export default function NotFound() {
+  const navigate = useNavigate();
+
   return (
     <div
       style={{
@@ -141,11 +138,8 @@ export default function NotFound() {
             flexWrap:        "wrap",
           }}
         >
-          <motion.a
-            href="/dashboard"
-            whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(184,112,78,0.25)" }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ duration: 0.25, ease: EASE }}
+          <Link
+            to="/dashboard"
             style={{
               display:        "inline-flex",
               alignItems:     "center",
@@ -164,13 +158,10 @@ export default function NotFound() {
           >
             <RiHome4Line size={14} />
             Back to Dashboard
-          </motion.a>
+          </Link>
 
-          <motion.button
-            onClick={() => window.history.back()}
-            whileHover={{ y: -2, boxShadow: "0 6px 18px rgba(55,38,22,0.08)" }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ duration: 0.25, ease: EASE }}
+          <button
+            onClick={() => navigate(-1)}
             style={{
               display:       "inline-flex",
               alignItems:    "center",
@@ -190,7 +181,28 @@ export default function NotFound() {
           >
             <RiArrowLeftLine size={14} />
             Go Back
-          </motion.button>
+          </button>
+
+          <Link
+            to="/"
+            style={{
+              display:       "inline-flex",
+              alignItems:    "center",
+              gap:           "7px",
+              padding:       "12px 22px",
+              borderRadius:  "12px",
+              background:    "transparent",
+              color:         "#8A7B6E",
+              fontFamily:    "'Jost', sans-serif",
+              fontSize:      "12px",
+              fontWeight:    400,
+              letterSpacing: "0.05em",
+              textDecoration: "none",
+              border:        "1px solid rgba(55,38,22,0.07)",
+            }}
+          >
+            Back to Home
+          </Link>
         </motion.div>
 
       </div>

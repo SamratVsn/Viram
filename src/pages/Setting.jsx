@@ -412,7 +412,7 @@ function ConfirmModal({ icon: Icon, title, body, confirmLabel, cancelLabel = 'Ca
 }
 
 /* ─── Main ────────────────────────────────────────────────────────────────── */
-export default function Settings({ G, setG }) {
+export default function Settings({ G }) {
   const navigate              = useNavigate()
   const [prefs, setPrefs]     = useState(loadPrefs)
   const [modal, setModal]     = useState(null)

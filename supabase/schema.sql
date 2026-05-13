@@ -15,6 +15,24 @@ CREATE TABLE IF NOT EXISTS profiles (
   last_login        DATE,
   goal              TEXT,
   onboarded         BOOL DEFAULT FALSE,
+
+  -- Onboarding survey answers
+  screen_time       REAL DEFAULT 4,
+  worst_app         TEXT,
+  focus_peak        TEXT,
+  mission           TEXT,
+  past_attempts     TEXT,
+  sleep             REAL DEFAULT 7,
+  stress_level      INT DEFAULT 1,
+  avatar_name       TEXT,
+
+  -- Avatar stats (calculated from onboarding)
+  vitality          INT DEFAULT 50,
+  energy            INT DEFAULT 50,
+  focus_stat        INT DEFAULT 50,
+  discipline_stat   INT DEFAULT 50,
+  shield_hp         INT DEFAULT 50,
+
   created_at        TIMESTAMPTZ DEFAULT NOW()
 );
 

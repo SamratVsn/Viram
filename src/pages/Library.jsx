@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { Link } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
 import {
   RiArrowLeftLine,
   RiBookOpenLine,
@@ -469,8 +470,14 @@ function TableOfContents({ chapters, readChapters, onChapterClick }) {
 
 /* ─── Main export ─────────────────────────────────────────────────────────── */
 export default function Library() {
-  const isLoggedIn = typeof localStorage !== 'undefined' && !!localStorage.getItem('viram_user')
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [readChapters, setReadChapters] = useState([])
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsLoggedIn(!!session)
+    }).catch(() => setIsLoggedIn(false))
+  }, [])
 
   const handleChapterClick = useCallback((num) => {
     const el = document.querySelector(`[data-chapter="${num}"]`)

@@ -430,17 +430,20 @@ function StackChip({ label, Icon, delay }) {
 }
 
 /* ─── CTA button ──────────────────────────────────────────────────────────── */
-function CTAButton({ to, children, variant = "primary" }) {
+function CTAButton({ to, children, variant = "primary", target, rel }) {
   const [hovered, setHovered] = useState(false);
   const isPrimary = variant === "primary";
+  const isExternal = typeof to === 'string' && to.startsWith('http');
+  const Tag = isExternal ? 'a' : Link;
+  const extraProps = isExternal ? { href: to, target: target || '_blank', rel: rel || 'noopener noreferrer' } : { to };
   return (
     <motion.div
       animate={{ y: hovered ? -2 : 0 }}
       transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
       className="inline-block"
     >
-      <Link
-        to={to}
+      <Tag
+        {...extraProps}
         className="no-underline inline-flex items-center gap-2 px-8 py-[14px] rounded-[28px] transition-shadow duration-300"
         style={{
           fontFamily: "'Jost', sans-serif",
@@ -468,7 +471,7 @@ function CTAButton({ to, children, variant = "primary" }) {
         onMouseLeave={() => setHovered(false)}
       >
         {children}
-      </Link>
+      </Tag>
     </motion.div>
   );
 }

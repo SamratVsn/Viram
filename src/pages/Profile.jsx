@@ -3,11 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   RiArrowLeftLine, RiUserLine, RiSmartphoneLine, RiTimerFlashLine,
-  RiMoonLine, RiFireLine, RiBrainLine, RiAlarmWarningLine,
-  RiSwordLine, RiShieldLine, RiHeartPulseLine, RiBookOpenLine,
-  RiMentalHealthLine, RiLeafLine, RiRocketLine, RiCheckLine,
-  RiQuillPenLine, RiCoinLine, RiZzzLine, RiEditLine,
-  RiEmotionLine, RiCalendarCheckLine, RiSparkling2Line, RiBarChartLine,
+  RiAlarmWarningLine, RiShieldLine,
+  RiMentalHealthLine, RiRocketLine, RiQuillPenLine, RiZzzLine, RiEditLine,
+  RiCalendarCheckLine,
 } from 'react-icons/ri'
 import SkillTracker from '../components/SkillTracker'
 import useViramData from '../hooks/useViramData'

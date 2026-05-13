@@ -214,11 +214,27 @@ export default function Contact() {
   const [email,   setEmail]   = useState('')
   const [message, setMessage] = useState('')
   const [sent,    setSent]    = useState(false)
+  const [sending, setSending] = useState(false)
+  const [sendErr, setSendErr] = useState('')
 
   function handleSubmit(e) {
     e.preventDefault()
-    if (!name || !email || !message) return
+    if (!name.trim() || !email.trim() || !message.trim()) return
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setSendErr('Please enter a valid email address.')
+      return
+    }
+
+    setSending(true)
+    setSendErr('')
+
+    const subject = encodeURIComponent(`[Viram] ${topic || 'General enquiry'}`)
+    const body = encodeURIComponent(
+      `Name: ${name.trim()}\nEmail: ${email.trim()}\n\n${message.trim()}`
+    )
+    window.location.href = `mailto:hello@viram.app?subject=${subject}&body=${body}`
     setSent(true)
+    setSending(false)
   }
 
   return (

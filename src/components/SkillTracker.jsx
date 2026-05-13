@@ -381,6 +381,7 @@ export default function SkillTracker() {
         <span style={{
           fontFamily: T.body, fontSize: 9, fontWeight: 600,
           letterSpacing: '0.22em', textTransform: 'uppercase', color: T.inkLow,
+          marginTop: 4,
         }}>
           Skill Profile
         </span>

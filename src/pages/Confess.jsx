@@ -300,7 +300,7 @@ function EmptyState() {
 }
 
 /* ─── Main Component ─────────────────────────────────────────────────────── */
-export default function Confess({ onBack }) {
+export default function Confess() {
   const [confessions, setConfessions] = useState([])
   const [draft,       setDraft]       = useState('')
   const [submitting,  setSubmitting]  = useState(false)
@@ -414,7 +414,7 @@ export default function Confess({ onBack }) {
     setConfessions(updated)
     saveConfessions(updated)
     if (item?.supabaseId && userIdRef.current) {
-      deleteConfession(item.supabaseId)
+      deleteConfession(item.supabaseId).catch(err => console.error('deleteConfession:', err))
     }
   }
 

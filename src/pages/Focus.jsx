@@ -36,7 +36,7 @@ const T = {
   /* Fonts */
   heading:      "'Cormorant Garamond', Georgia, serif",
   body:         "'Jost', system-ui, sans-serif",
-  rSm: '8px', rMd: '14px', rLg: '22px', rPill: '100px',
+  rSm: '8px', rMd: '14px', rLg: '22px', rXl: '32px', rPill: '100px',
 }
 
 const GRAIN = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E")`
@@ -164,9 +164,9 @@ export default function Focus() {
             setMinsDone(today.mins)
             setXpEarned(today.xp)
           }
-        })
+        }).catch(err => console.error('getTodayFocus:', err))
       }
-    })
+    }).catch(err => console.error('getUser:', err))
     const saved = localStorage.getItem('viram_focus_today')
     if (saved) {
       const d = JSON.parse(saved)
@@ -257,7 +257,7 @@ export default function Focus() {
     /* Source of truth: Supabase profile */
     supabase.auth.getUser().then(({ data: { user: authUser } }) => {
       if (authUser) {
-        saveFocusSession({ userId: authUser.id, duration: durMin, xpEarned: xpGained, coinsEarned, intent })
+        saveFocusSession({ userId: authUser.id, duration: durMin, xpEarned: xpGained, coinsEarned, intent }).catch(err => console.error('saveFocusSession:', err))
         getProfile(authUser.id).then(profile => {
           const currentCoins = profile?.coins || 0
           const newCoins = currentCoins + coinsEarned
@@ -266,7 +266,7 @@ export default function Focus() {
           updateProfile(authUser.id, {
             coins: newCoins,
             xp: currentXp + xpGained,
-          })
+          }).catch(err => console.error('updateProfile:', err))
 
           /* Mirror to localStorage */
           const lsUser = JSON.parse(localStorage.getItem('viram_user') || '{}')

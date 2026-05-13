@@ -257,8 +257,8 @@ function ProblemCard({ p, delay }) {
 }
 
 /* ─── Reading progress bar ────────────────────────────────────────────────── */
-function ReadingProgress() {
-  const { scrollYProgress } = useScroll()
+function ReadingProgress({ containerRef }) {
+  const { scrollYProgress } = useScroll({ container: containerRef })
   const scaleX = useTransform(scrollYProgress, [0, 1], [0, 1])
   return (
     <motion.div
@@ -308,11 +308,12 @@ export default function ProblemPage({ onBack }) {
   const [activeSection, setActiveSection] = useState('')
   const handleBack = () => navigate('/dashboard')
 
+  const scrollRef = useRef(null)
   const handleSectionClick = useCallback((id) => {
     const el = document.getElementById(id)
-    if (el) {
-      const top = el.getBoundingClientRect().top + window.scrollY - 72
-      window.scrollTo({ top, behavior: 'smooth' })
+    if (el && scrollRef.current) {
+      const top = el.getBoundingClientRect().top + scrollRef.current.scrollTop - 72
+      scrollRef.current.scrollTo({ top, behavior: 'smooth' })
     }
   }, [])
 
@@ -339,9 +340,9 @@ export default function ProblemPage({ onBack }) {
   }
 
   return (
-    <div className="fixed inset-0 z-10 overflow-y-auto" style={pageStyle}>
+    <div ref={scrollRef} className="fixed inset-0 z-10 overflow-y-auto" style={pageStyle}>
 
-      <ReadingProgress />
+      <ReadingProgress containerRef={scrollRef} />
 
       {/* ── Sticky nav ─────────────────────────────────────────────────── */}
       <div className="sticky top-0 z-50 flex items-center justify-between px-8 py-5 border-b"

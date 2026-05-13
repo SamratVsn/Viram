@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -6,7 +6,7 @@ import {
   RiUserLine, RiSettings3Line,
   RiFireLine, RiLeafLine, RiCalendarCheckLine, RiChat3Line,
   RiDoubleQuotesL, RiArrowRightSLine, RiCoinLine, RiRadarLine,
-  RiBarChartBoxLine, RiMentalHealthLine, RiRocketLine,
+  RiRocketLine,
 } from 'react-icons/ri'
 import MorningIntention from '../components/MorningIntention'
 import DigitalFast from '../components/DigitalFast'
@@ -209,7 +209,7 @@ function ValuePop({ val, style = {} }) {
 /* ═══ DASHBOARD ═══════════════════════════════════════════ */
 export default function Dashboard() {
   const navigate = useNavigate()
-  const { user, focus, confessions, refresh } = useViramData()
+  const { user, focus, confessions, loading, refresh } = useViramData()
   const [showCmp, setShowCmp] = useState(false)
 
   const todayFocusMins = focus?.mins || 0
@@ -230,17 +230,22 @@ export default function Dashboard() {
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
   const displayName = user?.name?.split(' ')[0] || 'Scholar'
+  const updatingStreak = useRef(false)
 
-  useEffect(() => {  
-    if (user) {
+  useEffect(() => {
+    if (user && !updatingStreak.current) {
       const today = new Date().toDateString()
       if (user.lastLoginDate !== today) {
+        updatingStreak.current = true
         updateProfile(user.id, {
           disciplinePoints: (user.disciplinePoints || 0) + 1,
           disciplineIndex: (user.disciplineIndex || 0) + 1,
           lastLoginDate: today,
         }).then(() => {
           refresh()
+        }).catch(err => {
+          console.error('Failed to update login streak:', err)
+          updatingStreak.current = false
         })
       }
     }
@@ -408,7 +413,7 @@ export default function Dashboard() {
                         { icon:RiCoinLine,          val:stats.coins,             label:'Coins',      c:T.gold,   bg:T.goldBg },
                         { icon:RiTimerFlashLine,    val:stats.focusMins,         label:'Focus Min',  c:T.green,  bg:T.greenBg },
                         { icon:RiFireLine,          val:stats.streak,            label:'Days Clean',  c:T.accent, bg:T.accentBg },
-                        { icon:RiChat3Line,         val:stats.confessions,       label:'Confessed',  c:T.inkMid, bg:T.cardDeep },
+                        { icon:RiChat3Line,         val:stats.confessions,       label:'Confessions',  c:T.inkMid, bg:T.cardDeep },
                       ].map(({ icon:Icon, val, label, c, bg }, i) => (
                         <div key={label} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:4, padding:'10px 4px', background:bg, borderRight:i<4?`1px solid ${T.border}`:'none' }}>
                           <Icon size={11} color={c} />

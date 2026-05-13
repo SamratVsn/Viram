@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
-import { getProfile } from '../lib/db'
+import { getProfile, upsertProfile } from '../lib/db'
 import {
   RiArrowLeftLine,
   RiArrowRightLine,
@@ -238,6 +238,7 @@ function AuthInput({ icon: Icon, type = 'text', placeholder, value, onChange, ri
         <button
           type="button"
           onClick={right.onClick}
+          tabIndex={-1}
           style={{
             position:   'absolute',
             right:      13,
@@ -318,9 +319,11 @@ export default function Start() {
   const [onboarded, setOnboarded] = useState(false)
 
   useEffect(() => {
+    let cancelled = false
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!session) return
+      if (cancelled || !session) return
       const profile = await getProfile(session.user.id)
+      if (cancelled) return
       const metaName = session.user.user_metadata?.full_name || session.user.user_metadata?.name
       const metaPicture = session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture
       setUser({
@@ -329,7 +332,8 @@ export default function Start() {
         picture: metaPicture || profile?.picture || null,
       })
       setOnboarded(profile?.onboarded === true || checkLocalOnboarded())
-    })
+    }).catch(err => console.error('Session check:', err))
+    return () => { cancelled = true }
   }, [navigate])
 
   function checkLocalOnboarded() {
@@ -342,10 +346,22 @@ export default function Start() {
 
   useEffect(() => {
     if (status === 'success') {
-      const t = setTimeout(() => navigate('/onboarding'), 2000)
+      const t = setTimeout(async () => {
+        if (isNew) {
+          navigate('/onboarding', { replace: true })
+        } else {
+          const { data: { session } } = await supabase.auth.getSession()
+          if (session) {
+            const profile = await getProfile(session.user.id)
+            navigate(profile?.onboarded ? '/dashboard' : '/onboarding', { replace: true })
+          } else {
+            navigate('/dashboard', { replace: true })
+          }
+        }
+      }, 2000)
       return () => clearTimeout(t)
     }
-  }, [status, navigate])
+  }, [status, navigate, isNew])
 
   const handleGoogleLogin = async () => {
     try {
@@ -355,26 +371,66 @@ export default function Start() {
         options: { redirectTo: `${window.location.origin}/callback` },
       })
       if (error) throw error
-    } catch {
+    } catch (err) {
+      console.error('Google sign-in:', err)
       setStatus('error'); setErrMsg('Google sign-in failed.')
     }
   }
 
-  function handleEmailSubmit(e) {
+  async function handleEmailSubmit(e) {
     e.preventDefault()
     setErrMsg('')
-    if (!email || !pass || (tab === 'signup' && !name)) {
+    setStatus('loading')
+
+    if (!email.trim() || !pass.trim() || (tab === 'signup' && !name.trim())) {
       setErrMsg('Please fill in all fields.')
+      setStatus('')
       return
     }
-    const mock = { name: name || email.split('@')[0], email, picture: null }
-    const existed = tab === 'login'
-    const prev = existed ? JSON.parse(localStorage.getItem('viram_user')) : {}
-    const today = new Date().toDateString()
-    const disciplineIndex = prev.lastLoginDate !== today ? (prev.disciplineIndex || 0) + 1 : (prev.disciplineIndex || 0)
-    const merged = { ...mock, focusPoints: prev.focusPoints || 0, focusMins: prev.focusMins || 0, disciplineIndex, lastLoginDate: today }
-    localStorage.setItem('viram_user', JSON.stringify(merged))
-    setUser(merged); setIsNew(!existed); setStatus('success')
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setErrMsg('Please enter a valid email address.')
+      setStatus('')
+      return
+    }
+
+    if (pass.length < 6) {
+      setErrMsg('Password must be at least 6 characters.')
+      setStatus('')
+      return
+    }
+
+    try {
+      if (tab === 'signup') {
+        const { data, error } = await supabase.auth.signUp({
+          email: email.trim(),
+          password: pass,
+          options: { data: { name: name.trim() } },
+        })
+        if (error) throw error
+
+        if (data?.user) {
+          await upsertProfile(data.user.id, { name: name.trim() })
+        }
+
+        setUser({ name: name.trim(), email: email.trim(), picture: null })
+        setIsNew(true)
+        setStatus('success')
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password: pass,
+        })
+        if (error) throw error
+
+        setUser({ name: email.trim().split('@')[0], email: email.trim(), picture: null })
+        setIsNew(false)
+        setStatus('success')
+      }
+    } catch (err) {
+      setErrMsg(err.message || 'Authentication failed.')
+      setStatus('')
+    }
   }
 
   async function handleLogout() {
@@ -388,6 +444,7 @@ export default function Start() {
       'viram_digital_fast', 'viram_skills', 'viram_profile', 'viram_morning_coin_date',
     ].forEach(k => localStorage.removeItem(k))
     setUser(null); setStatus(''); setIsNew(false); setErrMsg('')
+    setName(''); setEmail(''); setPass(''); setShowPass(false); setTab('signup'); setOnboarded(false)
     navigate('/')
   }
 
@@ -647,7 +704,7 @@ export default function Start() {
                     {[['signup', 'Sign up'], ['login', 'Log in']].map(([t, lbl]) => (
                       <button
                         key={t}
-                        onClick={() => { setTab(t); setErrMsg('') }}
+                        onClick={() => { setTab(t); setErrMsg(''); if (t === 'login') setName('') }}
                         style={{
                           flex:          1,
                           padding:       '10px 16px',
@@ -762,17 +819,18 @@ export default function Start() {
                     {/* Submit */}
                     <motion.button
                       type="submit"
-                      whileHover={{ y: -2, boxShadow: `0 14px 36px rgba(184,112,78,0.28)` }}
-                      whileTap={{ y: 0 }}
+                      disabled={isLoading}
+                      whileHover={!isLoading ? { y: -2, boxShadow: `0 14px 36px rgba(184,112,78,0.28)` } : {}}
+                      whileTap={!isLoading ? { y: 0 } : {}}
                       transition={{ duration: 0.28, ease }}
                       style={{
                         marginTop:      6,
                         width:          '100%',
                         padding:        '14px 24px',
                         borderRadius:   T.rPill,
-                        background:     T.accent,
-                        border:         'none',
-                        color:          '#FFF8F2',
+                        background:     isLoading ? T.cardDeep : T.accent,
+                        border:         isLoading ? `1px solid ${T.border}` : 'none',
+                        color:          isLoading ? T.inkLow : '#FFF8F2',
                         fontFamily:     T.body,
                         fontWeight:     600,
                         fontSize:       13,
@@ -782,12 +840,15 @@ export default function Start() {
                         alignItems:     'center',
                         justifyContent: 'center',
                         gap:            8,
-                        cursor:         'pointer',
-                        boxShadow:      `0 4px 18px rgba(184,112,78,0.22)`,
+                        cursor:         isLoading ? 'not-allowed' : 'pointer',
+                        boxShadow:      isLoading ? 'none' : `0 4px 18px rgba(184,112,78,0.22)`,
                       }}
                     >
-                      {tab === 'signup' ? 'Create account' : 'Log in'}
-                      <RiArrowRightLine size={14} />
+                      {isLoading ? (
+                        <>Connecting&hellip;</>
+                      ) : (
+                        <>{tab === 'signup' ? 'Create account' : 'Log in'} <RiArrowRightLine size={14} /></>
+                      )}
                     </motion.button>
                   </form>
 
