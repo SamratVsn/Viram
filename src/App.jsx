@@ -17,6 +17,7 @@ import Confess from "./pages/Confess";
 import Setting from "./pages/Setting";
 import Problems from "./pages/Problems";
 import Profile from "./pages/Profile";
+import GoalSetting from "./components/GoalSetting";
 
 export default function App() {
   return (
@@ -44,6 +45,14 @@ export default function App() {
           element={
             <AuthGuard>
               <Home />
+            </AuthGuard>
+          }
+        />
+        <Route
+          path="/goal-setting"
+          element={
+            <AuthGuard>
+              <GoalSetting />
             </AuthGuard>
           }
         />

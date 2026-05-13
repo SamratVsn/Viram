@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   streak            INT DEFAULT 0,
   discipline_points INT DEFAULT 0,
   last_login        DATE,
+  goal              TEXT,
   onboarded         BOOL DEFAULT FALSE,
   created_at        TIMESTAMPTZ DEFAULT NOW()
 );

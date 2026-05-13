@@ -15,6 +15,7 @@ export async function getProfile(userId) {
       disciplineIndex: data.streak,
       disciplinePoints: data.discipline_points,
       lastLoginDate: data.last_login,
+      goal: data.goal,
     }
   } catch (err) {
     console.error('getProfile:', err)
@@ -32,8 +33,7 @@ export async function updateProfile(userId, updates) {
 
     const { error } = await supabase
       .from('profiles')
-      .update(db)
-      .eq('id', userId)
+      .upsert({ id: userId, ...db }, { onConflict: 'id' })
     if (error) console.error('updateProfile:', error)
   } catch (err) {
     console.error('updateProfile:', err)

@@ -480,18 +480,20 @@ export default function Onboarding() {
     }
   }
 
-  function advance(overrideVal) {
+  async function advance(overrideVal) {
     const pVal = overrideVal ?? profile[cur.key]
     if (!cur.autoAdvance && !hasValue()) return
     if (isLast) {
       const finalStats = { ...calcStats(profile), disciplineIndex: 1, disciplinePoints: 0 }
-      localStorage.setItem('viram_profile', JSON.stringify({ ...profile, ...finalStats }))
-      // TODO: remove localStorage fallback after migration
-      supabase.auth.getUser().then(({ data: { user } }) => {
+      localStorage.setItem('viram_profile', JSON.stringify({ ...profile, ...finalStats, onboarded: true }))
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
         if (user) {
-          updateProfile(user.id, { ...profile, ...finalStats, onboarded: true })
+          await updateProfile(user.id, { ...profile, ...finalStats, onboarded: true })
         }
-      })
+      } catch (err) {
+        console.error('Failed to save onboarding profile:', err)
+      }
       setShowStamp(true)
       return
     }
@@ -535,7 +537,7 @@ export default function Onboarding() {
               archetype={archetype}
               avatarName={profile.avatarName}
               stats={stats}
-              onDone={() => navigate('/dashboard')}
+              onDone={() => navigate('/goal-setting')}
             />
           )}
         </AnimatePresence>

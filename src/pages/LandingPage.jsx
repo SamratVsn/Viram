@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   RiGamepadLine,
@@ -427,6 +427,7 @@ function AvatarCard({ avatarStats, heroOffset }) {
 export default function LandingPage() {
   const parallaxRef = useRef({ x: 0, y: 0 });
   const [heroOffset, setHeroOffset] = useState({ x: 0, y: 0 });
+  const navigate = useNavigate();
   const [avatarStats, setAvatarStats] = useState({
     focus: 72,
     discipline: 58,
@@ -548,13 +549,13 @@ export default function LandingPage() {
             >
               {/* ★ PRIMARY CTA — terracotta accent appears only here and in the footer CTA */}
               <button
-                onClick={() => {}}
+                onClick={() => navigate('/start')}
                 className="inline-flex items-center gap-1.5 cursor-pointer px-7 py-3 rounded-full bg-[var(--accent)] text-[#FAF5EC] border-0 text-sm font-medium tracking-[0.02em] shadow-[0_6px_20px_rgba(184,112,78,0.28)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(184,112,78,0.36)] active:scale-[0.975]"
               >
                 <RiRocketLine size={15} /> Start Your Journey
               </button>
               <button
-                onClick={() => {}}
+                onClick={() => navigate('/start')}
                 className="inline-flex items-center gap-1.5 cursor-pointer px-7 py-3 rounded-full bg-[var(--bg-card)] text-[var(--text-mid)] border border-[var(--border-mid)] text-sm font-light shadow-[var(--shadow-xs)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[rgba(55,38,22,0.22)] hover:shadow-[var(--shadow-sm)] active:scale-[0.975]"
               >
                 <RiPlayCircleLine size={15} /> Preview Dashboard
@@ -965,7 +966,7 @@ export default function LandingPage() {
           >
             {/* ★ FINAL PRIMARY CTA — the second and last terracotta button */}
             <button
-              onClick={() => {}}
+              onClick={() => navigate('/start')}
               className="inline-flex items-center gap-2 cursor-pointer px-10 py-4 rounded-full bg-[var(--accent)] text-[#FAF5EC] border-0 text-[15px] font-medium tracking-[0.02em] shadow-[0_8px_28px_rgba(184,112,78,0.30)] transition-all duration-200 hover:-translate-y-[3px] hover:shadow-[0_14px_40px_rgba(184,112,78,0.38)] active:scale-[0.975]"
             >
               <RiRocketLine size={16} /> Forge Your Avatar Now

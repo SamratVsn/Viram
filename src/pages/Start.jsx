@@ -315,15 +315,30 @@ export default function Start() {
   const [status,   setStatus]   = useState('')
   const [isNew,    setIsNew]    = useState(false)
   const [errMsg,   setErrMsg]   = useState('')
+  const [onboarded, setOnboarded] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session) {
-        const profile = await getProfile(session.user.id)
-        navigate(profile?.onboarded ? '/dashboard' : '/onboarding', { replace: true })
-      }
+      if (!session) return
+      const profile = await getProfile(session.user.id)
+      const metaName = session.user.user_metadata?.full_name || session.user.user_metadata?.name
+      const metaPicture = session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture
+      setUser({
+        name: metaName || profile?.name || session.user.email?.split('@')[0] || 'User',
+        email: session.user.email,
+        picture: metaPicture || profile?.picture || null,
+      })
+      setOnboarded(profile?.onboarded === true || checkLocalOnboarded())
     })
   }, [navigate])
+
+  function checkLocalOnboarded() {
+    try {
+      const raw = localStorage.getItem('viram_profile')
+      if (!raw) return false
+      return JSON.parse(raw)?.onboarded === true
+    } catch { return false }
+  }
 
   useEffect(() => {
     if (status === 'success') {
@@ -516,7 +531,7 @@ export default function Start() {
                   {/* CTAs */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     <motion.button
-                      onClick={() => navigate('/dashboard')}
+                      onClick={() => navigate(onboarded ? '/dashboard' : '/onboarding')}
                       whileHover={{ y: -2, boxShadow: `0 14px 36px rgba(184,112,78,0.28)` }}
                       whileTap={{ y: 0 }}
                       transition={{ duration: 0.28, ease }}

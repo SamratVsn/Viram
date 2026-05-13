@@ -6,7 +6,7 @@ import {
   RiUserLine, RiSettings3Line,
   RiFireLine, RiLeafLine, RiCalendarCheckLine, RiChat3Line,
   RiDoubleQuotesL, RiArrowRightSLine, RiCoinLine, RiRadarLine,
-  RiBarChartBoxLine, RiMentalHealthLine,
+  RiBarChartBoxLine, RiMentalHealthLine, RiRocketLine,
 } from 'react-icons/ri'
 import MorningIntention from '../components/MorningIntention'
 import DigitalFast from '../components/DigitalFast'
@@ -325,6 +325,33 @@ export default function Dashboard() {
                 {/* ── Morning Intention anchor ─────────────── */}
                 <MorningIntention />
 
+                {/* ── Goal card ────────────────────────────── */}
+                {user?.goal && (
+                  <motion.div
+                    initial={{ opacity:0, y:-8 }}
+                    animate={{ opacity:1, y:0 }}
+                    transition={{ duration:0.5, ease }}
+                    style={{
+                      display:'flex', alignItems:'center', gap:10,
+                      padding:'12px 18px', marginBottom:12,
+                      background:`linear-gradient(135deg, ${T.accentBg} 0%, ${T.card} 100%)`,
+                      border:`1px solid ${T.accentBorder}`,
+                      borderRadius:T.rLg,
+                    }}
+                  >
+                    <RiRocketLine size={14} color={T.accent} style={{ flexShrink:0 }}/>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontFamily:T.body, fontSize:8, fontWeight:600, letterSpacing:'0.18em', textTransform:'uppercase', color:T.accent, marginBottom:3 }}>
+                        My Goal
+                      </div>
+                      <div style={{ fontFamily:T.heading, fontStyle:'italic', fontWeight:500, fontSize:14, color:T.inkHigh, lineHeight:1.4 }}>
+                        {user.goal}
+                      </div>
+                    </div>
+                    <RiArrowRightSLine size={14} color={T.accentDim} style={{ flexShrink:0 }}/>
+                  </motion.div>
+                )}
+
                 {/* ── Hero identity card ───────────────────── */}
                 <Card style={{ marginBottom:12 }}>
                   {/* Subtle accent bar top */}
@@ -337,7 +364,7 @@ export default function Dashboard() {
                           {displayName}
                         </div>
                         <div style={{ fontFamily:T.body, fontWeight:300, fontSize:10.5, color:T.inkLow, marginTop:3 }}>
-                          {stats.focusMins}m focused · {stats.coins} coins · {stats.confessions} unburdened
+                          {stats.streak} days clean · {stats.focusMins}m focused · {stats.coins} coins
                         </div>
                       </div>
                     </div>
@@ -380,7 +407,7 @@ export default function Dashboard() {
                         { icon:RiCalendarCheckLine, val:stats.disciplinePoints, label:'Discipline', c:T.accent, bg:T.accentBg },
                         { icon:RiCoinLine,          val:stats.coins,             label:'Coins',      c:T.gold,   bg:T.goldBg },
                         { icon:RiTimerFlashLine,    val:stats.focusMins,         label:'Focus Min',  c:T.green,  bg:T.greenBg },
-                        { icon:RiFireLine,          val:stats.streak,            label:'Streak',     c:T.accent, bg:T.accentBg },
+                        { icon:RiFireLine,          val:stats.streak,            label:'Days Clean',  c:T.accent, bg:T.accentBg },
                         { icon:RiChat3Line,         val:stats.confessions,       label:'Confessed',  c:T.inkMid, bg:T.cardDeep },
                       ].map(({ icon:Icon, val, label, c, bg }, i) => (
                         <div key={label} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:4, padding:'10px 4px', background:bg, borderRight:i<4?`1px solid ${T.border}`:'none' }}>
@@ -502,6 +529,38 @@ export default function Dashboard() {
               }} />
             </div>
           </div>
+        )}
+
+        {/* ── GOAL OVERLAY (persistent) ──────────────────── */}
+        {user?.goal && (
+          <motion.div
+            initial={{ opacity:0, x:-20 }}
+            animate={{ opacity:1, x:0 }}
+            transition={{ delay:0.8, duration:0.5, ease }}
+            style={{
+              position:'fixed', bottom:68, left:14, zIndex:18,
+              maxWidth:200, pointerEvents:'none',
+            }}
+          >
+            <div style={{
+              display:'flex', alignItems:'center', gap:6,
+              padding:'6px 12px 6px 10px',
+              background:`rgba(249,245,236,0.92)`,
+              backdropFilter:'blur(10px)',
+              border:`1px solid ${T.accentBorder}`,
+              borderRadius:T.rPill,
+              boxShadow:`0 4px 16px rgba(55,38,22,0.12)`,
+            }}>
+              <RiRocketLine size={10} color={T.accent} style={{ flexShrink:0 }}/>
+              <span style={{
+                fontFamily:T.heading, fontStyle:'italic', fontWeight:500,
+                fontSize:11, color:T.inkHigh, lineHeight:1.2,
+                overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap',
+              }}>
+                {user.goal.length > 28 ? user.goal.slice(0, 28) + '...' : user.goal}
+              </span>
+            </div>
+          </motion.div>
         )}
 
         {/* ── BOTTOM NAV ──────────────────────────────────── */}
