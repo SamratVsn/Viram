@@ -63,6 +63,7 @@ export default function DigitalFast({ onComplete }) {
               setStatus('completed')
               setRemaining(0)
               setShowAchievement(true)
+              localStorage.setItem(STORAGE_KEY, JSON.stringify({ startTime: Date.now(), status: 'completed' }))
               grantPoints(onComplete, uid)
             } else {
               setStatus('running')
@@ -114,6 +115,7 @@ export default function DigitalFast({ onComplete }) {
           setStatus('completed')
           setRemaining(0)
           setShowAchievement(true)
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({ startTime: Date.now(), status: 'completed' }))
           grantPoints(onComplete, userIdRef.current)
         }
       }, 500)

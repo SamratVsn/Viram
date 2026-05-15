@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { RiQuillPenLine, RiCheckLine, RiSunLine } from 'react-icons/ri'
 import { supabase } from '../lib/supabase'
-import { saveTodayIntention, updateProfile, getProfile } from '../lib/db'
+import { saveTodayIntention, updateProfile, getProfile, getTodayIntention } from '../lib/db'
 import AdvancementToast, { checkCoinMilestone } from './AdvancementToast'
 
 const T = {
@@ -27,21 +27,44 @@ export default function MorningIntention() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) userIdRef.current = user.id
+      if (user) {
+        userIdRef.current = user.id
+        getTodayIntention(user.id).then(supabaseText => {
+          if (supabaseText) {
+            setSavedIntention(supabaseText)
+            setInitialized(true)
+            const stored = localStorage.getItem(STORAGE_KEY)
+            if (stored) {
+              try {
+                const local = JSON.parse(stored)
+                if (local.date === new Date().toDateString() && local.timestamp > Date.now() - 60000) {
+                  setSavedIntention(local.text)
+                }
+              } catch { /* ignore */ }
+            }
+            return
+          }
+          fallback()
+        }).catch(() => fallback())
+      } else {
+        fallback()
+      }
     })
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) {
-      try {
-        const data = JSON.parse(stored)
-        if (data.date === new Date().toDateString()) {
-          setSavedIntention(data.text)
-          setInitialized(true)
-          return
-        }
-      } catch { /* ignore */ }
+    function fallback() {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      if (stored) {
+        try {
+          const data = JSON.parse(stored)
+          if (data.date === new Date().toDateString()) {
+            setSavedIntention(data.text)
+            setInitialized(true)
+            return
+          }
+        } catch { /* ignore */ }
+      }
+      setShowModal(true)
+      setInitialized(true)
     }
-    setShowModal(true)
-    setInitialized(true)
   }, [])
 
   function saveIntention() {
