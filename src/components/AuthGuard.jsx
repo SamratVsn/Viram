@@ -29,18 +29,36 @@ export default function AuthGuard({ children }) {
         position: 'fixed', inset: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: '#F4EEE3',
-        fontFamily: "'Cormorant Garamond', Georgia, serif",
-        fontSize: 18, color: '#5A4E42',
-        flexDirection: 'column', gap: 16,
+        flexDirection: 'column', gap: 20,
       }}>
         <div style={{
-          width: 32, height: 32, borderRadius: '50%',
-          border: '2px solid rgba(55,38,22,0.10)',
-          borderTopColor: '#B8704E',
-          animation: 'as-spin 0.8s linear infinite',
+          position: 'absolute', inset: 0, pointerEvents: 'none',
+          backgroundImage: 'repeating-linear-gradient(transparent, transparent 35px, rgba(55,38,22,0.04) 35px, rgba(55,38,22,0.04) 36px)',
         }} />
-        <span style={{ opacity: 0.6 }}>Loading&hellip;</span>
-        <style>{`@keyframes as-spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }`}</style>
+        <div style={{
+          fontFamily: "'Cormorant Garamond', Georgia, serif",
+          fontWeight: 700, fontSize: 22,
+          letterSpacing: '0.14em', color: '#2A2218',
+          position: 'relative',
+        }}>
+          VI<span style={{ color: '#B8704E' }}>RAM</span>
+        </div>
+        <div style={{
+          width: 28, height: 28, borderRadius: '50%',
+          border: '2px solid rgba(55,38,22,0.08)',
+          borderTopColor: '#B8704E',
+          animation: 'ag-spin 0.8s linear infinite',
+          position: 'relative',
+        }} />
+        <span style={{
+          fontFamily: "'Jost', sans-serif",
+          fontSize: 13, fontWeight: 300,
+          color: '#8A7B6E', opacity: 0.6,
+          letterSpacing: '0.06em', position: 'relative',
+        }}>
+          Preparing your journey&hellip;
+        </span>
+        <style>{`@keyframes ag-spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }`}</style>
       </div>
     )
   }

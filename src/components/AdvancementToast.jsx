@@ -31,8 +31,6 @@ const TIERS = {
 
 /* ─── CSS ───────────────────────────────────────────────── */
 const GLOBAL = `
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Jost:wght@300;400;500;600&display=swap');
-
   @keyframes vt-float {
     0%,100% { transform: translateY(0px) rotate(var(--r,0deg)); opacity: var(--oa, 0.55); }
     50%      { transform: translateY(-14px) rotate(calc(var(--r,0deg) + 3deg)); opacity: var(--ob, 0.85); }

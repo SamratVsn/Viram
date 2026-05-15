@@ -30,8 +30,6 @@ import NavBar from "../components/NavBar";
 // Tailwind can't generate: custom keyframes, font imports, CSS variables,
 // or the body::before grain overlay. Everything else uses Tailwind classes.
 const STYLES = `
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Jost:wght@300;400;500;600&display=swap');
-
   /* ── Design tokens ── */
   :root {
     --bg:          #F4EEE3;

@@ -1,6 +1,8 @@
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
 import { RiHome4Line, RiArrowLeftLine } from "react-icons/ri";
+import { supabase } from "../lib/supabase";
 
 const EASE = [0.22, 1, 0.36, 1];
 const up = (delay = 0) => ({
@@ -13,6 +15,13 @@ const GRAIN = `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http:
 
 export default function NotFound() {
   const navigate = useNavigate();
+  const [authed, setAuthed] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setAuthed(true);
+    }).catch(() => {});
+  }, []);
 
   return (
     <div
@@ -139,7 +148,7 @@ export default function NotFound() {
           }}
         >
           <Link
-            to="/dashboard"
+            to={authed ? "/dashboard" : "/start"}
             style={{
               display:        "inline-flex",
               alignItems:     "center",
@@ -157,7 +166,7 @@ export default function NotFound() {
             }}
           >
             <RiHome4Line size={14} />
-            Back to Dashboard
+            {authed ? "Back to Dashboard" : "Get Started"}
           </Link>
 
           <button

@@ -52,7 +52,6 @@ const ease = [0.22, 1, 0.36, 1]
 
 /* ─── Global CSS ────────────────────────────────────────── */
 const GLOBAL = `
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,500;1,600&family=Jost:wght@300;400;500;600&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   .viram-ob::after {

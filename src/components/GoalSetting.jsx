@@ -33,7 +33,6 @@ const GRAIN = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'
 const ease = [0.22, 1, 0.36, 1]
 
 const GLOBAL = `
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,500;1,600&family=Jost:wght@300;400;500;600&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   .viram-gs::after {
@@ -177,7 +176,7 @@ export default function GoalSetting() {
                       top:56+i*28, height:1, background:T.borderRule,
                     }}/>
                   ))}
-                  <label style={{
+                  <label htmlFor="goal-input" style={{
                     fontFamily:T.body, fontSize:9, fontWeight:600,
                     letterSpacing:'0.22em', textTransform:'uppercase',
                     color:T.accent, display:'block', marginBottom:14,
@@ -185,6 +184,7 @@ export default function GoalSetting() {
                     I want to
                   </label>
                   <textarea
+                    id="goal-input"
                     ref={inputRef}
                     value={input}
                     onChange={e => setInput(e.target.value)}

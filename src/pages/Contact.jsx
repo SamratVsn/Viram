@@ -98,8 +98,6 @@ const TOPICS = [
 
 /* ─── Inline styles (non-Tailwind) ──────────────────────── */
 const GLOBAL = `
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Jost:wght@300;400;500;600&display=swap');
-
   :root {
     --bg:      ${T.bg};
     --card:    ${T.card};

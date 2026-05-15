@@ -13,14 +13,6 @@ import { supabase } from '../lib/supabase'
 import { saveConfession, updateProfile, deleteConfession, getProfile } from '../lib/db'
 import AdvancementToast, { checkCoinMilestone } from '../components/AdvancementToast'
 
-/* ─── Font loader ─────────────────────────────────────────────────────────── */
-const FontLoader = () => (
-  <link
-    rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,600&family=Jost:wght@300;400;500;600&display=swap"
-  />
-)
-
 /* ─── Grain overlay ───────────────────────────────────────────────────────── */
 const Grain = () => (
   <div
@@ -54,7 +46,7 @@ function loadConfessions() {
     const parsed = JSON.parse(raw)
     // purge entries older than 30 days
     const now = Date.now()
-    return parsed.filter(c => now - (c.ts || c.timestamp) < THIRTY_DAYS)
+    return parsed.filter(c => now - (c.ts || c.timestamp || now) < THIRTY_DAYS)
   } catch {
     return []
   }
@@ -426,8 +418,6 @@ export default function Confess() {
 
   return (
     <>
-      <FontLoader />
-
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
