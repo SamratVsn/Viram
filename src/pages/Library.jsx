@@ -19,14 +19,6 @@ import {
   RiRocketLine,
 } from 'react-icons/ri'
 
-/* ─── Font loader ─────────────────────────────────────────────────────────── */
-const FontLoader = () => (
-  <link
-    rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,600&family=Jost:wght@300;400;500;600&display=swap"
-  />
-)
-
 /* ─── Animation helper ────────────────────────────────────────────────────── */
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 20 },
@@ -516,7 +508,6 @@ export default function Library() {
   return (
     <>
       <ReadingProgress />
-      <FontLoader />
 
       <div
         className="min-h-svh overflow-x-hidden"

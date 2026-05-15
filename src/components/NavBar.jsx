@@ -12,14 +12,6 @@ import {
   RiArrowRightLine,
 } from "react-icons/ri";
 
-/* ─── Font loader (JSX, no CSS block) ───────────────────────────────────── */
-const FontLoader = () => (
-  <link
-    rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,600&family=Jost:wght@300;400;500;600&display=swap"
-  />
-);
-
 /* ─── Grain SVG texture overlay ─────────────────────────────────────────── */
 const Grain = () => (
   <div
@@ -162,8 +154,6 @@ export default function NavBar() {
 
   return (
     <>
-      <FontLoader />
-
       {/* ── Nav bar ──────────────────────────────────────────────────────── */}
       <motion.nav
         initial={{ y: -90, opacity: 0 }}

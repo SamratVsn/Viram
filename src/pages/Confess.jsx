@@ -10,7 +10,7 @@ import {
 } from 'react-icons/ri'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { saveConfession, updateProfile, deleteConfession, getProfile } from '../lib/db'
+import { saveConfession, updateProfile, deleteConfession, getProfile, getConfessions } from '../lib/db'
 import AdvancementToast, { checkCoinMilestone } from '../components/AdvancementToast'
 
 /* ─── Grain overlay ───────────────────────────────────────────────────────── */
@@ -302,14 +302,41 @@ export default function Confess() {
   const userIdRef                     = useRef(null)
   const MAX_CHARS                     = 400
 
-  /* Load from localStorage on mount, purge expired */
+  /* Load from Supabase + localStorage on mount, purge expired */
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) userIdRef.current = user.id
+      if (user) {
+        userIdRef.current = user.id
+        getConfessions(user.id).then(supabaseConfs => {
+          const localConfs = loadConfessions()
+          // Map Supabase entries to local format
+          const mapped = supabaseConfs.map(c => ({
+            id: c.id,
+            text: c.text,
+            trigger: c.trigger || '',
+            app: c.app || '',
+            ts: new Date(c.created_at).getTime(),
+            date: new Date(c.created_at).toDateString(),
+            supabaseId: c.id,
+          }))
+          // Deduplicate: skip local entries already in Supabase
+          const supabaseIds = new Set(mapped.map(c => c.id))
+          const uniqueLocal = localConfs.filter(c => !supabaseIds.has(c.supabaseId) && !supabaseIds.has(c.id))
+          const merged = [...mapped, ...uniqueLocal].sort((a, b) => b.ts - a.ts)
+          setConfessions(merged)
+          saveConfessions(merged)
+        }).catch(() => {
+          // Fallback to localStorage only if Supabase fails
+          const loaded = loadConfessions()
+          setConfessions(loaded)
+          saveConfessions(loaded)
+        })
+      } else {
+        const loaded = loadConfessions()
+        setConfessions(loaded)
+        saveConfessions(loaded)
+      }
     })
-    const loaded = loadConfessions()
-    setConfessions(loaded)
-    saveConfessions(loaded)           // persist after purge
   }, [])
 
   /* Auto-resize textarea */

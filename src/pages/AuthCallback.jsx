@@ -8,8 +8,19 @@ export default function AuthCallback() {
 
   useEffect(() => {
     let cancelled = false
+    let handled = false
+
+    const timeout = setTimeout(() => {
+      if (!cancelled && !handled) {
+        cancelled = true
+        navigate('/start', { replace: true })
+      }
+    }, 8000)
 
     async function handleSession(session) {
+      if (handled || cancelled) return
+      handled = true
+      clearTimeout(timeout)
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user || cancelled) return
@@ -26,17 +37,15 @@ export default function AuthCallback() {
       }
     }
 
-    /* Check for an existing session (OAuth redirect may have been processed already) */
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) handleSession(session)
     })
 
-    /* Also listen for the SIGNED_IN event in case it fires after mount */
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) handleSession(session)
     })
 
-    return () => { cancelled = true; subscription?.unsubscribe() }
+    return () => { cancelled = true; clearTimeout(timeout); subscription?.unsubscribe() }
   }, [navigate])
 
   return (

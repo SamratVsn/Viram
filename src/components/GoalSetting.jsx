@@ -1,8 +1,8 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
-import { updateProfile } from '../lib/db'
+import { updateProfile, getProfile } from '../lib/db'
 import {
   RiRocketLine, RiQuillPenLine, RiArrowRightLine,
 } from 'react-icons/ri'
@@ -58,9 +58,20 @@ export default function GoalSetting() {
   const [input, setInput] = useState('')
   const [saving, setSaving] = useState(false)
   const [fadeOut, setFadeOut] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const inputRef = useRef(null)
 
   const hasValue = input.trim().length > 0
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        getProfile(user.id).then(profile => {
+          if (profile?.goal) setInput(profile.goal)
+        }).catch(() => {})
+      }
+    }).catch(() => {})
+  }, [])
 
   function pickSuggestion(suggestion) {
     setInput(suggestion)
@@ -70,6 +81,7 @@ export default function GoalSetting() {
   async function saveGoal() {
     if (!hasValue || saving) return
     setSaving(true)
+    setSaveError('')
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
@@ -77,7 +89,8 @@ export default function GoalSetting() {
       }
       setFadeOut(true)
       setTimeout(() => navigate('/dashboard'), 600)
-    } catch {
+    } catch (err) {
+      setSaveError(err?.message || 'Failed to save goal.')
       setSaving(false)
     }
   }
@@ -238,6 +251,11 @@ export default function GoalSetting() {
                   >
                     {saving ? 'Saving...' : <><RiRocketLine size={14}/> Begin My Journey</>}
                   </motion.button>
+                  {saveError && (
+                    <p style={{ fontFamily:T.body, fontSize:11, color:T.accent, textAlign:'center', marginTop:10 }}>
+                      {saveError}
+                    </p>
+                  )}
                 </div>
 
                 <div style={{

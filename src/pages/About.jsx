@@ -16,14 +16,6 @@ import {
 } from "react-icons/ri";
 import NavBar from "../components/NavBar";
 
-/* ─── Font loader ─────────────────────────────────────────────────────────── */
-const FontLoader = () => (
-  <link
-    rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,600&family=Jost:wght@300;400;500;600&display=swap"
-  />
-);
-
 /* ─── Grain overlay ───────────────────────────────────────────────────────── */
 const Grain = () => (
   <div
@@ -480,7 +472,6 @@ function CTAButton({ to, children, variant = "primary", target, rel }) {
 export default function About() {
   return (
     <>
-      <FontLoader />
       <NavBar />
 
       <div

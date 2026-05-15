@@ -252,8 +252,7 @@ export default function Dashboard() {
 
     const t = setTimeout(() => setShowCmp(true), 600)
     return () => clearTimeout(t)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user])
+  }, [user?.id, user?.lastLoginDate])
 
   return (
     <>

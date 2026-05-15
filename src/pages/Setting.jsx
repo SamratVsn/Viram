@@ -24,14 +24,6 @@ import { supabase } from '../lib/supabase'
 import { updateProfile, getProfile, clearAllConfessions } from '../lib/db'
 import useViramData from '../hooks/useViramData'
 
-/* ─── Font loader ─────────────────────────────────────────────────────────── */
-const FontLoader = () => (
-  <link
-    rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,600&family=Jost:wght@300;400;500;600&display=swap"
-  />
-)
-
 /* ─── Grain ───────────────────────────────────────────────────────────────── */
 const Grain = () => (
   <div
@@ -680,8 +672,6 @@ export default function Settings({ G }) {
 
   return (
     <>
-      <FontLoader />
-
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
