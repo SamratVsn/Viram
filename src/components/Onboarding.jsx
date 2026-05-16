@@ -210,19 +210,6 @@ const STEPS = [
   },
 ]
 
-/* ─── Stat calculator ───────────────────────────────────── */
-function calcStats(p) {
-  const st=p.screenTime??4, sl=p.sleep??7, str=p.stressLevel??1
-  return {
-    vitality:   Math.max(15,Math.min(100,Math.round(100-st*5 -str*6 +(sl-5)*3))),
-    energy:     Math.max(15,Math.min(100,Math.round(100-st*4 -str*5 +(sl-5)*4))),
-    discipline: Math.max(20,Math.min(100,Math.round(100-st*6 -str*4))),
-    focus:      Math.max(20,Math.min(100,Math.round(100-st*7 -str*3 +(sl-5)*2))),
-    shieldHP:   Math.max(10,Math.min(100,Math.round(100-st*8))),
-    coins:      Math.max(1, Math.round(10-st*0.7)),
-  }
-}
-
 /* ─── Option card ────────────────────────────────────────── */
 function OptionCard({ opt, selected, onClick }) {
   const Icon = opt.icon
@@ -282,11 +269,16 @@ function OptionCard({ opt, selected, onClick }) {
 }
 
 /* ─── Archetype Stamp Overlay ────────────────────────────── */
-function ArchetypeStamp({ archetype, avatarName, stats, onDone }) {
+function ArchetypeStamp({ archetype, avatarName, profile, onDone }) {
   useEffect(() => {
-    const t = setTimeout(onDone, 3200)
+    const t = setTimeout(onDone, 5000)
     return () => clearTimeout(t)
   }, [onDone])
+
+  const APP_LABELS = {
+    reels: 'Instagram / TikTok', youtube: 'YouTube', chat: 'WhatsApp / Messaging',
+    feed: 'Twitter / Reddit', games: 'Games', all: 'All of them',
+  }
 
   return (
     <motion.div
@@ -300,127 +292,164 @@ function ArchetypeStamp({ archetype, avatarName, stats, onDone }) {
       }}
       onClick={onDone}
     >
-      {/* Ruled paper lines on the overlay itself */}
       <div style={{
         position:'absolute', inset:0, pointerEvents:'none',
         backgroundImage:`repeating-linear-gradient(transparent, transparent 35px, rgba(55,38,22,0.04) 35px, rgba(55,38,22,0.04) 36px)`,
       }}/>
 
-      <div style={{ position:'relative', textAlign:'center', userSelect:'none' }}>
+      <div style={{ position:'relative', textAlign:'center', userSelect:'none', maxWidth:380, width:'100%', padding:'0 24px' }}>
 
         {/* Pre-stamp copy */}
         <motion.div
           initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }}
           transition={{ delay:0.06, duration:0.6, ease }}
-          style={{ marginBottom:52 }}
+          style={{ marginBottom:40 }}
         >
           <div style={{
-            fontFamily:T.body, fontWeight:300, fontSize:11,
-            color:T.inkLow, letterSpacing:'0.22em', textTransform:'uppercase',
+            fontFamily:T.body, fontWeight:300, fontSize:10,
+            color:T.inkLow, letterSpacing:'0.24em', textTransform:'uppercase',
           }}>
             Avatar forged
           </div>
           {avatarName && (
             <div style={{
-              fontFamily:T.heading, fontWeight:600, fontStyle:'italic',
-              fontSize:26, color:T.inkHigh, marginTop:6, letterSpacing:'-0.01em',
+              fontFamily:T.heading, fontWeight:700, fontStyle:'italic',
+              fontSize:30, color:T.inkHigh, marginTop:6, letterSpacing:'-0.02em',
             }}>
               {avatarName}
             </div>
           )}
         </motion.div>
 
-        {/* Stamp container — positioned */}
-        <div style={{ position:'relative', width:240, height:240, margin:'0 auto' }}>
-
-          {/* Ink ripple ring — fires just after stamp lands */}
+        {/* Stamp */}
+        <div style={{ position:'relative', width:220, height:220, margin:'0 auto' }}>
           <div className="ink-ring" style={{
-            position:'absolute', top:'50%', left:'50%',
-            width:240, height:240,
-            borderRadius:'50%',
+            position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)',
+            width:220, height:220, borderRadius:'50%',
             border:`2px solid ${T.accentBorder}`,
           }}/>
-
-          {/* The stamp itself */}
           <div className="stamp-slam" style={{
             position:'absolute', top:'50%', left:'50%',
-            width:220, height:220, borderRadius:'50%',
-            background:T.accentBg,
-            border:`4px solid ${T.accent}`,
+            width:200, height:200, borderRadius:'50%',
+            background:`radial-gradient(circle, ${T.accentBg} 0%, ${T.card} 100%)`,
+            border:`3px solid ${T.accent}`,
             outline:`2px solid ${T.accentBorder}`,
-            outlineOffset:5,
-            boxShadow:`0 0 0 1px ${T.accentBorder}, 0 24px 64px rgba(184,112,78,0.22)`,
+            outlineOffset:4,
+            boxShadow:`0 0 0 1px ${T.accentBorder}, 0 20px 56px rgba(184,112,78,0.20)`,
             display:'flex', flexDirection:'column',
             alignItems:'center', justifyContent:'center',
-            padding:28, gap:4,
+            padding:24, gap:3,
           }}>
-            {/* Top arc text */}
-            <svg width="180" height="40" viewBox="0 0 180 40" style={{ position:'absolute', top:22 }}>
-              <path id="arc-top" d="M 20,30 A 70,70 0 0,1 160,30" fill="none"/>
-              <text style={{ fontFamily:T.body, fontSize:9, fontWeight:600, letterSpacing:'0.22em', fill:T.accentDim, textTransform:'uppercase' }}>
+            <svg width="160" height="36" viewBox="0 0 160 36" style={{ position:'absolute', top:18 }}>
+              <path id="arc-top" d="M 18,26 A 62,62 0 0,1 142,26" fill="none"/>
+              <text style={{ fontFamily:T.body, fontSize:8, fontWeight:600, letterSpacing:'0.20em', fill:T.accentDim, textTransform:'uppercase' }}>
                 <textPath href="#arc-top" startOffset="50%" textAnchor="middle">VIRAM · PROFILE</textPath>
               </text>
             </svg>
 
-            {/* Central content */}
-            <div style={{ fontFamily:T.body, fontWeight:600, fontSize:9, letterSpacing:'0.26em', textTransform:'uppercase', color:T.accentDim, marginTop:24 }}>
+            <div style={{ fontFamily:T.body, fontWeight:600, fontSize:8, letterSpacing:'0.24em', textTransform:'uppercase', color:T.accentDim, marginTop:20 }}>
               Archetype
             </div>
             <div style={{
               fontFamily:T.heading, fontWeight:700,
-              fontSize: archetype.title.length > 12 ? 18 : 22,
-              letterSpacing:'0.04em', color:T.inkHigh,
-              lineHeight:1.1, textAlign:'center', marginTop:4,
+              fontSize: archetype.title.length > 12 ? 16 : 20,
+              letterSpacing:'0.03em', color:T.inkHigh,
+              lineHeight:1.1, textAlign:'center', marginTop:3,
             }}>
               {archetype.title}
             </div>
             <div style={{
               fontFamily:T.heading, fontStyle:'italic', fontWeight:400,
-              fontSize:12, color:T.accent, marginTop:6, letterSpacing:'0.01em',
+              fontSize:11, color:T.accent, marginTop:4, letterSpacing:'0.01em',
             }}>
               {archetype.sub}
             </div>
 
-            {/* Bottom arc text */}
-            <svg width="180" height="40" viewBox="0 0 180 40" style={{ position:'absolute', bottom:20 }}>
-              <path id="arc-bot" d="M 20,10 A 70,70 0 0,0 160,10" fill="none"/>
-              <text style={{ fontFamily:T.body, fontSize:8, fontWeight:500, letterSpacing:'0.18em', fill:T.accentDim }}>
+            <svg width="160" height="36" viewBox="0 0 160 36" style={{ position:'absolute', bottom:16 }}>
+              <path id="arc-bot" d="M 18,10 A 62,62 0 0,0 142,10" fill="none"/>
+              <text style={{ fontFamily:T.body, fontSize:7, fontWeight:500, letterSpacing:'0.16em', fill:T.accentDim }}>
                 <textPath href="#arc-bot" startOffset="50%" textAnchor="middle">EST. {new Date().getFullYear()}</textPath>
               </text>
             </svg>
           </div>
         </div>
 
-        {/* Stat chips that appear after stamp settles */}
+        {/* Starting stats card */}
         <motion.div
-          initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }}
+          initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }}
           transition={{ delay:0.9, duration:0.55, ease }}
-          style={{ marginTop:44, display:'flex', gap:10, justifyContent:'center' }}
+          style={{
+            marginTop:36, padding:'16px 18px',
+            background:T.card, border:`1px solid ${T.borderMid}`,
+            borderRadius:16, textAlign:'left',
+            boxShadow:`0 4px 16px rgba(55,38,22,0.06)`,
+          }}
         >
-          {[
-            { label:'Vitality',   val:stats.vitality   },
-            { label:'Focus',      val:stats.focus      },
-            { label:'Discipline', val:stats.discipline },
-          ].map(({ label, val }) => (
-            <div key={label} style={{
-              padding:'8px 14px', borderRadius:T.rPill,
-              background:T.card, border:`1px solid ${T.border}`,
-              boxShadow:`0 2px 8px rgba(55,38,22,0.06)`,
-            }}>
-              <div style={{ fontFamily:T.body, fontSize:8, fontWeight:600, letterSpacing:'0.18em', textTransform:'uppercase', color:T.inkLow, marginBottom:2 }}>
-                {label}
-              </div>
-              <div style={{ fontFamily:T.heading, fontWeight:600, fontSize:16, color:T.inkHigh }}>
-                {val}
+          <div style={{
+            fontFamily:T.body, fontSize:8, fontWeight:600,
+            letterSpacing:'0.18em', textTransform:'uppercase',
+            color:T.accent, marginBottom:10, textAlign:'center',
+          }}>
+            Starting Point
+          </div>
+          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+              <div style={{
+                width:28, height:28, borderRadius:'50%', flexShrink:0,
+                background:T.accentBg, border:`1px solid ${T.accentBorder}`,
+                display:'flex', alignItems:'center', justifyContent:'center',
+                color:T.accent, fontSize:12,
+              }}>⏱</div>
+              <div>
+                <div style={{ fontFamily:T.body, fontSize:9, fontWeight:500, color:T.inkLow, letterSpacing:'0.06em' }}>
+                  Screen time
+                </div>
+                <div style={{ fontFamily:T.heading, fontWeight:600, fontSize:15, color:T.inkHigh }}>
+                  {profile.screenTime ?? 4} hrs/day
+                </div>
               </div>
             </div>
-          ))}
+            {profile.worstApp && (
+              <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                <div style={{
+                  width:28, height:28, borderRadius:'50%', flexShrink:0,
+                  background:T.accentBg, border:`1px solid ${T.accentBorder}`,
+                  display:'flex', alignItems:'center', justifyContent:'center',
+                  color:T.accent, fontSize:12,
+                }}>📱</div>
+                <div>
+                  <div style={{ fontFamily:T.body, fontSize:9, fontWeight:500, color:T.inkLow, letterSpacing:'0.06em' }}>
+                    Biggest thief
+                  </div>
+                  <div style={{ fontFamily:T.heading, fontWeight:600, fontSize:15, color:T.inkHigh }}>
+                    {APP_LABELS[profile.worstApp] || profile.worstApp}
+                  </div>
+                </div>
+              </div>
+            )}
+            <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+              <div style={{
+                width:28, height:28, borderRadius:'50%', flexShrink:0,
+                background:T.accentBg, border:`1px solid ${T.accentBorder}`,
+                display:'flex', alignItems:'center', justifyContent:'center',
+                color:T.accent, fontSize:12,
+              }}>🎯</div>
+              <div>
+                <div style={{ fontFamily:T.body, fontSize:9, fontWeight:500, color:T.inkLow, letterSpacing:'0.06em' }}>
+                  Mission
+                </div>
+                <div style={{ fontFamily:T.heading, fontWeight:600, fontSize:15, color:T.inkHigh, textTransform:'capitalize' }}>
+                  {profile.mission || 'Discipline'}
+                </div>
+              </div>
+            </div>
+          </div>
         </motion.div>
 
         <motion.p
           initial={{ opacity:0 }} animate={{ opacity:1 }}
-          transition={{ delay:1.6, duration:0.5 }}
-          style={{ marginTop:28, fontFamily:T.body, fontWeight:300, fontSize:11, color:T.inkLow, letterSpacing:'0.06em' }}
+          transition={{ delay:2.0, duration:0.5 }}
+          style={{ marginTop:24, fontFamily:T.body, fontWeight:300, fontSize:11, color:T.inkLow, letterSpacing:'0.06em' }}
         >
           Tap anywhere to enter your dashboard →
         </motion.p>
@@ -452,8 +481,21 @@ export default function Onboarding() {
     return val !== undefined && val !== null && val !== ''
   }
 
-  const stats     = calcStats(profile)
   const archetype = ARCHETYPES[profile.mission] ?? ARCHETYPES.discipline
+
+  function calcStats(p) {
+    const st = p.screenTime ?? 4
+    const sl = p.sleep ?? 7
+    const str = p.stressLevel ?? 1
+    return {
+      vitality:   Math.max(15, Math.min(100, Math.round(100 - st*5  - str*6 + (sl-5)*3))),
+      energy:     Math.max(15, Math.min(100, Math.round(100 - st*4  - str*5 + (sl-5)*4))),
+      discipline: Math.max(20, Math.min(100, Math.round(100 - st*6  - str*4))),
+      focus:      Math.max(20, Math.min(100, Math.round(100 - st*7  - str*3 + (sl-5)*2))),
+      shieldHP:   Math.max(10, Math.min(100, Math.round(100 - st*8))),
+      coins:      Math.max(1,  Math.round(10 - st*0.7)),
+    }
+  }
 
   useEffect(() => {
     if (cur.type==='text' && inputRef.current) inputRef.current.focus()
@@ -535,7 +577,7 @@ export default function Onboarding() {
             <ArchetypeStamp
               archetype={archetype}
               avatarName={profile.avatarName}
-              stats={stats}
+              profile={profile}
               onDone={() => navigate('/goal-setting')}
             />
           )}

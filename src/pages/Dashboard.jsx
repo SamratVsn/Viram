@@ -12,6 +12,8 @@ import MorningIntention from '../components/MorningIntention'
 import DigitalFast from '../components/DigitalFast'
 import SEO from '../components/SEO'
 import CuriositySeed from '../components/CuriositySeed'
+import SkillTracker from '../components/SkillTracker'
+import SuggestedAction from '../components/SuggestedAction'
 import companionImg from '../assets/3dmodel.png'
 import useViramData from '../hooks/useViramData'
 import { updateProfile } from '../lib/db'
@@ -331,6 +333,9 @@ export default function Dashboard() {
                 {/* ── Morning Intention anchor ─────────────── */}
                 <MorningIntention />
 
+                {/* ── Suggested Action ─────────────────────────── */}
+                <SuggestedAction focus={focus} profile={user} />
+
                 {/* ── Goal card ────────────────────────────── */}
                 {user?.goal && (
                   <motion.div
@@ -432,7 +437,7 @@ export default function Dashboard() {
                   {[
                     { icon:RiTimerFlashLine, label:'Focus Mode',   sub:'Enter deep work',      route:'/focus',   variant:'primary' },
                     { icon:RiChat3Line,      label:'Confess',      sub:'Log a slip-up',         route:'/confess', variant:'warm'    },
-                    { icon:RiLeafLine,       label:'My Triggers',  sub:'Patterns & insights',   route:'/problems',variant:'subtle'  },
+                    { icon:RiLeafLine,       label:'My Triggers',  sub:'Patterns & insights',   route:'/triggers',variant:'subtle'  },
                     { icon:RiBookOpenLine,   label:'Library',      sub:'Reading & reflection',  route:'/library', variant:'subtle'  },
                   ].map(({ icon:Icon, label, sub, route, variant }) => {
                     const styles = {
@@ -469,6 +474,11 @@ export default function Dashboard() {
                 {/* ── Digital Fast ──────────────────────────── */}
                 <div style={{ marginBottom: 18 }}>
                   <DigitalFast onComplete={() => refresh()} />
+                </div>
+
+                {/* ── Skill Tracker ────────────────────────── */}
+                <div style={{ marginBottom: 18 }}>
+                  <SkillTracker />
                 </div>
 
                 {/* ── Curiosity Seed ───────────────────────── */}
@@ -509,8 +519,10 @@ export default function Dashboard() {
             <img
               src={companionImg}
               alt="Viram companion"
+              width="140"
+              height="140"
               style={{
-                width:'100%', objectFit:'contain', objectPosition:'bottom right',
+                width:'100%', height:'auto', objectFit:'contain', objectPosition:'bottom right',
                 filter:'drop-shadow(0 8px 28px rgba(55,38,22,0.20))',
                 userSelect:'none', display:'block',
               }}

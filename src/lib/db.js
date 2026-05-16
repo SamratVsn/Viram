@@ -171,6 +171,117 @@ export async function getConfessions(userId, limit = 50) {
   }
 }
 
+export async function updateConfessionTrigger(confessionId, trigger) {
+  try {
+    const { error } = await supabase
+      .from('confessions')
+      .update({ trigger })
+      .eq('id', confessionId)
+    if (error) console.error('updateConfessionTrigger:', error)
+  } catch (err) {
+    console.error('updateConfessionTrigger:', err)
+  }
+}
+
+export async function getConfessionTriggerCounts(userId) {
+  try {
+    const { data, error } = await supabase
+      .from('confessions')
+      .select('trigger')
+      .eq('user_id', userId)
+      .not('trigger', 'is', null)
+      .neq('trigger', '')
+    if (error) { console.error('getConfessionTriggerCounts:', error); return {} }
+    const counts = { boredom: 0, stress: 0, habit: 0, loneliness: 0 }
+    for (const row of data || []) {
+      if (counts[row.trigger] !== undefined) counts[row.trigger]++
+    }
+    return counts
+  } catch (err) {
+    console.error('getConfessionTriggerCounts:', err)
+    return {}
+  }
+}
+
+export async function getFocusSessionCount(userId) {
+  try {
+    const { count, error } = await supabase
+      .from('focus_sessions')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+    if (error) { console.error('getFocusSessionCount:', error); return 0 }
+    return count || 0
+  } catch (err) {
+    console.error('getFocusSessionCount:', err)
+    return 0
+  }
+}
+
+export async function getConfessionCount(userId) {
+  try {
+    const { count, error } = await supabase
+      .from('confessions')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+    if (error) { console.error('getConfessionCount:', error); return 0 }
+    return count || 0
+  } catch (err) {
+    console.error('getConfessionCount:', err)
+    return 0
+  }
+}
+
+/* ─── Intention follow-through ───────────────────────────── */
+
+export async function saveIntentionCheckin(userId, date, answer) {
+  try {
+    const { error } = await supabase
+      .from('intentions')
+      .upsert(
+        { user_id: userId, date, checkin: answer },
+        { onConflict: 'user_id,date' }
+      )
+    if (error) console.error('saveIntentionCheckin:', error)
+  } catch (err) {
+    console.error('saveIntentionCheckin:', err)
+  }
+}
+
+export async function getIntentionCheckin(userId, date) {
+  try {
+    const { data, error } = await supabase
+      .from('intentions')
+      .select('checkin')
+      .eq('user_id', userId)
+      .eq('date', date)
+      .maybeSingle()
+    if (error) { console.error('getIntentionCheckin:', error); return null }
+    return data?.checkin || null
+  } catch (err) {
+    console.error('getIntentionCheckin:', err)
+    return null
+  }
+}
+
+export async function getIntentionFollowThroughRate(userId) {
+  try {
+    const { data, error } = await supabase
+      .from('intentions')
+      .select('checkin')
+      .eq('user_id', userId)
+      .not('checkin', 'is', null)
+    if (error) { console.error('getIntentionFollowThroughRate:', error); return { yes: 0, partial: 0, no: 0, total: 0 } }
+    const counts = { yes: 0, partial: 0, no: 0, total: data?.length || 0 }
+    for (const row of data || []) {
+      if (counts[row.checkin] !== undefined) counts[row.checkin]++
+    }
+    return counts
+  } catch (err) {
+    console.error('getIntentionFollowThroughRate:', err)
+    return { yes: 0, partial: 0, no: 0, total: 0 }
+  }
+}
+
 export async function getTotalFocus(userId) {
   try {
     const { data, error } = await supabase

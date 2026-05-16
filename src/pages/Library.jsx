@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -120,6 +120,7 @@ function DynIcon({ name, size = 14, color = '#8A7E74' }) {
 const CHAPTERS = [
   {
     num: '01', label: 'Atomic Habits', icon: 'ri-seedling-line', author: 'James Clear',
+    archetypes: ['study', 'discipline', 'health'],
     title: 'Identity Over Goals',
     subtitle: 'The person you become determines the results you get. Not the other way around.',
     paras: [
@@ -132,6 +133,7 @@ const CHAPTERS = [
   },
   {
     num: '02', label: 'Deep Work', icon: 'ri-brain-line', author: 'Cal Newport',
+    archetypes: ['deepwork', 'discipline', 'study'],
     title: 'The Rarest Skill in the Modern Economy',
     subtitle: 'The ability to focus without distraction is becoming simultaneously rare and extraordinarily valuable.',
     paras: [
@@ -145,6 +147,7 @@ const CHAPTERS = [
   },
   {
     num: '03', label: 'The Power of Your Subconscious Mind', icon: 'ri-mind-map', author: 'Joseph Murphy',
+    archetypes: ['discipline', 'detox', 'health'],
     title: 'The Architecture of Belief',
     subtitle: 'What you tell yourself in the quiet moments becomes the structure your behaviour is built upon.',
     paras: [
@@ -157,6 +160,7 @@ const CHAPTERS = [
   },
   {
     num: '04', label: 'Digital Minimalism', icon: 'ri-shield-line', author: 'Cal Newport & Tristan Harris',
+    archetypes: ['detox', 'discipline', 'deepwork'],
     title: 'The Slot Machine in Your Pocket',
     subtitle: 'These companies are not building tools. They are building desire machines calibrated to your most exploitable psychological vulnerabilities.',
     paras: [
@@ -169,6 +173,7 @@ const CHAPTERS = [
   },
   {
     num: '05', label: 'Essentialism', icon: 'ri-scissors-cut-line', author: 'Greg McKeown',
+    archetypes: ['study', 'deepwork', 'detox'],
     title: 'The Ruthless Pursuit of Less',
     subtitle: 'Almost everything is noise. Almost nothing is signal. The Essentialist spends their life learning to tell the difference.',
     paras: [
@@ -462,15 +467,41 @@ function TableOfContents({ chapters, readChapters, onChapterClick }) {
 }
 
 /* ─── Main export ─────────────────────────────────────────────────────────── */
+const ARCHETYPE_LABELS = {
+  study: 'Scholar',
+  deepwork: 'Architect',
+  health: 'Athlete',
+  discipline: 'Warrior',
+  detox: 'Monk',
+}
+
 export default function Library() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [archetype, setArchetype] = useState(null)
   const [readChapters, setReadChapters] = useState([])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsLoggedIn(!!session)
+      if (session?.user) {
+        supabase.from('profiles').select('mission').eq('id', session.user.id).single()
+          .then(({ data }) => {
+            if (data?.mission) setArchetype(data.mission)
+          })
+          .catch(() => {})
+      }
     }).catch(() => setIsLoggedIn(false))
   }, [])
+
+  const sortedChapters = useMemo(() => {
+    if (!archetype) return CHAPTERS
+    const sorted = [...CHAPTERS].sort((a, b) => {
+      const aMatch = a.archetypes?.includes(archetype) ? 1 : 0
+      const bMatch = b.archetypes?.includes(archetype) ? 1 : 0
+      return bMatch - aMatch
+    })
+    return sorted
+  }, [archetype])
 
   const handleChapterClick = useCallback((num) => {
     const el = document.querySelector(`[data-chapter="${num}"]`)
@@ -562,7 +593,7 @@ export default function Library() {
             }}
           >
             <PulseDot />
-            {CHAPTERS.length} Chapters
+            {sortedChapters.length} Chapters
           </div>
         </div>
 
@@ -638,6 +669,28 @@ export default function Library() {
                 <AuthorPill key={name} Icon={Icon} name={name} />
               ))}
             </motion.div>
+
+            {/* Archetype indicator */}
+            {archetype && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.32, duration: 0.5 }}
+                className="mt-6"
+              >
+                <div style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '5px 14px', borderRadius: 100,
+                  background: 'rgba(184,112,78,0.08)',
+                  border: '1px solid rgba(184,112,78,0.18)',
+                  fontFamily: "'Jost', sans-serif",
+                  fontSize: 10, fontWeight: 600, color: '#B8704E',
+                  letterSpacing: '0.08em',
+                }}>
+                  Curated for {ARCHETYPE_LABELS[archetype] || 'you'}
+                </div>
+              </motion.div>
+            )}
           </div>
         </section>
 
@@ -645,14 +698,23 @@ export default function Library() {
         <div className="max-w-[740px] mx-auto px-[5vw] pt-[80px] pb-[120px]">
 
           {/* ── Table of Contents ──────────────────────────────────────── */}
-          <TableOfContents chapters={CHAPTERS} readChapters={readChapters} onChapterClick={handleChapterClick} />
+          <TableOfContents chapters={sortedChapters} readChapters={readChapters} onChapterClick={handleChapterClick} />
 
-          {CHAPTERS.map((ch, idx) => (
+          {sortedChapters.map((ch, idx) => (
             <div key={ch.num} data-chapter={ch.num}>
               <motion.article {...fadeUp(0)}>
 
                 {/* Chapter badge row */}
                 <div className="flex items-center gap-[10px] mb-5">
+                  {archetype && ch.archetypes?.includes(archetype) && (
+                    <span style={{
+                      padding: '2px 8px', borderRadius: 100,
+                      background: '#B8704E', color: '#FFF8F2',
+                      fontFamily: "'Jost', sans-serif", fontSize: 8,
+                      fontWeight: 600, letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                    }}>Recommended</span>
+                  )}
                   <div
                     className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                     style={{
@@ -745,7 +807,7 @@ export default function Library() {
                 />
               </motion.article>
 
-              {idx < CHAPTERS.length - 1 && <ChapterDivider />}
+              {idx < sortedChapters.length - 1 && <ChapterDivider />}
             </div>
           ))}
 
@@ -811,7 +873,7 @@ export default function Library() {
               letterSpacing: '0.04em',
             }}
           >
-            Mind Library · {CHAPTERS.length} Chapters
+            Mind Library · {sortedChapters.length} Chapters
           </div>
 
           <div className="relative z-[1] flex items-center gap-[6px]"

@@ -151,7 +151,7 @@ function SkillCard({ skill, onDelete, onUpdate }) {
     if (userIdRef.current) {
       getProfile(userIdRef.current).then(profile => {
         const currentCoins = profile?.coins || 0
-        const coinsToAdd = Math.floor(sessionMin / 5)
+        const coinsToAdd = Math.floor(sessionMin / 5) * 2
         const newCoins = currentCoins + coinsToAdd
 
         updateProfile(userIdRef.current, { coins: newCoins })
@@ -173,7 +173,7 @@ function SkillCard({ skill, onDelete, onUpdate }) {
       /* Fallback: localStorage only (no auth) */
       const lsUser = JSON.parse(localStorage.getItem('viram_user') || '{}')
       const oldCoins = lsUser.coins || 0
-      const coinsToAdd = Math.floor(sessionMin / 5)
+      const coinsToAdd = Math.floor(sessionMin / 5) * 2
       lsUser.coins = oldCoins + coinsToAdd
       lsUser.focusMins = (lsUser.focusMins || 0) + sessionMin
       localStorage.setItem('viram_user', JSON.stringify(lsUser))

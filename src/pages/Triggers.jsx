@@ -14,6 +14,8 @@ import {
   RiCodeBoxLine, RiRocketLine,
 } from 'react-icons/ri'
 import SEO from '../components/SEO'
+import { supabase } from '../lib/supabase'
+import { getConfessionTriggerCounts } from '../lib/db'
 
 /* ─── Design Tokens ───────────────────────────────────────────────────────── */
 const T = {
@@ -299,7 +301,7 @@ function SectionNav({ sections, activeSection, onSectionClick }) {
 }
 
 /* ─── Main Component ──────────────────────────────────────────────────────── */
-export default function ProblemPage({ onBack }) {
+export default function TriggersPage({ onBack }) {
   const navigate = useNavigate()
   const heroRef = useRef(null)
   const { scrollYProgress: heroScroll } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
@@ -307,6 +309,8 @@ export default function ProblemPage({ onBack }) {
   const heroY       = useTransform(heroScroll, [0, 0.6], [0, 40])
 
   const [activeSection, setActiveSection] = useState('')
+  const [triggerCounts, setTriggerCounts] = useState(null)
+  const [userId, setUserId] = useState(null)
   const handleBack = () => navigate('/dashboard')
 
   const scrollRef = useRef(null)
@@ -316,6 +320,15 @@ export default function ProblemPage({ onBack }) {
       const top = el.getBoundingClientRect().top + scrollRef.current.scrollTop - 72
       scrollRef.current.scrollTo({ top, behavior: 'smooth' })
     }
+  }, [])
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        setUserId(user.id)
+        getConfessionTriggerCounts(user.id).then(setTriggerCounts)
+      }
+    })
   }, [])
 
   useEffect(() => {
@@ -342,7 +355,7 @@ export default function ProblemPage({ onBack }) {
 
   return (
     <>
-      <SEO title="The Problem — Attention Economy Exposed" description="Social media is engineered to hijack your dopamine. Learn the science behind the addiction and how Viram helps you fight back." canonical="https://viram.app/problems" />
+      <SEO title="The Problem — Attention Economy Exposed" description="Social media is engineered to hijack your dopamine. Learn the science behind the addiction and how Viram helps you fight back." canonical="https://viram.app/triggers" />
       <div ref={scrollRef} className="fixed inset-0 z-10 overflow-y-auto" style={pageStyle}>
 
       <ReadingProgress containerRef={scrollRef} />
@@ -761,6 +774,70 @@ export default function ProblemPage({ onBack }) {
           </motion.div>
         </div>
       </div>
+
+      {/* ── Your Personal Trigger Breakdown ──────────────────────────── */}
+      {triggerCounts && (
+        <div data-section="trigger-breakdown" style={{ background: T.cardDeep, backgroundImage: GRAIN_SVG, borderTop: `1px solid ${T.border}`, padding: '80px 6vw 96px' }}>
+          <div style={{ maxWidth: 720, margin: '0 auto' }}>
+            <motion.div {...fadeUp(0)} style={{ textAlign: 'center', marginBottom: 48 }}>
+              <SectionTag Icon={RiBarChartLine}>Your Personal Breakdown</SectionTag>
+              <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, color: T.ink, fontSize: 'clamp(24px, 3vw, 40px)', lineHeight: 1.1, letterSpacing: '-0.02em', marginBottom: 12 }}>
+                What's triggering <span style={{ color: T.accent }}>your slips?</span>
+              </h2>
+              <p style={{ maxWidth: 480, margin: '0 auto', color: T.charcoal, fontSize: 13, lineHeight: 1.9 }}>
+                Your confessed moments, grouped by trigger. Awareness of the pattern is the first crack in the loop.
+              </p>
+            </motion.div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {[
+                { id: 'boredom', icon: '😐', label: 'Boredom', desc: 'Scrolling to fill silence' },
+                { id: 'stress', icon: '😰', label: 'Stress', desc: 'Escaping pressure or anxiety' },
+                { id: 'habit', icon: '🔄', label: 'Habit', desc: 'Muscle memory, no conscious choice' },
+                { id: 'loneliness', icon: '😔', label: 'Loneliness', desc: 'Reaching for connection' },
+              ].map((t, i) => {
+                const count = triggerCounts[t.id] || 0
+                const maxCount = Math.max(...Object.values(triggerCounts), 1)
+                const pct = maxCount > 0 ? (count / maxCount) * 100 : 0
+                return (
+                  <motion.div key={t.id} {...fadeUp(i * 0.06)}
+                    style={{ padding: '16px 20px', background: T.card, borderRadius: T.rMd, border: `1px solid ${T.border}`, boxShadow: T.shadow, backgroundImage: GRAIN_SVG }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                      <span style={{ fontSize: 22 }}>{t.icon}</span>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 16, color: T.ink }}>{t.label}</div>
+                        <div style={{ fontSize: 11, color: T.faint, fontStyle: 'italic' }}>{t.desc}</div>
+                      </div>
+                      <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 28, color: T.accent, minWidth: 50, textAlign: 'right' }}>
+                        {count}
+                      </div>
+                    </div>
+                    <div style={{ position: 'relative', height: 6, borderRadius: 3, background: T.border }}>
+                      <motion.div
+                        initial={{ width: 0 }}
+                        whileInView={{ width: `${pct}%` }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.8, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] }}
+                        style={{
+                          height: '100%', borderRadius: 3,
+                          background: `linear-gradient(90deg, ${T.accent}, ${i === 0 ? '#D4A843' : i === 1 ? '#B8704E' : i === 2 ? '#8A7E74' : '#6B8F5E'})`,
+                        }}
+                      />
+                    </div>
+                  </motion.div>
+                )
+              })}
+            </div>
+
+            {Object.values(triggerCounts).reduce((a, b) => a + b, 0) === 0 && (
+              <motion.div {...fadeUp(0.2)} style={{ textAlign: 'center', padding: '32px', color: T.faint, fontSize: 13, fontStyle: 'italic', fontFamily: "'Cormorant Garamond', serif" }}>
+                No trigger data yet. Start confessing and naming your triggers — patterns will appear here.
+              </motion.div>
+            )}
+          </div>
+        </div>
+      )}
 
     </div>
     </>

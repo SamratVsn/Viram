@@ -10,7 +10,7 @@ import {
 import SkillTracker from '../components/SkillTracker'
 import SEO from '../components/SEO'
 import useViramData from '../hooks/useViramData'
-import { getTotalFocus, updateProfile } from '../lib/db'
+import { getTotalFocus, updateProfile, getFocusSessionCount, getConfessionCount } from '../lib/db'
 import { supabase } from '../lib/supabase'
 
 const T = {
@@ -230,10 +230,14 @@ export default function Profile() {
   const [authEmail, setAuthEmail] = useState('')
   const [showEditModal, setShowEditModal] = useState(false)
   const [editProfile, setEditProfile] = useState(null)
+  const [focusSessions, setFocusSessions] = useState(0)
+  const [confessions, setConfessions] = useState(0)
 
   useEffect(() => {
     if (profileData?.id) {
       getTotalFocus(profileData.id).then(setTotalFocusMins)
+      getFocusSessionCount(profileData.id).then(setFocusSessions)
+      getConfessionCount(profileData.id).then(setConfessions)
     }
     supabase.auth.getUser().then(({ data: { user: au } }) => {
       if (au?.email) setAuthEmail(au.email)
@@ -276,6 +280,23 @@ export default function Profile() {
     setShowEditModal(false)
     setEditProfile(null)
   }
+
+  function tierLabel(count, thresholds) {
+    const t = [...thresholds].reverse().find(t => count >= t.count)
+    return t || { label: 'Aspirant', icon: '🌱', color: T.inkLow }
+  }
+  const sessionTier = tierLabel(focusSessions, [
+    { count: 100, label: 'Platinum', icon: '💎', color: '#8AC4D4' },
+    { count: 50, label: 'Gold', icon: '🥇', color: '#D4A843' },
+    { count: 20, label: 'Silver', icon: '🥈', color: '#A8B4BC' },
+    { count: 5, label: 'Bronze', icon: '🥉', color: '#B8704E' },
+  ])
+  const confessionTier = tierLabel(confessions, [
+    { count: 250, label: 'Platinum', icon: '💎', color: '#8AC4D4' },
+    { count: 100, label: 'Gold', icon: '🥇', color: '#D4A843' },
+    { count: 50, label: 'Silver', icon: '🥈', color: '#A8B4BC' },
+    { count: 10, label: 'Bronze', icon: '🥉', color: '#B8704E' },
+  ])
 
   const archetype = ARCHETYPE_MAP[profileData.mission] || ARCHETYPE_MAP.discipline
   const stressColor = STRESS_COLORS[profileData.stressLevel] || T.inkLow
@@ -426,6 +447,80 @@ export default function Profile() {
                     </div>
                     <div style={{ fontFamily:T.body, fontWeight:300, fontSize:9, color:T.inkLow, marginTop:4, letterSpacing:'0.1em', textTransform:'uppercase' }}>
                       Discipline
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+
+            {/* ── Archetype Progression ────────────────────── */}
+            <motion.div
+              initial={{ opacity:0, y:12 }}
+              animate={{ opacity:1, y:0 }}
+              transition={{ delay:0.12, duration:0.5, ease }}
+            >
+              <SectionLabel icon={RiRocketLine} label="Archetype Progression" />
+              <Card style={{ padding:'14px 18px' }}>
+                <div style={{ display:'flex', gap:16 }}>
+                  <div style={{ flex:1, textAlign:'center' }}>
+                    <div style={{ fontSize:28, lineHeight:1, marginBottom:2 }}>
+                      {sessionTier.icon}
+                    </div>
+                    <div style={{ fontFamily:T.heading, fontWeight:700, fontSize:22, color:sessionTier.color, lineHeight:1 }}>
+                      {focusSessions}
+                    </div>
+                    <div style={{ fontFamily:T.body, fontWeight:300, fontSize:9, color:T.inkLow, marginTop:4, letterSpacing:'0.1em', textTransform:'uppercase' }}>
+                      Focus Sessions
+                    </div>
+                    <div style={{
+                      display:'inline-block', marginTop:6, padding:'2px 10px', borderRadius:100,
+                      background:`${sessionTier.color}12`, border:`1px solid ${sessionTier.color}30`,
+                      fontFamily:T.body, fontSize:9, fontWeight:600, color:sessionTier.color,
+                      letterSpacing:'0.08em',
+                    }}>
+                      {sessionTier.label}
+                    </div>
+                    <div style={{ marginTop:8, position:'relative', height:4, borderRadius:2, background:T.border }}>
+                      <div style={{
+                        height:'100%', borderRadius:2,
+                        background:`linear-gradient(90deg, ${T.accent}, ${sessionTier.color})`,
+                        width:`${Math.min(100, (focusSessions / 100) * 100)}%`,
+                        transition:'width 0.8s ease',
+                      }} />
+                    </div>
+                    <div style={{ fontFamily:T.body, fontSize:8, color:T.inkLow, marginTop:3, letterSpacing:'0.04em' }}>
+                      Next: {focusSessions < 5 ? '5 sessions → Bronze' : focusSessions < 20 ? '20 → Silver' : focusSessions < 50 ? '50 → Gold' : focusSessions < 100 ? '100 → Platinum' : 'Max tier'}
+                    </div>
+                  </div>
+                  <div style={{ width:1, background:T.border }} />
+                  <div style={{ flex:1, textAlign:'center' }}>
+                    <div style={{ fontSize:28, lineHeight:1, marginBottom:2 }}>
+                      {confessionTier.icon}
+                    </div>
+                    <div style={{ fontFamily:T.heading, fontWeight:700, fontSize:22, color:confessionTier.color, lineHeight:1 }}>
+                      {confessions}
+                    </div>
+                    <div style={{ fontFamily:T.body, fontWeight:300, fontSize:9, color:T.inkLow, marginTop:4, letterSpacing:'0.1em', textTransform:'uppercase' }}>
+                      Confessions
+                    </div>
+                    <div style={{
+                      display:'inline-block', marginTop:6, padding:'2px 10px', borderRadius:100,
+                      background:`${confessionTier.color}12`, border:`1px solid ${confessionTier.color}30`,
+                      fontFamily:T.body, fontSize:9, fontWeight:600, color:confessionTier.color,
+                      letterSpacing:'0.08em',
+                    }}>
+                      {confessionTier.label}
+                    </div>
+                    <div style={{ marginTop:8, position:'relative', height:4, borderRadius:2, background:T.border }}>
+                      <div style={{
+                        height:'100%', borderRadius:2,
+                        background:`linear-gradient(90deg, ${T.accent}, ${confessionTier.color})`,
+                        width:`${Math.min(100, (confessions / 250) * 100)}%`,
+                        transition:'width 0.8s ease',
+                      }} />
+                    </div>
+                    <div style={{ fontFamily:T.body, fontSize:8, color:T.inkLow, marginTop:3, letterSpacing:'0.04em' }}>
+                      Next: {confessions < 10 ? '10 → Bronze' : confessions < 50 ? '50 → Silver' : confessions < 100 ? '100 → Gold' : confessions < 250 ? '250 → Platinum' : 'Max tier'}
                     </div>
                   </div>
                 </div>

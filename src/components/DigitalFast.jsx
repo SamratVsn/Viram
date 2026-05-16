@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { RiCheckLine, RiAlertLine, RiSwordLine } from 'react-icons/ri'
+import { RiCheckLine, RiAlertLine, RiSwordLine, RiShareForwardLine } from 'react-icons/ri'
 import { supabase } from '../lib/supabase'
 import { updateProfile, getProfile } from '../lib/db'
 import AdvancementToast, { ACHIEVEMENTS } from './AdvancementToast'
@@ -46,6 +46,7 @@ export default function DigitalFast({ onComplete }) {
   const [status, setStatus] = useState('idle')
   const [remaining, setRemaining] = useState(FAST_DURATION)
   const [showAchievement, setShowAchievement] = useState(false)
+  const [copied, setCopied] = useState(false)
   const userIdRef = useRef(null)
   const pollRef = useRef(null)
 
@@ -140,6 +141,27 @@ export default function DigitalFast({ onComplete }) {
   const mins = Math.floor((remaining % 3600000) / 60000)
   const secs = Math.floor((remaining % 60000) / 1000)
   const pct = 1 - remaining / FAST_DURATION
+
+  function copyStreak() {
+    const streakHrs = ((FAST_DURATION - remaining) / 3600000).toFixed(1)
+    const text = status === 'completed'
+      ? `I just completed a 2-hour Digital Fast with Viram! 🧘\n\nJoin me: https://viram.app/start`
+      : `I'm ${streakHrs}h into a Digital Fast on Viram. Staying focused. 🧘\n\nStart your own: https://viram.app/start`
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2500)
+    }).catch(() => {
+      // Fallback for older browsers
+      const ta = document.createElement('textarea')
+      ta.value = text
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2500)
+    })
+  }
 
   return (
     <>
@@ -244,33 +266,51 @@ export default function DigitalFast({ onComplete }) {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {status === 'running' && (
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: 4,
-                  fontFamily: T.body, fontSize: 9, color: T.inkLow,
-                }}>
-                  <span style={{
-                    width: 6, height: 6, borderRadius: '50%',
-                    background: T.accent, display: 'inline-block',
-                    animation: 'pulse-fast 2s ease-in-out infinite',
-                  }} />
-                  Tracking
-                </div>
+              {(status === 'running' || status === 'completed' || status === 'broken') && (
+                <motion.button
+                  whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.95 }}
+                  onClick={copyStreak}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 4,
+                    padding: '5px 10px', borderRadius: T.rPill,
+                    background: 'transparent', border: `1px solid ${T.borderMid}`,
+                    cursor: 'pointer', fontFamily: T.body, fontSize: 9,
+                    fontWeight: 500, color: T.inkLow, transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = T.accentBg; e.currentTarget.style.color = T.accent }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = T.inkLow }}
+                >
+                  <RiShareForwardLine size={10} />
+                  {copied ? 'Copied!' : 'Share'}
+                </motion.button>
               )}
 
               {status === 'running' && (
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={resetFast}
-                  style={{
-                    padding: '6px 14px', borderRadius: T.rPill,
-                    background: 'transparent', border: `1px solid ${T.borderMid}`,
-                    cursor: 'pointer', color: T.inkLow, fontFamily: T.body,
-                    fontSize: 10, fontWeight: 500,
-                  }}
-                >
-                  Cancel
-                </motion.button>
+                <>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 4,
+                    fontFamily: T.body, fontSize: 9, color: T.inkLow,
+                  }}>
+                    <span style={{
+                      width: 6, height: 6, borderRadius: '50%',
+                      background: T.accent, display: 'inline-block',
+                      animation: 'pulse-fast 2s ease-in-out infinite',
+                    }} />
+                    Tracking
+                  </div>
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={resetFast}
+                    style={{
+                      padding: '6px 14px', borderRadius: T.rPill,
+                      background: 'transparent', border: `1px solid ${T.borderMid}`,
+                      cursor: 'pointer', color: T.inkLow, fontFamily: T.body,
+                      fontSize: 10, fontWeight: 500,
+                    }}
+                  >
+                    Cancel
+                  </motion.button>
+                </>
               )}
 
               {(status === 'completed' || status === 'broken') && (

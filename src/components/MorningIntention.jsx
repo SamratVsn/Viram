@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { RiQuillPenLine, RiCheckLine, RiSunLine } from 'react-icons/ri'
+import { RiQuillPenLine, RiCheckLine, RiSunLine, RiMoonLine, RiEmotionLine, RiEmotionUnhappyLine, RiEmotionNormalLine } from 'react-icons/ri'
 import { supabase } from '../lib/supabase'
-import { saveTodayIntention, updateProfile, getProfile, getTodayIntention } from '../lib/db'
+import { saveTodayIntention, updateProfile, getProfile, getTodayIntention, saveIntentionCheckin, getIntentionCheckin } from '../lib/db'
 import AdvancementToast, { checkCoinMilestone } from './AdvancementToast'
 
 const T = {
@@ -23,6 +23,8 @@ export default function MorningIntention() {
   const [input, setInput] = useState('')
   const [initialized, setInitialized] = useState(false)
   const [advancement, setAdvancement] = useState(null)
+  const [showCheckin, setShowCheckin] = useState(false)
+  const [checkinAnswer, setCheckinAnswer] = useState(null)
   const userIdRef = useRef(null)
 
   useEffect(() => {
@@ -42,6 +44,15 @@ export default function MorningIntention() {
                 }
               } catch { /* ignore */ }
             }
+            // Check if already answered today
+            getIntentionCheckin(user.id, new Date().toISOString().split('T')[0]).then(answer => {
+              if (answer) {
+                setCheckinAnswer(answer)
+              } else {
+                // Show check-in anytime intention is set (not just evening)
+                setShowCheckin(true)
+              }
+            })
             return
           }
           fallback()
@@ -66,6 +77,15 @@ export default function MorningIntention() {
       setInitialized(true)
     }
   }, [])
+
+  function handleCheckin(answer) {
+    setCheckinAnswer(answer)
+    setShowCheckin(false)
+    if (userIdRef.current) {
+      const today = new Date().toISOString().split('T')[0]
+      saveIntentionCheckin(userIdRef.current, today, answer)
+    }
+  }
 
   function saveIntention() {
     if (!input.trim()) return
@@ -212,7 +232,9 @@ export default function MorningIntention() {
             padding: '10px 18px', marginBottom: 12,
             background: T.accentBg, border: `1px solid ${T.accentBorder}`,
             borderRadius: T.rLg,
+            cursor: 'pointer',
           }}
+          onClick={() => setShowCheckin(true)}
         >
           <RiQuillPenLine size={14} color={T.accent} style={{ flexShrink: 0 }} />
           <span style={{
@@ -221,9 +243,80 @@ export default function MorningIntention() {
           }}>
             {savedIntention}
           </span>
-          <RiCheckLine size={14} color={T.green} style={{ flexShrink: 0 }} />
+          {checkinAnswer && (
+            <span style={{
+              fontFamily: "'Jost', sans-serif", fontSize: 9, fontWeight: 600,
+              color: checkinAnswer === 'yes' ? T.green : checkinAnswer === 'partial' ? T.accent : '#B85E5E',
+              letterSpacing: '0.08em', textTransform: 'uppercase',
+            }}>
+              {checkinAnswer === 'yes' ? '✓ Lived it' : checkinAnswer === 'partial' ? '~ Partial' : '✗ Missed'}
+            </span>
+          )}
+          {!checkinAnswer && <RiMoonLine size={14} color={T.accentDim} style={{ flexShrink: 0 }} />}
         </motion.div>
       )}
+
+      {/* ── End-of-day check-in ────────────────────────────── */}
+      <AnimatePresence>
+        {showCheckin && savedIntention && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.4, ease }}
+            style={{
+              padding: '16px 18px', marginBottom: 12,
+              background: T.card, border: `1px solid ${T.borderMid}`,
+              borderRadius: T.rLg,
+            }}
+          >
+            <div style={{
+              fontFamily: T.heading, fontWeight: 600, fontSize: 15,
+              color: T.inkHigh, marginBottom: 4, textAlign: 'center',
+            }}>
+              Did you live by your intention today?
+            </div>
+            <p style={{
+              fontFamily: T.body, fontWeight: 300, fontSize: 11,
+              color: T.inkMid, textAlign: 'center', marginBottom: 14,
+              fontStyle: 'italic',
+            }}>
+              "{savedIntention}"
+            </p>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+              {[
+                { id: 'yes', icon: RiEmotionLine, label: 'Yes', color: T.green, bg: 'rgba(107,143,94,0.10)', border: 'rgba(107,143,94,0.25)' },
+                { id: 'partial', icon: RiEmotionNormalLine, label: 'Partially', color: T.accent, bg: T.accentBg, border: T.accentBorder },
+                { id: 'no', icon: RiEmotionUnhappyLine, label: 'No', color: '#B85E5E', bg: 'rgba(184,94,94,0.08)', border: 'rgba(184,94,94,0.20)' },
+              ].map(({ id, icon: Icon, label, color, bg, border }) => (
+                <motion.button
+                  key={id}
+                  whileHover={{ y: -2 }} whileTap={{ scale: 0.95 }}
+                  onClick={() => handleCheckin(id)}
+                  style={{
+                    flex: 1, display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', gap: 5,
+                    padding: '10px 8px', borderRadius: 14,
+                    background: checkinAnswer === id ? bg : T.cardDeep,
+                    border: `1px solid ${checkinAnswer === id ? border : T.border}`,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <Icon size={18} color={color} />
+                  <span style={{
+                    fontFamily: "'Jost', sans-serif", fontSize: 10, fontWeight: 600,
+                    color: checkinAnswer === id ? color : T.inkLow,
+                    letterSpacing: '0.04em',
+                  }}>
+                    {checkinAnswer === id ? '✓ ' : ''}{label}
+                  </span>
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <AdvancementToast
         visible={!!advancement}
         onDismiss={() => setAdvancement(null)}

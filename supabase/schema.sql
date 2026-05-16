@@ -78,12 +78,52 @@ CREATE POLICY "own data only" ON confessions
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
+CREATE POLICY "rate limit confessions" ON confessions
+  FOR INSERT
+  WITH CHECK (
+    auth.uid() = user_id
+    AND (
+      SELECT COUNT(*) FROM confessions WHERE user_id = auth.uid()
+    ) < 100
+  );
+
+-- Rate-limit focus sessions: max 20 per user per day
+CREATE POLICY "rate limit focus sessions daily" ON focus_sessions
+  FOR INSERT
+  WITH CHECK (
+    auth.uid() = user_id
+    AND (
+      SELECT COUNT(*) FROM focus_sessions
+      WHERE user_id = auth.uid()
+        AND created_at >= DATE_TRUNC('day', NOW())
+    ) < 20
+  );
+
+-- ── Auto-delete confessions older than 30 days (called via pg_cron or Edge Function) ──
+CREATE OR REPLACE FUNCTION delete_expired_confessions()
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  DELETE FROM confessions
+  WHERE created_at < NOW() - INTERVAL '30 days';
+END;
+$$;
+
+-- To enable scheduled execution, run in Supabase SQL editor:
+--   CREATE EXTENSION IF NOT EXISTS pg_cron;
+--   SELECT cron.schedule('delete-expired-confessions', '0 3 * * *', $$SELECT delete_expired_confessions()$$);
+--
+-- Alternatively, call this function via a Supabase Edge Function cron trigger.
+
 -- 4. Intentions (one per user per day)
 CREATE TABLE IF NOT EXISTS intentions (
   id          UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id     UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   text        TEXT NOT NULL,
   date        DATE DEFAULT CURRENT_DATE,
+  checkin     TEXT,  -- 'yes', 'partial', or 'no' — end-of-day follow-through
   created_at  TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE (user_id, date)
 );

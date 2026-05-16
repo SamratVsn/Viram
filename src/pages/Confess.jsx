@@ -10,7 +10,7 @@ import {
 } from 'react-icons/ri'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { saveConfession, updateProfile, deleteConfession, getProfile, getConfessions } from '../lib/db'
+import { saveConfession, updateProfile, deleteConfession, getProfile, getConfessions, updateConfessionTrigger } from '../lib/db'
 import AdvancementToast, { checkCoinMilestone } from '../components/AdvancementToast'
 import SEO from '../components/SEO'
 
@@ -116,6 +116,10 @@ function ExpiryBar({ timestamp }) {
 }
 
 /* ─── Single confession card ─────────────────────────────────────────────── */
+const TRIGGER_LABELS = {
+  boredom: 'Boredom', stress: 'Stress', habit: 'Habit', loneliness: 'Loneliness',
+}
+
 function ConfessionCard({ confession, onDelete }) {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [hovered, setHovered]             = useState(false)
@@ -237,6 +241,23 @@ function ConfessionCard({ confession, onDelete }) {
         {confession.text}
       </p>
 
+      {/* Trigger badge */}
+      {confession.trigger && TRIGGER_LABELS[confession.trigger] && (
+        <div className="relative z-[1] mt-3">
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            padding: '3px 10px', borderRadius: 100,
+            background: 'rgba(184,112,78,0.08)',
+            border: '1px solid rgba(184,112,78,0.18)',
+            fontFamily: "'Jost', sans-serif",
+            fontSize: 9, fontWeight: 600, color: '#B8704E',
+            letterSpacing: '0.06em',
+          }}>
+            Triggered by: {TRIGGER_LABELS[confession.trigger]}
+          </span>
+        </div>
+      )}
+
       {/* Expiry bar */}
       <div className="relative z-[1]">
         <ExpiryBar timestamp={confession.ts} />
@@ -293,12 +314,20 @@ function EmptyState() {
 }
 
 /* ─── Main Component ─────────────────────────────────────────────────────── */
+const TRIGGER_OPTIONS = [
+  { id: 'boredom',    icon: '💭', label: 'Boredom',    sub: 'The quiet void that itches to be filled' },
+  { id: 'stress',     icon: '😰', label: 'Stress',     sub: 'Overwhelm that demands an escape' },
+  { id: 'habit',      icon: '🔄', label: 'Habit',      sub: 'Muscle memory — you didn\'t even notice' },
+  { id: 'loneliness', icon: '💔', label: 'Loneliness', sub: 'The urge to feel connected, anywhere' },
+]
+
 export default function Confess() {
   const [confessions, setConfessions] = useState([])
   const [draft,       setDraft]       = useState('')
   const [submitting,  setSubmitting]  = useState(false)
   const [charCount,   setCharCount]   = useState(0)
   const [advancement, setAdvancement] = useState(null)
+  const [pendingTrigger, setPendingTrigger] = useState(null)
   const textareaRef                   = useRef(null)
   const userIdRef                     = useRef(null)
   const MAX_CHARS                     = 400
@@ -378,12 +407,15 @@ export default function Confess() {
       setCharCount(0)
       setSubmitting(false)
 
+      // Show trigger selection
+      setPendingTrigger(newEntry.id)
+
       // Award coins + discipline points
       if (userIdRef.current) {
         saveConfession({ userId: userIdRef.current, text, trigger: '', app: '' }).then(result => {
           if (result?.id) {
             const withSupabase = loadConfessions().map(c =>
-              c.id === newEntry.id ? { ...c, supabaseId: result.id } : c
+              c.id === newEntry.id ? { ...c, supabaseId: result.id, trigger: '' } : c
             )
             saveConfessions(withSupabase)
           }
@@ -435,6 +467,20 @@ export default function Confess() {
     saveConfessions(updated)
     if (item?.supabaseId && userIdRef.current) {
       deleteConfession(item.supabaseId).catch(err => console.error('deleteConfession:', err))
+    }
+  }
+
+  function handleTriggerSelect(confessionId, trigger) {
+    const updated = confessions.map(c =>
+      c.id === confessionId ? { ...c, trigger, supabaseId: c.supabaseId || c.id } : c
+    )
+    setConfessions(updated)
+    saveConfessions(updated)
+    setPendingTrigger(null)
+
+    const item = updated.find(c => c.id === confessionId)
+    if (item?.supabaseId && userIdRef.current) {
+      updateConfessionTrigger(item.supabaseId, trigger)
     }
   }
 
@@ -682,6 +728,85 @@ export default function Confess() {
                 </div>
               </div>
             </motion.div>
+
+            {/* ── Trigger follow-up ──────────────────────────────────── */}
+            <AnimatePresence>
+              {pendingTrigger && (
+                <motion.div
+                  key="trigger-prompt"
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                  className="relative rounded-[22px] overflow-hidden mb-8"
+                  style={{
+                    background: '#F9F5EC',
+                    border: '1px solid rgba(184,112,78,0.22)',
+                    boxShadow: '0 4px 16px rgba(42,34,24,0.07)',
+                  }}
+                >
+                  <div className="absolute top-0 left-0 right-0 h-[2px]"
+                    style={{ background: 'linear-gradient(90deg, #B8704E, rgba(184,112,78,0.3), transparent)', opacity: 0.8 }}
+                  />
+                  <div className="relative z-[1] p-6">
+                    <div style={{
+                      fontFamily: "'Cormorant Garamond', serif",
+                      fontSize: 18, fontWeight: 600, color: '#2A2218',
+                      textAlign: 'center', marginBottom: 4,
+                    }}>
+                      What triggered this slip-up?
+                    </div>
+                    <p style={{
+                      fontFamily: "'Jost', sans-serif", fontSize: 12,
+                      color: '#8A7E74', textAlign: 'center', marginBottom: 18,
+                      lineHeight: 1.6,
+                    }}>
+                      Naming the trigger gives you power over it. Be honest — this is for your awareness, not your judgment.
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {TRIGGER_OPTIONS.map(opt => (
+                        <motion.button
+                          key={opt.id}
+                          whileHover={{ x: 4 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => handleTriggerSelect(pendingTrigger, opt.id)}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 12,
+                            padding: '12px 16px', borderRadius: 14,
+                            background: '#F4EEE3', border: '1px solid rgba(55,38,22,0.10)',
+                            cursor: 'pointer', textAlign: 'left', width: '100%',
+                            transition: 'all 0.2s ease',
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(184,112,78,0.08)'; e.currentTarget.style.borderColor = 'rgba(184,112,78,0.22)' }}
+                          onMouseLeave={e => { e.currentTarget.style.background = '#F4EEE3'; e.currentTarget.style.borderColor = 'rgba(55,38,22,0.10)' }}
+                        >
+                          <span style={{ fontSize: 22 }}>{opt.icon}</span>
+                          <div>
+                            <div style={{ fontFamily: "'Jost', sans-serif", fontSize: 13, fontWeight: 600, color: '#2A2218' }}>
+                              {opt.label}
+                            </div>
+                            <div style={{ fontFamily: "'Jost', sans-serif", fontSize: 10.5, color: '#8A7E74', marginTop: 1, fontStyle: 'italic' }}>
+                              {opt.sub}
+                            </div>
+                          </div>
+                        </motion.button>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => setPendingTrigger(null)}
+                      style={{
+                        marginTop: 12, background: 'none', border: 'none',
+                        fontFamily: "'Jost', sans-serif", fontSize: 10.5,
+                        color: '#B0A396', cursor: 'pointer', width: '100%',
+                        textAlign: 'center', padding: '6px',
+                      }}
+                    >
+                      Skip — I'll reflect later
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* ── Past confessions ──────────────────────────────────── */}
             <motion.div

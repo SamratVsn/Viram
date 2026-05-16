@@ -252,7 +252,7 @@ export default function Focus() {
     setShowComplete(true)
     saveFocusStats(newSessions, newMins, newXp)
 
-    const coinsEarned = Math.floor(durMin / 5)
+    const coinsEarned = Math.floor(durMin / 5) * 2
 
     /* Source of truth: Supabase profile */
     supabase.auth.getUser().then(({ data: { user: authUser } }) => {
@@ -784,12 +784,49 @@ export default function Focus() {
                   display: 'inline-flex', alignItems: 'center', gap: 8,
                   padding: '8px 20px', borderRadius: T.rPill,
                   background: T.accentBg, border: `1px solid ${T.accentBorder}`,
-                  marginBottom: 28,
+                  marginBottom: 20,
                 }}>
                   <RiSparkling2Line size={13} color={T.accent} />
                   <span style={{ fontFamily: T.heading, fontWeight: 700, fontSize: 18, color: T.inkHigh }}>+{lastXp}</span>
                   <span style={{ fontFamily: T.body, fontWeight: 300, fontSize: 11, color: T.inkLow }}>XP earned</span>
                 </div>
+
+                {/* Break suggestion */}
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3, duration: 0.5 }}
+                  style={{
+                    padding: '12px 16px', borderRadius: 14,
+                    background: T.cardDeep, border: `1px solid ${T.border}`,
+                    marginBottom: 24, textAlign: 'center',
+                  }}
+                >
+                  <div style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    marginBottom: 6,
+                  }}>
+                    <RiLeafLine size={12} color="#6B8F5E" />
+                    <span style={{
+                      fontFamily: T.body, fontSize: 9, fontWeight: 600,
+                      letterSpacing: '0.14em', textTransform: 'uppercase',
+                      color: '#6B8F5E',
+                    }}>
+                      Suggested Break
+                    </span>
+                  </div>
+                  <p style={{
+                    fontFamily: T.heading, fontStyle: 'italic', fontWeight: 500,
+                    fontSize: 14, color: T.inkHigh, lineHeight: 1.4,
+                  }}>
+                    {durMin < 25
+                      ? 'Stand up, refill your water. Small movements reset the mind.'
+                      : durMin < 45
+                        ? 'Step outside for 5 minutes. Fresh air recalibrates your attention.'
+                        : 'Take a 10-minute walk — no phone. Let your subconscious integrate the work.'
+                    }
+                  </p>
+                </motion.div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <button
