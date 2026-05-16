@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS profiles (
 
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "own data only" ON profiles;
 CREATE POLICY "own data only" ON profiles
   FOR ALL
   USING (auth.uid() = id)
@@ -56,6 +57,7 @@ CREATE TABLE IF NOT EXISTS focus_sessions (
 
 ALTER TABLE focus_sessions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "own data only" ON focus_sessions;
 CREATE POLICY "own data only" ON focus_sessions
   FOR ALL
   USING (auth.uid() = user_id)
@@ -73,11 +75,13 @@ CREATE TABLE IF NOT EXISTS confessions (
 
 ALTER TABLE confessions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "own data only" ON confessions;
 CREATE POLICY "own data only" ON confessions
   FOR ALL
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "rate limit confessions" ON confessions;
 CREATE POLICY "rate limit confessions" ON confessions
   FOR INSERT
   WITH CHECK (
@@ -88,6 +92,7 @@ CREATE POLICY "rate limit confessions" ON confessions
   );
 
 -- Rate-limit focus sessions: max 20 per user per day
+DROP POLICY IF EXISTS "rate limit focus sessions daily" ON focus_sessions;
 CREATE POLICY "rate limit focus sessions daily" ON focus_sessions
   FOR INSERT
   WITH CHECK (
@@ -130,6 +135,7 @@ CREATE TABLE IF NOT EXISTS intentions (
 
 ALTER TABLE intentions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "own data only" ON intentions;
 CREATE POLICY "own data only" ON intentions
   FOR ALL
   USING (auth.uid() = user_id)
