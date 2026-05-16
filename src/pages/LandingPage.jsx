@@ -650,10 +650,13 @@ export default function LandingPage() {
               </motion.p>
               <motion.button
                 {...fadeUp(0.18)}
-                onClick={() => {}}
+                onClick={() => {
+                  const el = document.getElementById('features')
+                  if (el) el.scrollIntoView({ behavior: 'smooth' })
+                }}
                 className="inline-flex items-center gap-1.5 cursor-pointer px-[18px] py-2 rounded-full text-[13px] font-light text-[var(--text-mid)] bg-[var(--bg-card)] border border-[var(--border-mid)] shadow-[var(--shadow-xs)] transition-all duration-200 hover:border-[rgba(55,38,22,0.22)] hover:shadow-[var(--shadow-sm)] hover:-translate-y-px active:scale-[0.975]"
               >
-                Read the full manifesto <RiArrowRightLine size={14} />
+                See how it works <RiArrowRightLine size={14} />
               </motion.button>
             </div>
 
@@ -698,62 +701,70 @@ export default function LandingPage() {
               </em>
             </motion.h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-              {/* Hero feature — spans 2 rows on lg only */}
-              <motion.div
-                {...fadeUp(0)}
-                className="sm:col-span-2 lg:col-span-1 lg:row-span-2 flex flex-col justify-between p-6 md:p-8 rounded-[var(--r-lg)] min-h-[260px] lg:min-h-[300px] cursor-default border border-[var(--border)] shadow-[var(--shadow-sm)] transition-all duration-[280ms] hover:-translate-y-1 hover:shadow-[var(--shadow-lift)]"
-                style={{
-                  background:
-                    "linear-gradient(145deg, var(--bg-card) 0%, var(--bg-inset) 100%)",
-                }}
-              >
-                <div>
-                  <div className="w-[50px] h-[50px] rounded-[14px] flex items-center justify-center mb-5 bg-[var(--bg)] border border-[var(--border-mid)] shadow-[var(--shadow-xs)]">
-                    <RiUserHeartLine
-                      size={22}
-                      className="text-[var(--text-mid)]"
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {FEATURES.map(({ Icon, title, body }, i) => {
+                const isHero = i === 0
+                return (
+                  <motion.div
+                    key={title}
+                    {...fadeUp(i * 0.06)}
+                    className={`group relative overflow-hidden cursor-default bg-[var(--bg-card)] border border-[var(--border)] shadow-[var(--shadow-xs)] transition-all duration-[350ms] hover:-translate-y-1 hover:shadow-[var(--shadow-lift)] ${isHero ? 'md:col-span-2 lg:col-span-2 row-span-1' : ''}`}
+                    style={{ borderRadius: isHero ? 'var(--r-lg)' : 'var(--r-md)' }}
+                  >
+                    {/* Hover accent glow */}
+                    <div className="absolute -top-12 -right-12 w-24 h-24 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-[400ms] pointer-events-none"
+                      style={{
+                        background: `radial-gradient(circle, rgba(184,112,78,0.08) 0%, transparent 70%)`,
+                      }}
                     />
-                  </div>
-                  <div className="font-display text-[22px] font-bold mb-3 text-[var(--text-hi)] tracking-[-0.01em]">
-                    Living Avatar
-                  </div>
-                  <div className="text-[14px] font-light text-[var(--text-mid)] leading-[1.8]">
-                    Your habits manifest in your character's stats in real time.
-                    Every deep work session fuels your avatar. Every scroll
-                    drains it. Watch yourself grow — or wither.
-                  </div>
-                </div>
-                <div className="mt-7 p-4 rounded-[var(--r-sm)] bg-[var(--bg)] border border-[var(--border)] shadow-[var(--shadow-xs)]">
-                  <div className="text-[10px] font-medium tracking-[0.16em] uppercase text-[var(--text-lo)] mb-1.5">
-                    Your stats right now
-                  </div>
-                  <div className="font-display font-bold text-[28px] text-[var(--text-hi)]">
-                    LV 14
-                  </div>
-                  <div className="text-[11px] font-light text-[var(--text-ghost)] mt-0.5">
-                    Focused Human · 2,340 XP
-                  </div>
-                </div>
-              </motion.div>
 
-              {FEATURES.slice(1).map(({ Icon, title, body }, i) => (
-                <motion.div
-                  key={title}
-                  {...fadeUp((i + 1) * 0.055)}
-                  className="p-5 md:p-6 rounded-[var(--r-md)] cursor-default bg-[var(--bg-card)] border border-[var(--border)] shadow-[var(--shadow-xs)] transition-all duration-[280ms] hover:-translate-y-1 hover:shadow-[var(--shadow-lift)]"
-                >
-                  <div className="w-[42px] h-[42px] rounded-[12px] flex items-center justify-center mb-4 bg-[var(--bg-inset)] border border-[var(--border)] shadow-[var(--shadow-xs)]">
-                    <Icon size={18} className="text-[var(--text-lo)]" />
-                  </div>
-                  <div className="font-display text-[16px] font-bold mb-1.5 text-[var(--text-hi)]">
-                    {title}
-                  </div>
-                  <div className="text-[12px] font-light text-[var(--text-lo)] leading-[1.75]">
-                    {body}
-                  </div>
-                </motion.div>
-              ))}
+                    {/* Content */}
+                    <div className={`p-5 md:p-6 ${isHero ? 'md:p-7' : ''}`}>
+                      {/* Icon */}
+                      <div className={`flex items-center gap-3 mb-4 ${isHero ? 'mb-5' : ''}`}>
+                        <div className={`shrink-0 flex items-center justify-center rounded-[var(--r-sm)] bg-[var(--bg-inset)] border border-[var(--border)] shadow-[var(--shadow-xs)] transition-all duration-300 group-hover:bg-[var(--accent)] group-hover:border-[var(--accent)] ${isHero ? 'w-[48px] h-[48px]' : 'w-[42px] h-[42px]'}`}>
+                          <Icon size={isHero ? 20 : 17} className="text-[var(--text-lo)] transition-colors duration-300 group-hover:text-[#FAF5EC]" />
+                        </div>
+                        <div className="font-display font-bold text-[var(--text-hi)] tracking-[-0.01em] transition-colors duration-300 group-hover:text-[var(--accent)]"
+                          style={{ fontSize: isHero ? 20 : 16 }}>
+                          {title}
+                        </div>
+                      </div>
+
+                      {/* Body */}
+                      <div className="text-[13px] font-light text-[var(--text-lo)] leading-[1.8]">
+                        {body}
+                      </div>
+
+                      {/* Hero extra: live stat preview */}
+                      {isHero && (
+                        <div className="mt-5 grid grid-cols-3 gap-2.5 pt-4 border-t border-[var(--border)]">
+                          {[
+                            { label: 'Focus', val: '72%', bar: '72%' },
+                            { label: 'Discipline', val: '58%', bar: '58%' },
+                            { label: 'Clarity', val: '84%', bar: '84%' },
+                          ].map(s => (
+                            <div key={s.label}>
+                              <div className="flex justify-between items-end mb-1">
+                                <span className="font-body text-[8px] font-medium tracking-[0.14em] uppercase text-[var(--text-ghost)]">{s.label}</span>
+                                <span className="font-display text-[10px] font-bold text-[var(--text-mid)]">{s.val}</span>
+                              </div>
+                              <div className="h-[3px] rounded-full bg-[var(--bg-inset)] overflow-hidden">
+                                <div className="h-full rounded-full transition-all duration-700"
+                                  style={{ width: s.bar, background: 'linear-gradient(90deg, var(--accent), rgba(184,112,78,0.4))' }}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Bottom accent line */}
+                    <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[var(--accent)] scale-x-0 group-hover:scale-x-100 transition-transform duration-[400ms] origin-left" />
+                  </motion.div>
+                )
+              })}
             </div>
           </div>
         </section>
@@ -1013,24 +1024,29 @@ export default function LandingPage() {
             {[
               {
                 title: "Product",
-                links: ["Get Started", "Mind Library", "Features", "Dashboard"],
+                links: [
+                  { label: "Get Started", to: "/start" },
+                  { label: "Features", to: "/#features" },
+                  { label: "Dashboard", to: "/start" },
+                  { label: "Pricing", to: "/start" },
+                ],
               },
               {
                 title: "Resources",
                 links: [
-                  "Playlists",
-                  "Deep Work",
-                  "Scriptures",
-                  "Digital Detox",
+                  { label: "Focus Library", to: "#resources" },
+                  { label: "Deep Work", to: "#resources", onClick: () => { const el = document.getElementById('resources'); if (el) el.scrollIntoView({ behavior: 'smooth' }) } },
+                  { label: "About Viram", to: "/about" },
+                  { label: "Contact", to: "/contact" },
                 ],
               },
               {
                 title: "Philosophy",
                 links: [
-                  "The Problem",
-                  "Our Manifesto",
-                  "Privacy",
-                  "Sign Up Free",
+                  { label: "The Problem", to: "#problem", onClick: () => { const el = document.getElementById('problem'); if (el) el.scrollIntoView({ behavior: 'smooth' }) } },
+                  { label: "Our Manifesto", to: "/about" },
+                  { label: "Privacy", to: "/about" },
+                  { label: "Sign Up Free", to: "/start" },
                 ],
               },
             ].map((col) => (
@@ -1038,14 +1054,24 @@ export default function LandingPage() {
                 <div className="text-[9px] font-semibold tracking-[0.2em] uppercase text-[var(--text-ghost)] mb-4">
                   {col.title}
                 </div>
-                {col.links.map((label) => (
-                  <Link
-                    key={label}
-                    to="/"
-                    className="block text-[13px] font-light text-[var(--text-lo)] mb-2.5 no-underline transition-colors duration-200 hover:text-[var(--text-hi)]"
-                  >
-                    {label}
-                  </Link>
+                {col.links.map(({ label, to, onClick }) => (
+                  onClick ? (
+                    <span
+                      key={label}
+                      onClick={onClick}
+                      className="block text-[13px] font-light text-[var(--text-lo)] mb-2.5 cursor-pointer transition-colors duration-200 hover:text-[var(--text-hi)]"
+                    >
+                      {label}
+                    </span>
+                  ) : (
+                    <Link
+                      key={label}
+                      to={to}
+                      className="block text-[13px] font-light text-[var(--text-lo)] mb-2.5 no-underline transition-colors duration-200 hover:text-[var(--text-hi)]"
+                    >
+                      {label}
+                    </Link>
+                  )
                 ))}
               </div>
             ))}

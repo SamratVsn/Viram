@@ -153,6 +153,7 @@ export default function Focus() {
   const offset = circ * pct
   const phase  = getPhase(elapsed, total)
   const isDark = running
+  const isDemo = durMin === 0.5
 
   /* Load today's focus stats from Supabase + localStorage fallback */
   useEffect(() => {
@@ -239,6 +240,21 @@ export default function Focus() {
   }
 
   function completeSession() {
+    if (isDemo) {
+      setDone(true)
+      setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)])
+      setTimeout(() => {
+        setAdvancement({
+          type: 'focus', tier: 'bronze', title: 'Demo Focus',
+          rank: 'The Curious',
+          subtitle: '30-second demo complete. Sign up to unlock real sessions, earn XP, and grow your avatar.',
+          xpGained: 0,
+          chips: [{ icon: RiTimerFlashLine, label: '30s demo' }],
+        })
+      }, 400)
+      return
+    }
+
     const xpGained = Math.round(30 + durMin * 1.4)
     const newSessions = sessions + 1
     const newMins     = minsDone + durMin
@@ -390,16 +406,27 @@ export default function Focus() {
             </div>
           </div>
 
-          {/* Today's session count */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 5,
-            padding: '5px 11px', borderRadius: T.rPill,
-            background: T.accentBg, border: `1px solid ${T.accentBorder}`,
-          }}>
-            <RiFireLine size={10} color={T.accent} />
-            <span style={{ fontFamily: T.heading, fontWeight: 700, fontSize: 13, color: isDark ? T.darkInkHigh : T.inkHigh }}>{sessions}</span>
-            <span style={{ fontFamily: T.body, fontWeight: 300, fontSize: 9, color: inkL }}>today</span>
-          </div>
+          {/* Demo badge or session count */}
+          {isDemo ? (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 4,
+              padding: '5px 11px', borderRadius: T.rPill,
+              background: 'rgba(184,112,78,0.06)', border: `1px solid ${T.accentBorder}`,
+            }}>
+              <RiSparkling2Line size={10} color={T.accent} />
+              <span style={{ fontFamily: T.body, fontWeight: 700, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: T.accent }}>Demo</span>
+            </div>
+          ) : (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              padding: '5px 11px', borderRadius: T.rPill,
+              background: T.accentBg, border: `1px solid ${T.accentBorder}`,
+            }}>
+              <RiFireLine size={10} color={T.accent} />
+              <span style={{ fontFamily: T.heading, fontWeight: 700, fontSize: 13, color: isDark ? T.darkInkHigh : T.inkHigh }}>{sessions}</span>
+              <span style={{ fontFamily: T.body, fontWeight: 300, fontSize: 9, color: inkL }}>today</span>
+            </div>
+          )}
         </motion.div>
 
         {/* ── Body ────────────────────────────────────────────── */}
@@ -449,7 +476,7 @@ export default function Focus() {
             transition={{ delay: 0.18, duration: 0.5, ease }}
             style={{ display: 'flex', gap: 8, marginBottom: 28 }}
           >
-            {[15, 25, 45, 60].map(min => {
+            {[0.5, 15, 25, 45, 60].map(min => {
               const active = durMin === min
               return (
                 <button
@@ -469,7 +496,7 @@ export default function Focus() {
                     transition: 'all 0.25s ease',
                   }}
                 >
-                  {min}m
+                  {min < 1 ? '30s' : `${min}m`}
                 </button>
               )
             })}
@@ -651,43 +678,67 @@ export default function Focus() {
             <div style={{ width: 44, height: 44 }} />
           </motion.div>
 
-          {/* ── Today's stats ────────────────────────────────── */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.45, duration: 0.5, ease }}
-            style={{
-              width: '100%', maxWidth: 380,
-              display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
-              gap: 10, marginBottom: 22,
-            }}
-          >
-            {[
-              { icon: RiTimerFlashLine, val: sessions,         label: 'Sessions', c: T.accent  },
-              { icon: RiSparkling2Line, val: xpEarned,         label: 'XP',       c: T.inkMid  },
-              { icon: RiLeafLine,       val: `${minsDone}m`,   label: 'Focused',  c: '#6B8F5E' },
-            ].map(({ icon: Icon, val, label, c }) => (
-              <div key={label} style={{
-                background: cardC, border: `1px solid ${borderC}`,
-                borderRadius: T.rLg, padding: '12px 10px',
-                textAlign: 'center',
+          {/* ── Today's stats / Demo prompt ─────────────────── */}
+          {isDemo ? (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.45, duration: 0.5, ease }}
+              onClick={() => navigate('/start')}
+              style={{
+                width: '100%', maxWidth: 380,
+                background: cardC, border: `1px dashed ${T.accentBorder}`,
+                borderRadius: T.rLg, padding: '18px 20px', marginBottom: 22,
+                textAlign: 'center', cursor: 'pointer',
                 boxShadow: `0 2px 8px rgba(55,38,22,0.05)`,
                 transition: 'background 1s ease',
-              }}>
-                <Icon size={13} color={c} style={{ margin: '0 auto 5px', display: 'block' }} />
-                <motion.div
-                  key={val}
-                  animate={{ scale: [1, 1.15, 1] }}
-                  transition={{ duration: 0.35 }}
-                  style={{ fontFamily: T.heading, fontWeight: 700, fontSize: 24, color: inkH, lineHeight: 1 }}
-                >
-                  {val}
-                </motion.div>
-                <div style={{ fontFamily: T.body, fontWeight: 300, fontSize: 9, color: inkL, marginTop: 3, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                  {label}
-                </div>
+              }}
+            >
+              <RiSparkling2Line size={18} color={T.accent} style={{ margin: '0 auto 8px', display: 'block' }} />
+              <div style={{ fontFamily: T.heading, fontWeight: 700, fontSize: 17, color: inkH, marginBottom: 4 }}>
+                Try the full experience
               </div>
-            ))}
-          </motion.div>
+              <div style={{ fontFamily: T.body, fontWeight: 300, fontSize: 11, color: inkL, lineHeight: 1.6 }}>
+                Sign up to earn XP, track streaks,<br />and grow your avatar.
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.45, duration: 0.5, ease }}
+              style={{
+                width: '100%', maxWidth: 380,
+                display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
+                gap: 10, marginBottom: 22,
+              }}
+            >
+              {[
+                { icon: RiTimerFlashLine, val: sessions,         label: 'Sessions', c: T.accent  },
+                { icon: RiSparkling2Line, val: xpEarned,         label: 'XP',       c: T.inkMid  },
+                { icon: RiLeafLine,       val: `${minsDone}m`,   label: 'Focused',  c: '#6B8F5E' },
+              ].map(({ icon: Icon, val, label, c }) => (
+                <div key={label} style={{
+                  background: cardC, border: `1px solid ${borderC}`,
+                  borderRadius: T.rLg, padding: '12px 10px',
+                  textAlign: 'center',
+                  boxShadow: `0 2px 8px rgba(55,38,22,0.05)`,
+                  transition: 'background 1s ease',
+                }}>
+                  <Icon size={13} color={c} style={{ margin: '0 auto 5px', display: 'block' }} />
+                  <motion.div
+                    key={val}
+                    animate={{ scale: [1, 1.15, 1] }}
+                    transition={{ duration: 0.35 }}
+                    style={{ fontFamily: T.heading, fontWeight: 700, fontSize: 24, color: inkH, lineHeight: 1 }}
+                  >
+                    {val}
+                  </motion.div>
+                  <div style={{ fontFamily: T.body, fontWeight: 300, fontSize: 9, color: inkL, marginTop: 3, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                    {label}
+                  </div>
+                </div>
+              ))}
+            </motion.div>
+          )}
 
           {/* ── Quote card ───────────────────────────────────── */}
           <motion.div
@@ -771,89 +822,91 @@ export default function Focus() {
                   <RiCheckLine size={28} />
                 </div>
 
-                <div style={{ fontFamily: T.heading, fontWeight: 700, fontSize: 34, letterSpacing: '-0.02em', color: T.inkHigh, lineHeight: 1, marginBottom: 10 }}>
-                  Session complete.
-                </div>
-                <p style={{ fontFamily: T.body, fontWeight: 300, fontSize: 13.5, color: T.inkMid, lineHeight: 1.7, marginBottom: 24 }}>
-                  {intent ? `"${intent}" — done.` : 'Your focus strengthens the practice.'}<br />
-                  Your avatar grows stronger.
-                </p>
+                <>
+                    <div style={{ fontFamily: T.heading, fontWeight: 700, fontSize: 34, letterSpacing: '-0.02em', color: T.inkHigh, lineHeight: 1, marginBottom: 10 }}>
+                      Session complete.
+                    </div>
+                    <p style={{ fontFamily: T.body, fontWeight: 300, fontSize: 13.5, color: T.inkMid, lineHeight: 1.7, marginBottom: 24 }}>
+                      {intent ? `"${intent}" — done.` : 'Your focus strengthens the practice.'}<br />
+                      Your avatar grows stronger.
+                    </p>
 
-                {/* XP badge */}
-                <div style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 8,
-                  padding: '8px 20px', borderRadius: T.rPill,
-                  background: T.accentBg, border: `1px solid ${T.accentBorder}`,
-                  marginBottom: 20,
-                }}>
-                  <RiSparkling2Line size={13} color={T.accent} />
-                  <span style={{ fontFamily: T.heading, fontWeight: 700, fontSize: 18, color: T.inkHigh }}>+{lastXp}</span>
-                  <span style={{ fontFamily: T.body, fontWeight: 300, fontSize: 11, color: T.inkLow }}>XP earned</span>
-                </div>
-
-                {/* Break suggestion */}
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3, duration: 0.5 }}
-                  style={{
-                    padding: '12px 16px', borderRadius: 14,
-                    background: T.cardDeep, border: `1px solid ${T.border}`,
-                    marginBottom: 24, textAlign: 'center',
-                  }}
-                >
-                  <div style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                    marginBottom: 6,
-                  }}>
-                    <RiLeafLine size={12} color="#6B8F5E" />
-                    <span style={{
-                      fontFamily: T.body, fontSize: 9, fontWeight: 600,
-                      letterSpacing: '0.14em', textTransform: 'uppercase',
-                      color: '#6B8F5E',
+                    {/* XP badge */}
+                    <div style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 8,
+                      padding: '8px 20px', borderRadius: T.rPill,
+                      background: T.accentBg, border: `1px solid ${T.accentBorder}`,
+                      marginBottom: 20,
                     }}>
-                      Suggested Break
-                    </span>
-                  </div>
-                  <p style={{
-                    fontFamily: T.heading, fontStyle: 'italic', fontWeight: 500,
-                    fontSize: 14, color: T.inkHigh, lineHeight: 1.4,
-                  }}>
-                    {durMin < 25
-                      ? 'Stand up, refill your water. Small movements reset the mind.'
-                      : durMin < 45
-                        ? 'Step outside for 5 minutes. Fresh air recalibrates your attention.'
-                        : 'Take a 10-minute walk — no phone. Let your subconscious integrate the work.'
-                    }
-                  </p>
-                </motion.div>
+                      <RiSparkling2Line size={13} color={T.accent} />
+                      <span style={{ fontFamily: T.heading, fontWeight: 700, fontSize: 18, color: T.inkHigh }}>+{lastXp}</span>
+                      <span style={{ fontFamily: T.body, fontWeight: 300, fontSize: 11, color: T.inkLow }}>XP earned</span>
+                    </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <button
-                    onClick={() => { setShowComplete(false); resetTimer() }}
-                    style={{
-                      padding: '12px 24px', borderRadius: T.rPill,
-                      background: T.accent, border: 'none',
-                      color: '#FFF8F2', fontFamily: T.body, fontWeight: 600,
-                      fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase',
-                      cursor: 'pointer', boxShadow: `0 4px 16px rgba(184,112,78,0.25)`,
-                    }}
-                  >
-                    Another round
-                  </button>
-                  <button
-                    onClick={() => navigate('/dashboard')}
-                    style={{
-                      padding: '11px 24px', borderRadius: T.rPill,
-                      background: 'transparent', border: `1px solid ${T.border}`,
-                      color: T.inkLow, fontFamily: T.body, fontWeight: 500,
-                      fontSize: 13, letterSpacing: '0.04em',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Back to dashboard
-                  </button>
-                </div>
+                    {/* Break suggestion */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3, duration: 0.5 }}
+                      style={{
+                        padding: '12px 16px', borderRadius: 14,
+                        background: T.cardDeep, border: `1px solid ${T.border}`,
+                        marginBottom: 24, textAlign: 'center',
+                      }}
+                    >
+                      <div style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                        marginBottom: 6,
+                      }}>
+                        <RiLeafLine size={12} color="#6B8F5E" />
+                        <span style={{
+                          fontFamily: T.body, fontSize: 9, fontWeight: 600,
+                          letterSpacing: '0.14em', textTransform: 'uppercase',
+                          color: '#6B8F5E',
+                        }}>
+                          Suggested Break
+                        </span>
+                      </div>
+                      <p style={{
+                        fontFamily: T.heading, fontStyle: 'italic', fontWeight: 500,
+                        fontSize: 14, color: T.inkHigh, lineHeight: 1.4,
+                      }}>
+                        {durMin < 25
+                          ? 'Stand up, refill your water. Small movements reset the mind.'
+                          : durMin < 45
+                            ? 'Step outside for 5 minutes. Fresh air recalibrates your attention.'
+                            : 'Take a 10-minute walk — no phone. Let your subconscious integrate the work.'
+                        }
+                      </p>
+                    </motion.div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <button
+                        onClick={() => { setShowComplete(false); resetTimer() }}
+                        style={{
+                          padding: '12px 24px', borderRadius: T.rPill,
+                          background: T.accent, border: 'none',
+                          color: '#FFF8F2', fontFamily: T.body, fontWeight: 600,
+                          fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase',
+                          cursor: 'pointer', boxShadow: `0 4px 16px rgba(184,112,78,0.25)`,
+                        }}
+                      >
+                        Another round
+                      </button>
+                      <button
+                        onClick={() => navigate('/dashboard')}
+                        style={{
+                          padding: '11px 24px', borderRadius: T.rPill,
+                          background: 'transparent', border: `1px solid ${T.border}`,
+                          color: T.inkLow, fontFamily: T.body, fontWeight: 500,
+                          fontSize: 13, letterSpacing: '0.04em',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Back to dashboard
+                      </button>
+                    </div>
+                  </>
               </motion.div>
             </motion.div>
           )}
