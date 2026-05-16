@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { RiHome4Line, RiArrowLeftLine } from "react-icons/ri";
+import SEO from "../components/SEO";
 import { supabase } from "../lib/supabase";
 
 const EASE = [0.22, 1, 0.36, 1];
@@ -24,7 +25,9 @@ export default function NotFound() {
   }, []);
 
   return (
-    <div
+    <>
+      <SEO title="Page Not Found" description="The page you're looking for doesn't exist. Head back to Viram and stay on track." noIndex />
+      <div
       style={{
         minHeight:      "100svh",
         background:     "#F4EEE3",
@@ -216,5 +219,6 @@ export default function NotFound() {
 
       </div>
     </div>
+    </>
   );
 }

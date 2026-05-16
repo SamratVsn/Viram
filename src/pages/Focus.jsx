@@ -7,6 +7,7 @@ import {
   RiLeafLine, RiAlarmWarningLine,
 } from 'react-icons/ri'
 import { useNavigate } from 'react-router-dom'
+import SEO from '../components/SEO'
 import AdvancementToast, { checkCoinMilestone, ACHIEVEMENTS } from '../components/AdvancementToast'
 import { supabase } from '../lib/supabase'
 import { getTodayFocus, saveFocusSession, getProfile, updateProfile } from '../lib/db'
@@ -315,6 +316,7 @@ export default function Focus() {
 
   return (
     <>
+      <SEO title="Focus Timer" description="Deep work sessions with Pomodoro timing. Stay focused, earn XP, and build your discipline streak with Viram." noIndex />
       <style>{GLOBAL}</style>
 
       <motion.div

@@ -18,6 +18,7 @@ import {
   RiUserSmileLine,
   RiLeafLine,
 } from 'react-icons/ri'
+import SEO from '../components/SEO'
 
 /* ─── Design Tokens ─────────────────────────────────────── */
 const T = {
@@ -450,6 +451,7 @@ export default function Start() {
 
   return (
     <>
+      <SEO title="Get Started — Join Viram" description="Sign up or log in to Viram and start building discipline with gamified focus sessions, habit tracking, and avatar-based accountability." canonical="https://viram.app/start" />
       <style>{GLOBAL}</style>
 
       <div

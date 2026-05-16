@@ -13,6 +13,7 @@ import {
   RiHeartPulseLine, RiRoadMapLine, RiTimerFlashLine, RiUserHeartLine,
   RiCodeBoxLine, RiRocketLine,
 } from 'react-icons/ri'
+import SEO from '../components/SEO'
 
 /* ─── Design Tokens ───────────────────────────────────────────────────────── */
 const T = {
@@ -340,7 +341,9 @@ export default function ProblemPage({ onBack }) {
   }
 
   return (
-    <div ref={scrollRef} className="fixed inset-0 z-10 overflow-y-auto" style={pageStyle}>
+    <>
+      <SEO title="The Problem — Attention Economy Exposed" description="Social media is engineered to hijack your dopamine. Learn the science behind the addiction and how Viram helps you fight back." canonical="https://viram.app/problems" />
+      <div ref={scrollRef} className="fixed inset-0 z-10 overflow-y-auto" style={pageStyle}>
 
       <ReadingProgress containerRef={scrollRef} />
 
@@ -760,5 +763,6 @@ export default function ProblemPage({ onBack }) {
       </div>
 
     </div>
+    </>
   )
 }

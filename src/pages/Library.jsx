@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import SEO from '../components/SEO'
 import {
   RiArrowLeftLine,
   RiBookOpenLine,
@@ -507,6 +508,7 @@ export default function Library() {
 
   return (
     <>
+      <SEO title="Mind Library — Knowledge That Changes Everything" description="Distilled lessons from Atomic Habits, Deep Work, Digital Minimalism, and more — structured to rewire how you think about focus and discipline." canonical="https://viram.app/library" />
       <ReadingProgress />
 
       <div

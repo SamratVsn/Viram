@@ -14,6 +14,7 @@ import {
   RiChat1Line,
 } from 'react-icons/ri'
 import NavBar from '../components/NavBar'
+import SEO from '../components/SEO'
 
 /* ─── Design Tokens ─────────────────────────────────────── */
 const T = {
@@ -237,6 +238,7 @@ export default function Contact() {
 
   return (
     <>
+      <SEO title="Contact Us — Get In Touch" description="Have a question, partnership idea, or just want to say hello? Reach out to the Viram team." canonical="https://viram.app/contact" />
       <style>{GLOBAL}</style>
       <NavBar />
 

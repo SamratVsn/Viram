@@ -10,6 +10,7 @@ import {
 } from 'react-icons/ri'
 import MorningIntention from '../components/MorningIntention'
 import DigitalFast from '../components/DigitalFast'
+import SEO from '../components/SEO'
 import CuriositySeed from '../components/CuriositySeed'
 import companionImg from '../assets/3dmodel.png'
 import useViramData from '../hooks/useViramData'
@@ -256,6 +257,7 @@ export default function Dashboard() {
 
   return (
     <>
+      <SEO title="Dashboard" description="Your Viram command center — track focus, discipline, streaks, and habit progress all in one place." noIndex />
       <style>{GLOBAL}</style>
       <div className="viram-dash" style={{ position:'fixed', inset:0, display:'flex', flexDirection:'column', overflow:'hidden' }}>
 

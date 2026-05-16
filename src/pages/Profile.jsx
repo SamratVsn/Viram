@@ -8,6 +8,7 @@ import {
   RiCalendarCheckLine,
 } from 'react-icons/ri'
 import SkillTracker from '../components/SkillTracker'
+import SEO from '../components/SEO'
 import useViramData from '../hooks/useViramData'
 import { getTotalFocus, updateProfile } from '../lib/db'
 import { supabase } from '../lib/supabase'
@@ -284,6 +285,7 @@ export default function Profile() {
 
   return (
     <>
+      <SEO title="Profile" description="View your Viram profile — avatar stats, focus history, discipline points, and personal archetype." noIndex />
       <style>{GLOBAL}</style>
       <div className="viram-prof" style={{ minHeight:'100vh', background:T.bg, display:'flex', flexDirection:'column', overflow:'hidden' }}>
 

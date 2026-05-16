@@ -15,6 +15,7 @@ import {
   RiReactjsLine,
 } from "react-icons/ri";
 import NavBar from "../components/NavBar";
+import SEO from "../components/SEO";
 
 /* ─── Grain overlay ───────────────────────────────────────────────────────── */
 const Grain = () => (
@@ -472,6 +473,7 @@ function CTAButton({ to, children, variant = "primary", target, rel }) {
 export default function About() {
   return (
     <>
+      <SEO title="About — Our Mission &amp; Team" description="Viram is built by two founders from Nepal. Learn about our mission to fight the attention economy with gamified productivity." canonical="https://viram.app/about" />
       <NavBar />
 
       <div

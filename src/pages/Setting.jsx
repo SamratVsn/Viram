@@ -23,6 +23,7 @@ import {
 import { supabase } from '../lib/supabase'
 import { updateProfile, getProfile, clearAllConfessions } from '../lib/db'
 import useViramData from '../hooks/useViramData'
+import SEO from '../components/SEO'
 
 /* ─── Grain ───────────────────────────────────────────────────────────────── */
 const Grain = () => (
@@ -672,6 +673,7 @@ export default function Settings({ G }) {
 
   return (
     <>
+      <SEO title="Settings" description="Customize your Viram experience — focus timer preferences, reminders, appearance, and data management." noIndex />
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

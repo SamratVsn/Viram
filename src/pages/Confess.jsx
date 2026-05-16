@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { saveConfession, updateProfile, deleteConfession, getProfile, getConfessions } from '../lib/db'
 import AdvancementToast, { checkCoinMilestone } from '../components/AdvancementToast'
+import SEO from '../components/SEO'
 
 /* ─── Grain overlay ───────────────────────────────────────────────────────── */
 const Grain = () => (
@@ -445,6 +446,7 @@ export default function Confess() {
 
   return (
     <>
+      <SEO title="Confessions — Private Journal" description="A private, judgment-free space to log your slip-ups and track your progress. Confessions auto-expire after 30 days." noIndex />
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

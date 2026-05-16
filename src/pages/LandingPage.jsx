@@ -25,6 +25,7 @@ import {
   RiDiscordLine,
 } from "react-icons/ri";
 import NavBar from "../components/NavBar";
+import SEO from "../components/SEO";
 
 // ─── Minimal style block ──────────────────────────────────────────────────────
 // Tailwind can't generate: custom keyframes, font imports, CSS variables,
@@ -470,6 +471,7 @@ export default function LandingPage() {
 
   return (
     <>
+      <SEO title="Turn Your Goals Into Milestones" canonical="https://viram.app/" />
       <NavBar />
       <style>{STYLES}</style>
 
