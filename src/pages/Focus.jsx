@@ -476,7 +476,7 @@ export default function Focus() {
             transition={{ delay: 0.18, duration: 0.5, ease }}
             style={{ display: 'flex', gap: 8, marginBottom: 28 }}
           >
-            {[0.5, 15, 25, 45, 60].map(min => {
+            {[0.1, 15, 25, 45, 60].map(min => {
               const active = durMin === min
               return (
                 <button
@@ -496,7 +496,7 @@ export default function Focus() {
                     transition: 'all 0.25s ease',
                   }}
                 >
-                  {min < 1 ? '30s' : `${min}m`}
+                  {min < 1 ? '6s' : `${min}m`}
                 </button>
               )
             })}

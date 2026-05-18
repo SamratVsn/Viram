@@ -530,7 +530,7 @@ export default function Onboarding() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
-          await updateProfile(user.id, { ...profile, ...finalStats, onboarded: true })
+          await updateProfile(user.id, { ...profile, ...finalStats, onboarded: true, name: profile.avatarName })
         }
       } catch (err) {
         console.error('Failed to save onboarding profile:', err)

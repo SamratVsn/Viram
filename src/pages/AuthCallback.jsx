@@ -24,11 +24,13 @@ export default function AuthCallback() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user || cancelled) return
+        const existing = await getProfile(user.id)
+        const googleName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0]
         await upsertProfile(user.id, {
-          name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0],
+          name: existing?.avatarName ? (existing.name || googleName) : googleName,
           picture: user.user_metadata?.avatar_url || user.user_metadata?.picture,
         })
-        const profile = await getProfile(user.id)
+        const profile = existing || (await getProfile(user.id))
         if (cancelled) return
         navigate(profile?.onboarded ? '/dashboard' : '/onboarding', { replace: true })
       } catch (err) {

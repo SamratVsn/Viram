@@ -41,14 +41,7 @@ const Grain = () => (
 const PREFS_KEY = 'viram_prefs'
 
 export const DEFAULT_PREFS = {
-  defaultPomodoro:   25,
-  soundEnabled:      true,
-  autoStartBreak:    false,
-  dailyReminder:     false,
-  streakAlert:       true,
-  theme:             'parchment',
-  showXPAnimations:  true,
-  confessionsLocked: false,
+  defaultPomodoro: 25,
 }
 
 export function loadPrefs() {
@@ -479,8 +472,9 @@ export default function Settings({ G }) {
 
   /* ── Read profile ─────────────────────────────────────────────────────── */
   const profile   = profileData || {}
-  const displayName = profile.avatarName || profile.name?.split(' ')[0] || 'Viram User'
-  const initials    = (profile.name || profile.avatarName || 'VU').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+  const localAvatarName = JSON.parse(localStorage.getItem('viram_profile') || '{}').avatarName
+  const displayName = profile.avatarName || localAvatarName || profile.name?.split(' ')[0] || 'Viram User'
+  const initials    = (profile.avatarName || localAvatarName || profile.name || 'VU').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
 
   const ARCHETYPE_MAP = {
     study:      'THE SCHOLAR',

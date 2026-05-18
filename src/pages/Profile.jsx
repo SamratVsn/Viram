@@ -301,8 +301,9 @@ export default function Profile() {
   const archetype = ARCHETYPE_MAP[profileData.mission] || ARCHETYPE_MAP.discipline
   const stressColor = STRESS_COLORS[profileData.stressLevel] || T.inkLow
   const stressLabel = STRESS_LABELS[profileData.stressLevel] || 'Unknown'
-  const displayName = profileData.name?.split(' ')[0] || profileData.avatarName || 'Scholar'
-  const initial = (profileData.name || profileData.avatarName || '?').charAt(0).toUpperCase()
+  const localAvatarName = JSON.parse(localStorage.getItem('viram_profile') || '{}').avatarName
+  const displayName = profileData.avatarName || localAvatarName || profileData.name?.split(' ')[0] || 'Scholar'
+  const initial = (profileData.avatarName || localAvatarName || profileData.name || '?').charAt(0).toUpperCase()
 
   return (
     <>

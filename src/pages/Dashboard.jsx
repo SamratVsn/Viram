@@ -231,7 +231,8 @@ export default function Dashboard() {
   const todayQuote = QUOTES[new Date().getDate() % QUOTES.length]
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
-  const displayName = user?.name?.split(' ')[0] || 'Scholar'
+  const localAvatarName = JSON.parse(localStorage.getItem('viram_profile') || '{}').avatarName
+  const displayName = user?.avatarName || localAvatarName || user?.name?.split(' ')[0] || 'Scholar'
   const updatingStreak = useRef(false)
 
   useEffect(() => {
